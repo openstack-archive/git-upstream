@@ -1,0 +1,8 @@
+hpgit is a Python application providing a default workflow for HP Cloud
+projects (i.e. feature branch creation/finishing, release starting/finishing)
+on top of git. The operations are performed using Git commands.
+
+hpgit can use multiple configuration files to specify project, team and
+individual preferences when working on projects. This allows for a number of
+similar but slightly different workflows to be implemented, while being
+described by the same commands.
