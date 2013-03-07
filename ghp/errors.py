@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 #
-# Copyright (c) 2012 Hewlett-Packard
+# Copyright (c) 2013 Hewlett-Packard
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ghp.main import main
-from sys import argv
+"""Hpgit base error exception"""
 
-if __name__ == '__main__':
-    main(argv)
+class HpgitError(Exception):
+    """Exception thrown by Hpgit classes"""
+    pass
+
