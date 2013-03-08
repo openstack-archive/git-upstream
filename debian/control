@@ -1,0 +1,11 @@
+Source: hpgit
+Section: vcs
+Priority: optional
+Maintainer: Darragh Bailey <dbailey@hp.com>
+Build-Depends: debhelper (>= 7.0.50~), git
+Standards-Version: 3.9.1
+
+Package: hpgit
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, git
+Description: Git extensions to provide high-level repository operations for the HPCS workflow
