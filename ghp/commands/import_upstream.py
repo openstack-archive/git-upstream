@@ -27,24 +27,23 @@ class ImportUpstreamError(HpgitError):
 
 
 class ImportUpstream:
-    """Import code and packaging branches from an upstream project
-    and create a new branch unto which changes that are not upstream
-    but are on the mainline branch are applied.
-
+    """Import code from an upstream project and merge in additional branches
+    to create a new branch unto which changes that are not upstream but are
+    on the local branch are applied.
     """
 
-    def __init__(self, branch=None, upstream=None, import_branch=None, packaging=None):
+    def __init__(self, branch=None, upstream=None, import_branch=None, extra_branches=None):
         self._branch = branch
         self._upstream = upstream
         self._import_branch = import_branch
-        self._packaging = packaging
+        self._extra_branches = extra_branches
 
         self._repo = Repo(os.environ.get('GIT_WORK_TREE', os.path.curdir))
         self._git = self.repo.git
 
 
         if self.repo.bare:
-            raise ImportUpstreamError("Cannot perform imports of upstream branches in bare repos")
+            raise ImportUpstreamError("Cannot perform imports in bare repos")
 
         if self.branch == 'HEAD':
             self.branch = self.repo.active_branch
@@ -54,8 +53,9 @@ class ImportUpstream:
             'branch': self.branch
         }
 
-        if self.packaging:
-            branches['packaging'] = self.packaging
+        if self.extra_branches != []:
+            branches.update({'extra branch %d' % idx: value
+                                for (idx, value) in enumerate(self.extra_branches, 1)})
 
         for branch_type, branch in branches.iteritems():
             if not any(head for head in self.repo.heads if head.name == branch):
@@ -81,9 +81,9 @@ class ImportUpstream:
         return self._import_branch
 
     @property
-    def packaging(self):
-        """Branch containing the packaging data to be merged with the upstream when importing"""
-        return self._packaging
+    def extra_branches(self):
+        """Branch containing the additional branches to be merged with the upstream when importing"""
+        return self._extra_branches
 
     @property
     def repo(self):
@@ -124,7 +124,7 @@ class ImportUpstream:
         print "Creating and switching to import branch '{0}' created from '{1}' ({2})".format(
             self.import_branch, self.upstream, commit)
 
-        if not self.git.show_ref("refs/heads/" + self.import_branch, verify=True, quiet=True,
+        if self.git.show_ref("refs/heads/" + self.import_branch, verify=True,
                                  with_exceptions=False) and not force:
             raise ImportUpstreamError("Import branch '{0}' already exists, use force to replace"
                                       .format(self.import_branch))
@@ -146,11 +146,11 @@ class ImportUpstream:
                 self.import_branch, commit)
             self.git.branch(self.import_branch, commit, force=force)
 
-        if self.packaging:
-            print "Merging packaging branch '{0}' into new import branch '{1}'".format(
-                self.packaging, self.import_branch)
+        if self.extra_branches:
+            print "Merging additional branch(es) '{0}' into new import branch '{1}'".format(
+                ", ".join(self.extra_branches), self.import_branch)
             self.git.checkout(self.import_branch)
-            self.git.merge(self.packaging)
+            self.git.merge(*self.extra_branches)
 
     def find_changes(self):
         pass
@@ -158,42 +158,55 @@ class ImportUpstream:
     def start(self, args):
         "Start import of upstream"
 
-        commit = args.get('upsteam-commit', args.get('upstream-branch', None))
+        commit = args.get('upstream-commit', args.get('upstream-branch', None))
         self.create_import(commit, checkout=args['checkout'], force=args['force'])
 
     def resume(self, args):
-        print "Allow resuming of a partial import, required to make it easy for individuals to rework changes"
+        print "Allow resuming of a partial import, required to make it easy for " \
+            "individuals to rework changes"
 
     def finish(self, args):
         print "Need to check if we are finished the import"
 
 
 
-@subcommand.arg('-f', '--force', dest='force', required=False, action='store_true', default=False,
-                help="Force overwrite of existing import branch if it already exists")
-@subcommand.arg('--merge', dest='merge', required=False, action='store_true', default=False,
-                help="Merge the resulting import branch into the target branch once complete")
+@subcommand.arg('-f', '--force', dest='force', required=False, action='store_true',
+                default=False,
+                help='Force overwrite of existing import branch if it exists.')
+@subcommand.arg('--merge', dest='merge', required=False, action='store_true',
+                default=False,
+                help='Merge the resulting import branch into the target branch '
+                     'once complete')
 @subcommand.arg('--no-merge', dest='merge', required=False, action='store_false',
                 help="Disable merge of the resulting import branch")
-@subcommand.arg('--packaging-branch', metavar='<packaging-branch>',
-                help='Branch containing packaging code that should be merged when importing upstream')
+@subcommand.arg('--into', dest='branch', metavar='<branch>', default='HEAD',
+                help='Branch to take changes from, and replace with imported branch.')
 @subcommand.arg('--import-branch', metavar='<import-branch>',
                 help='Name of import branch to use', default='import/{0}')
 @subcommand.arg('upstream_branch', metavar='<upstream-branch>', nargs='?',
-                help='Upstream branch to import', default='upstream/master')
-@subcommand.arg('branch', metavar='<branch>', nargs='?',
-                help='Branch to take changes from, and replace with imported branch', default='HEAD')
+                default='upstream/master',
+                help='Upstream branch to import. Must be specified if '
+                     'you wish to provide additional branches.')
+@subcommand.arg('branches', metavar='<branches>', nargs='*',
+                help='Branches to additionally merge into the import branch '
+                     'using default git merging behaviour')
 def do_import_upstream(args):
-    """Import code from specified upstream branches
+    """Import code from specified upstream branch.
 
-    optionally merge given packaging branches to create an import branch, upon
-    which to apply any locally carried changes. Once applied the resulting
-    import branch is then merged into the target branch replacing all previous
-    contents.
+    Creates an import branch from the specified upstream branch, and optionally
+    merges additional branches given as arguments. Current branch, unless
+    overridden by the --into option, is used as the target branch from which a
+    list of changes to apply onto the new import is constructed based on the
+    the specificed strategy.
+
+    Once complete it will merge and replace the contents of the target branch
+    with those from the import branch, unless --no-merge is specified.
     """
 
-    importupstream = ImportUpstream(branch=args.branch, upstream=args.upstream_branch,
-                                    import_branch=args.import_branch, packaging=args.packaging_branch)
+    importupstream = ImportUpstream(branch=args.branch,
+                                    upstream=args.upstream_branch,
+                                    import_branch=args.import_branch,
+                                    extra_branches=args.branches)
 
     commit = getattr(args, 'upstream_commit', None) or args.upstream_branch
     importupstream.create_import(commit,
