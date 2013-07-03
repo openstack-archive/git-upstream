@@ -15,10 +15,13 @@
 # limitations under the License.
 
 from ghp.errors import HpgitError
-from ghp import subcommand
+from ghp import subcommand, log
+
 from git import Repo, GitCommandError
 
+import inspect
 import os
+import textwrap
 
 
 class ImportUpstreamError(HpgitError):
@@ -60,8 +63,9 @@ class ImportUpstream(object):
 
         for branch_type, branch in branches.iteritems():
             if not any(head for head in self.repo.heads if head.name == branch):
-                raise ImportUpstreamError("Specified %s branch not found: %s" %
-                                          (branch_type, branch))
+                msg = "Specified %s branch not found: %s"
+                self.log.error(msg, branch_type, branch)
+                raise ImportUpstreamError(msg % (branch_type, branch))
 
     @staticmethod
     def __setup__(self, argparser):
@@ -127,41 +131,66 @@ class ImportUpstream(object):
             self.git.show_ref(commit, quiet=True, heads=True)
 
         except GitCommandError as e:
-            raise ImportUpstreamError("Invalid commit specified as import "
-                                      "point: {0}".format(e))
+            msg = "Invalid commit '%s' specified to import from"
+            self.log.error(msg, commit)
+            raise ImportUpstreamError((msg + ": %s"), commit, e)
 
         import_describe = self.git.describe(commit)
         self._import_branch = self.import_branch.format(import_describe)
 
-        print("Creating and switching to import branch '{0}' created from "
-              "'{1}' ({2})".format(self.import_branch, self.upstream, commit))
+        self.log.debug("Creating and switching to import branch '%s' created "
+                       "from '%s' (%s)", self.import_branch, self.upstream, commit)
 
+        self.log.info(
+            textwrap.dedent("""\
+                        Checking if import branch '%s' already exists:
+                            git branch --list %s
+                        """), self.import_branch, self.import_branch)
         if self.git.show_ref("refs/heads/" + self.import_branch, verify=True,
                              with_exceptions=False) and not force:
-            raise ImportUpstreamError("Import branch '{0}' already exists, use "
-                                      "force to replace".format(self.import_branch))
+            msg = "Import branch '%s' already exists, use force to replace"
+            self.log.error(msg, self.import_branch)
+            raise ImportUpstreamError(msg % self.import_branch)
 
         if self.repo.active_branch == self.import_branch:
-            print("Resetting import branch '{0}' to specified commit '{1}'"
-                  .format(self.import_branch, commit))
+            self.log.info(
+                textwrap.dedent(
+                    """\
+                    Resetting import branch '%s' to specified commit '%s'
+                        git reset --hard %s
+                    """), self.import_branch, commit, commit)
             self.git.reset(commit, hard=True)
         elif checkout:
             checkout_args = dict(b=True)
             if force:
                 checkout_args = dict(B=True)
 
-            print("Checking out import branch '{0}' using specified commit "
-                  "'{1}'".format(self.import_branch, commit))
+            self.log.info(
+                textwrap.dedent(
+                    """\
+                    Checking out import branch '%s' using specified commit '%s'
+                        git checkout %s %s %s
+                    """), self.import_branch, commit, checkout_args,
+                self.import_branch, commit)
             self.git.checkout(self.import_branch, commit, **checkout_args)
         else:
-            print("Creating import branch '{0}' from specified commit '{1}'"
-                  .format(self.import_branch, commit))
+            self.log.info(
+                textwrap.dedent(
+                    """\
+                    Creating import branch '%s' from specified commit '%s'
+                        git branch --force %s %s
+                    """), self.import_branch, commit, self.import_branch, commit)
             self.git.branch(self.import_branch, commit, force=force)
 
         if self.extra_branches:
-            print("Merging additional branch(es) '{0}' into new import branch "
-                  "'{1}'".format(", ".join(self.extra_branches),
-                                 self.import_branch))
+            self.log.info(
+                textwrap.dedent(
+                    """\
+                    Merging additional branch(es) '%s' into import branch '%s'
+                        git checkout %s
+                        git merge %s
+                    """), ", ".join(self.extra_branches), self.import_branch,
+                self.import_branch, " ".join(self.extra_branches))
             self.git.checkout(self.import_branch)
             self.git.merge(*self.extra_branches)
 
@@ -175,11 +204,13 @@ class ImportUpstream(object):
         self.create_import(commit, checkout=args['checkout'], force=args['force'])
 
     def resume(self, args):
-        print("Allow resuming of a partial import, required to make it easy "
-              "for individuals to rework changes")
+        """Resume previous partial import"""
 
     def finish(self, args):
-        print("Need to check if we are finished the import")
+        """
+        Finish merge according to the selected strategy while performing
+        suitable verification checks.
+        """
 
 
 @subcommand.arg('-f', '--force', dest='force', required=False, action='store_true',
@@ -216,15 +247,20 @@ def do_import_upstream(args):
     with those from the import branch, unless --no-merge is specified.
     """
 
+    logger = log.getLogger('%s.%s' % (__name__,
+                                      inspect.stack()[0][0].f_code.co_name))
+
     importupstream = ImportUpstream(branch=args.branch,
                                     upstream=args.upstream_branch,
                                     import_branch=args.import_branch,
                                     extra_branches=args.branches)
 
     commit = getattr(args, 'upstream_commit', None) or args.upstream_branch
+    logger.notice("Starting import of upstream")
     importupstream.create_import(commit,
                                  checkout=getattr(args, 'checkout', None),
                                  force=getattr(args, 'force', None))
+    logger.notice("Successfully created import branch")
 
 
 
