@@ -1,5 +1,6 @@
 #
-# Copyright (c) 2012 Hewlett-Packard
+# Copyright (c) 2011, 2012 OpenStack LLC.
+# Copyright (c) 2012, 2013 Hewlett-Packard Development Company, L.P.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@ import subprocess
 VERBOSE = os.environ.get('VERBOSE', False)
 
 
+# following function is taken from git-review
 def run_command(cmd, status=False, env={}):
     if VERBOSE:
         print(datetime.datetime.now(), "Running:", cmd)

@@ -15,6 +15,7 @@
 # limitations under the License.
 
 
+# following function taken from python-keystoneclient - keystoneclient/utils.py
 # Decorator for cli-args
 def arg(*args, **kwargs):
     def _decorator(func):

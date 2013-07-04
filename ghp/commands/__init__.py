@@ -1,3 +1,5 @@
+#
+# Copyright (c) 2011 OpenStack LLC.
 # Copyright (c) 2013 Hewlett-Packard
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +26,7 @@ def get_subcommands(subparsers):
     return subcommands
 
 
+# partially taken from python-keystoneclient
 def _find_actions(subparsers, module_path):
     subcommands = {}
     for mod in (p[:-len('.py')] for p in os.listdir(module_path) if p.endswith('.py')):

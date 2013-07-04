@@ -1,7 +1,18 @@
 Format: http://dep.debian.net/deps/dep5
 Source: https://gerrit.hpcloud.net/p/automation/hpgit.git
+
 Files: *
-Copyright: 2012 Hewlett-Packard
+Copyright: 2012 Hewlett-Packard Development Company, L.P.
+License: Other/Proprietary
+  Confidential computer software. Valid license from HP required for
+  possession, use or copying. Consistent with FAR 12.211 and 12.212,
+  Commercial Computer Software, Computer Software Documentation, and
+  Technical Data for Commercial Items are licensed to the U.S. Government
+  under vendor's standard commercial license.
+
+
+Files: ghp/subcommand.py ghp/version.py ghp/commands/__init__.py
+Copyright: 2011, 2012 OpenStack LLC.
 License: Apache-2
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -17,3 +28,7 @@ License: Apache-2
  .
  On Debian-based systems the full text of the Apache version 2.0 license
  can be found in `/usr/share/common-licenses/Apache-2.0'.
+Comment:
+ In the case of ghp/version.py and ghp/commands/__init__.py only part of
+ the files are copyright, and as such are marked inline as being taken
+ from another project.
