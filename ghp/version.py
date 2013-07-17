@@ -21,6 +21,7 @@ import subprocess
 
 VERBOSE = os.environ.get('VERBOSE', False)
 
+
 def run_command(cmd, status=False, env={}):
     if VERBOSE:
         print(datetime.datetime.now(), "Running:", cmd)
@@ -35,6 +36,7 @@ def run_command(cmd, status=False, env={}):
         return (p.returncode, out.strip())
     return out.strip()
 
+
 def git_describe_version():
     try:
         v = run_command('git describe --tags --dirty')
@@ -43,6 +45,7 @@ def git_describe_version():
 
     return v
 
+
 def get_version():
     try:
         return git_describe_version()
@@ -50,5 +53,6 @@ def get_version():
         pass
 
     return 'unknown-version'
+
 
 version = get_version()

@@ -26,7 +26,7 @@ def get_subcommands(subparsers):
 
 def _find_actions(subparsers, module_path):
     subcommands = {}
-    for mod in ( p[:-len('.py')] for p in os.listdir(module_path) if p.endswith('.py') ):
+    for mod in (p[:-len('.py')] for p in os.listdir(module_path) if p.endswith('.py')):
         __import__(__name__ + '.' + mod)
         module = sys.modules[__name__ + '.' + mod]
         for attr in (a for a in dir(module) if a.startswith('do_')):

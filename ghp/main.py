@@ -17,6 +17,9 @@
 
 """
 Command-line tool for the HP Cloud workflow
+
+Main parser module, which after parsing the top level options will hand
+off to the collected subcommands parsers.
 """
 
 import ghp.commands as commands
@@ -25,16 +28,20 @@ import ghp.version
 import subcommand
 from argparse import ArgumentParser
 
+
 def get_parser():
     parser = ArgumentParser(
         description=__doc__.strip(),
         epilog='See "%(prog)s help COMMAND" for help on a specific command.',
         add_help=False,
     )
-    parser.add_argument('--version', action='version', version='%(prog)s ' + ghp.version.version)
-    parser.add_argument('-h', '--help', action='help', help='show this help message and exit')
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s ' + ghp.version.version)
+    parser.add_argument('-h', '--help', action='help',
+                        help='show this help message and exit')
 
-    subparsers = parser.add_subparsers(title="commands", metavar='<command>', dest='subcommand')
+    subparsers = parser.add_subparsers(title="commands", metavar='<command>',
+                                       dest='subcommand')
 
     # it would be nicer if we could hide this help command
     desc = help.__doc__ or ''
@@ -54,18 +61,17 @@ def get_parser():
 
 @subcommand.arg('command', metavar='<command>', nargs='?',
                 help='Display help for <command>')
-def help(parser, args, commands = None):
-    """
-    Display help about this program or one of its commands.
-    """
+def help(parser, args, commands=None):
+    """Display help about this program or one of its commands."""
     if getattr(args, 'command', None):
         if args.command in commands:
             commands[args.command].print_help()
         else:
             parser.error("'%s' is not a valid subcommand" %
-                                   args.command)
+                         args.command)
     else:
         parser.print_help()
+
 
 def main(argv):
     (cmds, parser) = get_parser()

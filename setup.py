@@ -20,21 +20,22 @@ import os
 from setuptools import setup, find_packages
 from ghp import version
 
+
 # taken from setuptools example.
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name = "hpgit",
-    version = version.version,
-    author = "Darragh Bailey",
-    author_email = "dbailey@hp.com",
-    description = ("Tool supporting HPCloud git workflows."),
-    license = "Apache License (2.0)",
-    keywords = "git hpcloud workflow",
-    url = "https://wiki.hpcloud.net/display/auto/hpgit",
-    scripts = ['git-hp'],
-    packages = find_packages(exclude=['test']),
+    name="hpgit",
+    version=version.version,
+    author="Darragh Bailey",
+    author_email="dbailey@hp.com",
+    description=("Tool supporting HPCloud git workflows."),
+    license="Apache License (2.0)",
+    keywords="git hpcloud workflow",
+    url="https://wiki.hpcloud.net/display/auto/hpgit",
+    scripts=['git-hp'],
+    packages=find_packages(exclude=['test']),
     long_description=read('README'),
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",

@@ -16,7 +16,7 @@
 
 """Hpgit base error exception"""
 
+
 class HpgitError(Exception):
     """Exception thrown by Hpgit classes"""
     pass
-

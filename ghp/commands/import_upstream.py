@@ -18,8 +18,8 @@ from ghp.errors import HpgitError
 from ghp import subcommand
 from git import Repo, GitCommandError
 
-import git
 import os
+
 
 class ImportUpstreamError(HpgitError):
     """Exception thrown by L{ImportUpstream}"""
@@ -27,12 +27,14 @@ class ImportUpstreamError(HpgitError):
 
 
 class ImportUpstream:
-    """Import code from an upstream project and merge in additional branches
+    """
+    Import code from an upstream project and merge in additional branches
     to create a new branch unto which changes that are not upstream but are
     on the local branch are applied.
     """
 
-    def __init__(self, branch=None, upstream=None, import_branch=None, extra_branches=None):
+    def __init__(self, branch=None, upstream=None, import_branch=None,
+                 extra_branches=None):
         self._branch = branch
         self._upstream = upstream
         self._import_branch = import_branch
@@ -40,7 +42,6 @@ class ImportUpstream:
 
         self._repo = Repo(os.environ.get('GIT_WORK_TREE', os.path.curdir))
         self._git = self.repo.git
-
 
         if self.repo.bare:
             raise ImportUpstreamError("Cannot perform imports in bare repos")
@@ -55,11 +56,12 @@ class ImportUpstream:
 
         if self.extra_branches != []:
             branches.update({'extra branch %d' % idx: value
-                                for (idx, value) in enumerate(self.extra_branches, 1)})
+                             for (idx, value) in enumerate(self.extra_branches, 1)})
 
         for branch_type, branch in branches.iteritems():
             if not any(head for head in self.repo.heads if head.name == branch):
-                raise ImportUpstreamError("Specified %s branch not found: %s" % (branch_type, branch))
+                raise ImportUpstreamError("Specified %s branch not found: %s" %
+                                          (branch_type, branch))
 
     @staticmethod
     def __setup__(self, argparser):
@@ -67,22 +69,28 @@ class ImportUpstream:
 
     @property
     def branch(self):
-        """Branch to search for branch changes to apply when importing"""
+        """Branch to search for branch changes to apply when importing."""
         return self._branch
 
     @property
     def upstream(self):
-        """Branch containing the upstream project code base to track"""
+        """Branch containing the upstream project code base to track."""
         return self._upstream
 
     @property
     def import_branch(self):
-        """Pattern to use to generate the name, or user specified branch name to use for import"""
+        """
+        Pattern to use to generate the name, or user specified branch name
+        to use for import.
+        """
         return self._import_branch
 
     @property
     def extra_branches(self):
-        """Branch containing the additional branches to be merged with the upstream when importing"""
+        """
+        Branch containing the additional branches to be merged with the
+        upstream when importing.
+        """
         return self._extra_branches
 
     @property
@@ -92,11 +100,15 @@ class ImportUpstream:
 
     @property
     def git(self):
-        """Git command object for performing direct git operations using python-git"""
+        """
+        Git command object for performing direct git operations using
+        python-git.
+        """
         return self._git
 
     def create_import(self, commit=None, checkout=False, force=False):
-        """Create the import branch from the specified commit.
+        """
+        Create the import branch from the specified commit.
 
         If the branch already exists abort if force is false
             If current branch, reset the head to the specified commit
@@ -115,40 +127,41 @@ class ImportUpstream:
             self.git.show_ref(commit, quiet=True, heads=True)
 
         except GitCommandError as e:
-            raise ImportUpstreamError("Invalid commit specified as import point: {0}".format(e))
+            raise ImportUpstreamError("Invalid commit specified as import "
+                                      "point: {0}".format(e))
 
         import_describe = self.git.describe(commit)
-        upstream_branches = self.git.branch("upstream/*", contains=commit, list=True).split('\n')
         self.import_branch = self.import_branch.format(import_describe)
 
-        print "Creating and switching to import branch '{0}' created from '{1}' ({2})".format(
-            self.import_branch, self.upstream, commit)
+        print("Creating and switching to import branch '{0}' created from "
+              "'{1}' ({2})".format(self.import_branch, self.upstream, commit))
 
         if self.git.show_ref("refs/heads/" + self.import_branch, verify=True,
-                                 with_exceptions=False) and not force:
-            raise ImportUpstreamError("Import branch '{0}' already exists, use force to replace"
-                                      .format(self.import_branch))
+                             with_exceptions=False) and not force:
+            raise ImportUpstreamError("Import branch '{0}' already exists, use "
+                                      "force to replace".format(self.import_branch))
 
         if self.repo.active_branch == self.import_branch:
-            print "Resetting import branch '{0}' to specified commit '{1}'".format(
-                self.import_branch, commit)
+            print("Resetting import branch '{0}' to specified commit '{1}'"
+                  .format(self.import_branch, commit))
             self.git.reset(commit, hard=True)
         elif checkout:
             checkout_args = dict(b=True)
             if force:
                 checkout_args = dict(B=True)
 
-            print "Checking out import branch '{0}' using specified commit '{1}'".format(
-                self.import_branch, commit)
+            print("Checking out import branch '{0}' using specified commit "
+                  "'{1}'".format(self.import_branch, commit))
             self.git.checkout(self.import_branch, commit, **checkout_args)
         else:
-            print "Creating import branch '{0}' from specified commit '{1}'".format(
-                self.import_branch, commit)
+            print("Creating import branch '{0}' from specified commit '{1}'"
+                  .format(self.import_branch, commit))
             self.git.branch(self.import_branch, commit, force=force)
 
         if self.extra_branches:
-            print "Merging additional branch(es) '{0}' into new import branch '{1}'".format(
-                ", ".join(self.extra_branches), self.import_branch)
+            print("Merging additional branch(es) '{0}' into new import branch "
+                  "'{1}'".format(", ".join(self.extra_branches),
+                                 self.import_branch))
             self.git.checkout(self.import_branch)
             self.git.merge(*self.extra_branches)
 
@@ -156,18 +169,17 @@ class ImportUpstream:
         pass
 
     def start(self, args):
-        "Start import of upstream"
+        """Start import of upstream"""
 
         commit = args.get('upstream-commit', args.get('upstream-branch', None))
         self.create_import(commit, checkout=args['checkout'], force=args['force'])
 
     def resume(self, args):
-        print "Allow resuming of a partial import, required to make it easy for " \
-            "individuals to rework changes"
+        print("Allow resuming of a partial import, required to make it easy "
+              "for individuals to rework changes")
 
     def finish(self, args):
-        print "Need to check if we are finished the import"
-
+        print("Need to check if we are finished the import")
 
 
 @subcommand.arg('-f', '--force', dest='force', required=False, action='store_true',
@@ -191,7 +203,8 @@ class ImportUpstream:
                 help='Branches to additionally merge into the import branch '
                      'using default git merging behaviour')
 def do_import_upstream(args):
-    """Import code from specified upstream branch.
+    """
+    Import code from specified upstream branch.
 
     Creates an import branch from the specified upstream branch, and optionally
     merges additional branches given as arguments. Current branch, unless
