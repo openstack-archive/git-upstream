@@ -19,6 +19,8 @@ import os
 import shlex
 import subprocess
 
+VERBOSE = os.environ.get('VERBOSE', False)
+
 def run_command(cmd, status=False, env={}):
     if VERBOSE:
         print(datetime.datetime.now(), "Running:", cmd)
@@ -36,7 +38,7 @@ def run_command(cmd, status=False, env={}):
 def git_describe_version():
     try:
         v = run_command('git describe --tags --dirty')
-    except RuntimeException, e:
+    except RuntimeError:
         pass
 
     return v
