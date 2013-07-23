@@ -154,17 +154,18 @@ class ImportUpstream(LogDedentMixin):
                 """, self.import_branch, commit, commit)
             self.git.reset(commit, hard=True)
         elif checkout:
-            checkout_args = dict(b=True)
             if force:
-                checkout_args = dict(B=True)
+                checkout_opt = '-B'
+            else:
+                checkout_opt = '-b'
 
             self.log.info(
                 """\
                 Checking out import branch '%s' using specified commit '%s'
                     git checkout %s %s %s
-                """, self.import_branch, commit, checkout_args,
+                """, self.import_branch, commit, checkout_opt,
                 self.import_branch, commit)
-            self.git.checkout(self.import_branch, commit, **checkout_args)
+            self.git.checkout(checkout_opt, self.import_branch, commit)
         else:
             self.log.info(
                 """\
