@@ -10,12 +10,12 @@
 
 from ghp.errors import HpgitError
 from ghp.log import LogDedentMixin
+from ghp.lib.utils import GitMixin
 from ghp import subcommand, log
 
-from git import Repo, GitCommandError
+from git import GitCommandError
 
 import inspect
-import os
 
 
 class ImportUpstreamError(HpgitError):
@@ -23,7 +23,7 @@ class ImportUpstreamError(HpgitError):
     pass
 
 
-class ImportUpstream(LogDedentMixin):
+class ImportUpstream(LogDedentMixin, GitMixin):
     """
     Import code from an upstream project and merge in additional branches
     to create a new branch unto which changes that are not upstream but are
@@ -36,9 +36,6 @@ class ImportUpstream(LogDedentMixin):
         self._upstream = upstream
         self._import_branch = import_branch
         self._extra_branches = extra_branches
-
-        self._repo = Repo(os.environ.get('GIT_WORK_TREE', os.path.curdir))
-        self._git = self.repo.git
 
         # make sure to correctly initialise inherited objects before performing
         # any computation
@@ -90,19 +87,6 @@ class ImportUpstream(LogDedentMixin):
         upstream when importing.
         """
         return self._extra_branches
-
-    @property
-    def repo(self):
-        """Git repository object for performing operations"""
-        return self._repo
-
-    @property
-    def git(self):
-        """
-        Git command object for performing direct git operations using
-        python-git.
-        """
-        return self._git
 
     def create_import(self, commit=None, checkout=False, force=False):
         """
