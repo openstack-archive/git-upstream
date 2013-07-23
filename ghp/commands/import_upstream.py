@@ -65,10 +65,6 @@ class ImportUpstream(LogDedentMixin):
                 self.log.error(msg, branch_type, branch)
                 raise ImportUpstreamError(msg % (branch_type, branch))
 
-    @staticmethod
-    def __setup__(self, argparser):
-        pass
-
     @property
     def branch(self):
         """Branch to search for branch changes to apply when importing."""
@@ -188,9 +184,6 @@ class ImportUpstream(LogDedentMixin):
             self.git.checkout(self.import_branch)
             self.git.merge(*self.extra_branches)
 
-    def find_changes(self):
-        pass
-
     def start(self, args):
         """Start import of upstream"""
 
@@ -199,12 +192,14 @@ class ImportUpstream(LogDedentMixin):
 
     def resume(self, args):
         """Resume previous partial import"""
+        raise NotImplementedError
 
     def finish(self, args):
         """
         Finish merge according to the selected strategy while performing
         suitable verification checks.
         """
+        raise NotImplementedError
 
 
 @subcommand.arg('-f', '--force', dest='force', required=False, action='store_true',
