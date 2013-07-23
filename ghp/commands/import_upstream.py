@@ -26,7 +26,7 @@ class ImportUpstreamError(HpgitError):
     pass
 
 
-class ImportUpstream:
+class ImportUpstream(object):
     """
     Import code from an upstream project and merge in additional branches
     to create a new branch unto which changes that are not upstream but are
@@ -47,14 +47,14 @@ class ImportUpstream:
             raise ImportUpstreamError("Cannot perform imports in bare repos")
 
         if self.branch == 'HEAD':
-            self.branch = self.repo.active_branch
+            self._branch = self.repo.active_branch
 
         branches = {
             'upstream': self.upstream,
             'branch': self.branch
         }
 
-        if self.extra_branches != []:
+        if self._extra_branches != []:
             branches.update({'extra branch %d' % idx: value
                              for (idx, value) in enumerate(self.extra_branches, 1)})
 
@@ -131,7 +131,7 @@ class ImportUpstream:
                                       "point: {0}".format(e))
 
         import_describe = self.git.describe(commit)
-        self.import_branch = self.import_branch.format(import_describe)
+        self._import_branch = self.import_branch.format(import_describe)
 
         print("Creating and switching to import branch '{0}' created from "
               "'{1}' ({2})".format(self.import_branch, self.upstream, commit))
