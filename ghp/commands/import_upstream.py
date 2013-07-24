@@ -15,13 +15,13 @@
 # limitations under the License.
 
 from ghp.errors import HpgitError
+from ghp.log import LogDedentMixin
 from ghp import subcommand, log
 
 from git import Repo, GitCommandError
 
 import inspect
 import os
-import textwrap
 
 
 class ImportUpstreamError(HpgitError):
@@ -29,7 +29,7 @@ class ImportUpstreamError(HpgitError):
     pass
 
 
-class ImportUpstream(object):
+class ImportUpstream(LogDedentMixin):
     """
     Import code from an upstream project and merge in additional branches
     to create a new branch unto which changes that are not upstream but are
@@ -45,6 +45,10 @@ class ImportUpstream(object):
 
         self._repo = Repo(os.environ.get('GIT_WORK_TREE', os.path.curdir))
         self._git = self.repo.git
+
+        # make sure to correctly initialise inherited objects before performing
+        # any computation
+        super(ImportUpstream, self).__init__()
 
         if self.repo.bare:
             raise ImportUpstreamError("Cannot perform imports in bare repos")
@@ -142,10 +146,10 @@ class ImportUpstream(object):
                        "from '%s' (%s)", self.import_branch, self.upstream, commit)
 
         self.log.info(
-            textwrap.dedent("""\
-                        Checking if import branch '%s' already exists:
-                            git branch --list %s
-                        """), self.import_branch, self.import_branch)
+            """\
+            Checking if import branch '%s' already exists:
+                git branch --list %s
+            """, self.import_branch, self.import_branch)
         if self.git.show_ref("refs/heads/" + self.import_branch, verify=True,
                              with_exceptions=False) and not force:
             msg = "Import branch '%s' already exists, use force to replace"
@@ -154,11 +158,10 @@ class ImportUpstream(object):
 
         if self.repo.active_branch == self.import_branch:
             self.log.info(
-                textwrap.dedent(
-                    """\
-                    Resetting import branch '%s' to specified commit '%s'
-                        git reset --hard %s
-                    """), self.import_branch, commit, commit)
+                """\
+                Resetting import branch '%s' to specified commit '%s'
+                    git reset --hard %s
+                """, self.import_branch, commit, commit)
             self.git.reset(commit, hard=True)
         elif checkout:
             checkout_args = dict(b=True)
@@ -166,30 +169,27 @@ class ImportUpstream(object):
                 checkout_args = dict(B=True)
 
             self.log.info(
-                textwrap.dedent(
-                    """\
-                    Checking out import branch '%s' using specified commit '%s'
-                        git checkout %s %s %s
-                    """), self.import_branch, commit, checkout_args,
+                """\
+                Checking out import branch '%s' using specified commit '%s'
+                    git checkout %s %s %s
+                """, self.import_branch, commit, checkout_args,
                 self.import_branch, commit)
             self.git.checkout(self.import_branch, commit, **checkout_args)
         else:
             self.log.info(
-                textwrap.dedent(
-                    """\
-                    Creating import branch '%s' from specified commit '%s'
-                        git branch --force %s %s
-                    """), self.import_branch, commit, self.import_branch, commit)
+                """\
+                Creating import branch '%s' from specified commit '%s'
+                    git branch --force %s %s
+                """, self.import_branch, commit, self.import_branch, commit)
             self.git.branch(self.import_branch, commit, force=force)
 
         if self.extra_branches:
             self.log.info(
-                textwrap.dedent(
-                    """\
-                    Merging additional branch(es) '%s' into import branch '%s'
-                        git checkout %s
-                        git merge %s
-                    """), ", ".join(self.extra_branches), self.import_branch,
+                """\
+                Merging additional branch(es) '%s' into import branch '%s'
+                    git checkout %s
+                    git merge %s
+                """, ", ".join(self.extra_branches), self.import_branch,
                 self.import_branch, " ".join(self.extra_branches))
             self.git.checkout(self.import_branch)
             self.git.merge(*self.extra_branches)

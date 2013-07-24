@@ -24,6 +24,8 @@ for logging output to the console.
 """
 
 import logging
+from functools import wraps
+import textwrap
 
 
 # Add new NOTICE logging level
@@ -87,3 +89,63 @@ class LevelFilterIgnoreBelow(logging.Filter):
 
     def filter(self, record):
         return record.levelno >= self.level
+
+
+class DedentLoggerMeta(type):
+    """
+    Meta class to wrap all level functions in logging interface with dedent
+
+    Classes created from this should be derived from the logging.Logger class
+    as otherwise they will not contain the correct methods to be wrapped and
+    trying to pass them as the default class to create Loggers from will fail.
+    """
+
+    def __new__(cls, name, bases, dict):
+        # provide a more intelligent error instead of waiting for setattr/getattr
+        # adding of a wrapper function to fail
+        if logging.Logger not in bases:
+            raise TypeError("%s not derived from logging.Logger" % name)
+
+        obj = super(DedentLoggerMeta, cls).__new__(cls, name, bases, dict)
+        for level in _levels:
+            setattr(obj, level, cls.wrap_level(getattr(obj, level)))
+        setattr(obj, 'log', cls.wrap(getattr(obj, 'log')))
+        return obj
+
+    @staticmethod
+    def wrap(func):
+        def _dedent_log(self, level, msg, *args, **kwargs):
+            dedent = kwargs.pop('dedent', True)
+            if dedent:
+                msg = textwrap.dedent(msg)
+            func(self, level, msg, *args, **kwargs)
+        return wraps(func)(_dedent_log)
+
+    @staticmethod
+    def wrap_level(func):
+        def _dedent_log(self, msg, *args, **kwargs):
+            dedent = kwargs.pop('dedent', True)
+            if dedent:
+                msg = textwrap.dedent(msg)
+            func(self, msg, *args, **kwargs)
+        return wraps(func)(_dedent_log)
+
+
+class DedentLogger(logging.Logger):
+    __metaclass__ = DedentLoggerMeta
+
+
+# override default logger class for everything that imports this module
+logging.setLoggerClass(DedentLogger)
+
+
+class LogDedentMixin(object):
+
+    def __init__(self, *args, **kwargs):
+        self.__log = getLogger('%s.%s' % (__name__, self.__class__.__name__))
+
+        super(LogDedentMixin, self).__init__(*args, **kwargs)
+
+    @property
+    def log(self):
+        return self.__log
