@@ -49,14 +49,14 @@ def getLogger(name=None):
     return logger
 
 
-# sorted in order of verbosity
+# sorted in order of verbosity "['level', 'alias']"
 _levels = [
-    'critical',
-    'error',
-    'warning',
-    'notice',
-    'info',
-    'debug'
+    ['critical', 'fatal'],
+    ['error'],
+    ['warning', 'warn'],
+    ['notice'],
+    ['info'],
+    ['debug']
 ]
 
 
@@ -65,7 +65,8 @@ def getIncrementLevel(count, default='warning'):
     Given a default level to start from, and a count to increment the logging
     level by, return the associated level that is 'count' levels more verbose.
     """
-    return _levels[min(_levels.index(default) + count, len(_levels) - 1)].upper()
+    idx = next((idx for idx, sublist in enumerate(_levels) if default in sublist), None)
+    return _levels[min(idx + count, len(_levels) - 1)][0].upper()
 
 
 class LevelFilterIgnoreAbove(logging.Filter):
@@ -100,8 +101,12 @@ class DedentLoggerMeta(type):
             raise TypeError("%s not derived from logging.Logger" % name)
 
         obj = super(DedentLoggerMeta, cls).__new__(cls, name, bases, dict)
-        for level in _levels:
+        for levelalias in _levels:
+            level = levelalias[0]
+            aliases = levelalias[1:]
             setattr(obj, level, cls.wrap_level(getattr(obj, level)))
+            for alias in aliases:
+                setattr(obj, alias, getattr(obj, level))
         setattr(obj, 'log', cls.wrap(getattr(obj, 'log')))
         return obj
 
