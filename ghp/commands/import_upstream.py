@@ -12,7 +12,10 @@ from ghp.errors import HpgitError
 from ghp.log import LogDedentMixin
 from ghp.lib.utils import GitMixin
 from ghp import subcommand, log
+from ghp.lib.searchers import UpstreamMergeBaseSearcher
 
+from abc import ABCMeta, abstractmethod
+from collections import Sequence
 from git import GitCommandError
 
 import inspect
@@ -175,11 +178,15 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self.git.checkout(self.import_branch)
             self.git.merge(*self.extra_branches)
 
-    def start(self, args):
-        """Start import of upstream"""
+    def start(self, strategy):
+        """Apply list of commits given onto latest import of upstream"""
 
-        commit = args.get('upstream-commit', args.get('upstream-branch', None))
-        self.create_import(commit, checkout=args['checkout'], force=args['force'])
+        self.log.debug(
+            """\
+            Should apply the following list of commits
+                %s
+            """, "\n    ".join([c.id for c in strategy.filtered_iter()]))
+        raise NotImplementedError("start() is not yet implemented")
 
     def resume(self, args):
         """Resume previous partial import"""
@@ -193,6 +200,91 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         raise NotImplementedError
 
 
+class ImportStrategiesFactory(object):
+    __strategies = None
+
+    @classmethod
+    def createStrategy(cls, type, *args, **kwargs):
+        if type in cls.listStrategies():
+            return cls.__strategies[type](*args, **kwargs)
+        else:
+            raise RuntimeError("No class implements the requested strategy: "
+                               "{0}".format(type))
+
+    @classmethod
+    def listStrategies(cls):
+        cls.__strategies = {subclass._strategy: subclass
+                            for subclass in LocateChangesStrategy.__subclasses__()
+                            if subclass._strategy}
+        return cls.__strategies.keys()
+
+
+from ghp.lib.searchers import NoMergeCommitFilter, ReverseCommitFilter
+
+
+class LocateChangesStrategy(GitMixin, Sequence):
+    """
+    Base class that needs to be extended with the specific strategy on how to
+    handle changes locally that are not yet upstream.
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self, git=None, *args, **kwargs):
+        """
+        Initialize an empty filters list
+        """
+        self.data = None
+        self.filters = []
+        super(LocateChangesStrategy, self).__init__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        if not self.data:
+            self.data = self._popdata()
+        return self.data[key]
+
+    def __len__(self):
+        if not self.data:
+            self.data = self._popdata()
+        return len(self.data)
+
+    @classmethod
+    def getName(cls):
+        return cls._strategy
+
+    def filtered_iter(self):
+        # chain the filters as generators so that we don't need to allocate new
+        # lists for each step in the filter chain.
+        commit_list = self
+        for f in self.filters:
+            commit_list = f.filter(commit_list)
+
+        return commit_list
+
+    def filtered_list(self):
+
+        return list(self.filtered_iter())
+
+    def _popdata(self):
+        """
+        Should return the list of commits from the searcher object
+        """
+        return self.searcher.list()
+
+
+class LocateChangesWalk(LocateChangesStrategy):
+    """
+    """
+
+    _strategy = "drop"
+
+    def __init__(self, branch="HEAD", *args, **kwargs):
+        self.searcher = UpstreamMergeBaseSearcher(branch=branch)
+        super(self.__class__, self).__init__(*args, **kwargs)
+        self.filters.append(NoMergeCommitFilter())
+        self.filters.append(ReverseCommitFilter())
+
+
 @subcommand.arg('-f', '--force', dest='force', required=False, action='store_true',
                 default=False,
                 help='Force overwrite of existing import branch if it exists.')
@@ -202,6 +294,11 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                      'once complete')
 @subcommand.arg('--no-merge', dest='merge', required=False, action='store_false',
                 help="Disable merge of the resulting import branch")
+@subcommand.arg('-s', '--strategy', metavar='<strategy>',
+                choices=ImportStrategiesFactory.listStrategies(),
+                default=LocateChangesWalk.getName(),
+                help='Use the given strategy to re-apply locally carried changes '
+                     'to the import branch. (default: %(default)s)')
 @subcommand.arg('--into', dest='branch', metavar='<branch>', default='HEAD',
                 help='Branch to take changes from, and replace with imported branch.')
 @subcommand.arg('--import-branch', metavar='<import-branch>',
@@ -235,12 +332,18 @@ def do_import_upstream(args):
                                     import_branch=args.import_branch,
                                     extra_branches=args.branches)
 
+    logger.notice("Searching for previous import")
+    strategy = ImportStrategiesFactory.createStrategy(args.strategy,
+                                                      branch=args.branch)
+
     commit = getattr(args, 'upstream_commit', None) or args.upstream_branch
     logger.notice("Starting import of upstream")
     importupstream.create_import(commit,
                                  checkout=getattr(args, 'checkout', None),
                                  force=getattr(args, 'force', None))
     logger.notice("Successfully created import branch")
+
+    importupstream.start(strategy)
 
 
 
