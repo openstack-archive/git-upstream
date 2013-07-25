@@ -104,29 +104,29 @@ class DedentLoggerMeta(type):
         for levelalias in _levels:
             level = levelalias[0]
             aliases = levelalias[1:]
-            setattr(obj, level, cls.wrap_level(getattr(obj, level)))
+            setattr(obj, level, cls.wrap()(getattr(obj, level)))
             for alias in aliases:
                 setattr(obj, alias, getattr(obj, level))
-        setattr(obj, 'log', cls.wrap(getattr(obj, 'log')))
+        setattr(obj, 'log', cls.wrap(True)(getattr(obj, 'log')))
         return obj
 
     @staticmethod
-    def wrap(func):
-        def _dedent_log(self, level, msg, *args, **kwargs):
-            dedent = kwargs.pop('dedent', True)
-            if dedent:
-                msg = textwrap.dedent(msg)
-            func(self, level, msg, *args, **kwargs)
-        return wraps(func)(_dedent_log)
-
-    @staticmethod
-    def wrap_level(func):
-        def _dedent_log(self, msg, *args, **kwargs):
-            dedent = kwargs.pop('dedent', True)
-            if dedent:
-                msg = textwrap.dedent(msg)
-            func(self, msg, *args, **kwargs)
-        return wraps(func)(_dedent_log)
+    def wrap(with_level=False):
+        def dedentlog(func):
+            if with_level:
+                def _dedent_log(self, level, msg, *args, **kwargs):
+                    dedent = kwargs.pop('dedent', True)
+                    if dedent:
+                        msg = textwrap.dedent(msg)
+                    func(self, level, msg, *args, **kwargs)
+            else:
+                def _dedent_log(self, msg, *args, **kwargs):
+                    dedent = kwargs.pop('dedent', True)
+                    if dedent:
+                        msg = textwrap.dedent(msg)
+                    func(self, msg, *args, **kwargs)
+            return wraps(func)(_dedent_log)
+        return dedentlog
 
 
 class DedentLogger(logging.Logger):
