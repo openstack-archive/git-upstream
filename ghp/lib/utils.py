@@ -8,8 +8,12 @@
 # under vendor's standard commercial license.
 #
 
+from ghp.errors import HpgitError
+
 from git import Repo
+from git.errors import InvalidGitRepositoryError
 import os
+import sys
 
 
 class GitMixin(object):
@@ -19,7 +23,12 @@ class GitMixin(object):
         if repo:
             self.__repo = repo
         else:
-            self.__repo = Repo(os.environ.get('GIT_WORK_TREE', os.path.curdir))
+            try:
+                self.__repo = Repo(os.environ.get('GIT_WORK_TREE',
+                                                  os.path.curdir))
+            except InvalidGitRepositoryError:
+                exc_class, exc, tb = sys.exc_info()
+                raise HpgitError("Not a git repository", tb)
 
         self.__git = self.repo.git
         super(GitMixin, self).__init__(*args, **kwargs)

@@ -17,6 +17,7 @@ off to the collected subcommands parsers.
 """
 
 import ghp.commands as commands
+from ghp.errors import HpgitError
 import ghp.log as log
 import ghp.version
 
@@ -123,7 +124,7 @@ def main(argv):
     errcon = logging.StreamHandler(sys.stderr)
     errcon.setLevel(logging.ERROR)
     errcon.addFilter(log.LevelFilterIgnoreBelow(logging.ERROR))
-    errcon.setFormatter(logging.Formatter("%(levelname)-8s %(message)s"))
+    errcon.setFormatter(logging.Formatter("%(levelname)-8s: %(message)s"))
     logger.addHandler(errcon)
 
     if args.log_file:
@@ -133,6 +134,11 @@ def main(argv):
         filehandler.setFormatter(logging.Formatter(format))
         logger.addHandler(filehandler)
 
-    args.func(args)
+    try:
+        args.func(args)
+    except HpgitError, e:
+        logger.fatal("%s", e[0])
+        logger.debug("HpgitError: %s", e[0], exc_info=e)
+        sys.exit(1)
 
 # vim:sw=4:sts=4:ts=4:et:
