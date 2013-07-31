@@ -58,7 +58,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
         for branch_type, branch in branches.iteritems():
             if not any(head for head in self.repo.heads if head.name == branch):
-                msg = "Specified %s branch not found: %s"
+                msg = "Specified %s not found: '%s'"
                 self.log.error(msg, branch_type, branch)
                 raise ImportUpstreamError(msg % (branch_type, branch))
 
