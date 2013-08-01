@@ -11,6 +11,7 @@
 from ghp.errors import HpgitError
 from ghp.log import LogDedentMixin
 from ghp.lib.utils import GitMixin
+from ghp.lib.rebaseeditor import RebaseEditor
 from ghp import subcommand, log
 from ghp.lib.searchers import UpstreamMergeBaseSearcher
 
@@ -206,7 +207,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self.git.checkout(base)
             self.git.merge(*self.extra_branches)
 
-    def start(self, strategy):
+    def apply(self, strategy, interactive=False):
         """Apply list of commits given onto latest import of upstream"""
 
         self.log.debug(
@@ -214,7 +215,41 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             Should apply the following list of commits
                 %s
             """, "\n    ".join([c.id for c in strategy.filtered_iter()]))
-        raise NotImplementedError("start() is not yet implemented")
+
+        base = self.import_branch + "-base"
+
+        first = next(strategy.filtered_iter())
+        self._set_branch(self.import_branch, self.branch, force=True)
+
+        rebase = RebaseEditor(interactive, repo=self.repo)
+
+        self.log.info(
+            """\
+            Rebase changes, dropping merges through editor:
+                git rebase --onto %s \\
+                    %s %s
+            """, base, first.parents[0].id, self.import_branch)
+        status, out, err = rebase.run(strategy.filtered_iter(),
+                                      first.parents[0].id, self.import_branch,
+                                      onto=base)
+        if status:
+            if err and err.startswith("Nothing to do"):
+                # cancelled by user
+                self.log.notice("Cancelled by user")
+                return
+
+            self.log.error("Rebase failed, will need user intervention to "
+                           "resolve.")
+            if out:
+                self.log.notice(out)
+            if err:
+                self.log.notice(err)
+
+            # once we support resuming/finishing add a message here to tell the
+            # user to rerun this tool with the appropriate options to complete
+            return
+
+        self.log.notice("Successfully applied all locally carried changes")
 
     def resume(self, args):
         """Resume previous partial import"""
@@ -313,6 +348,8 @@ class LocateChangesWalk(LocateChangesStrategy):
         self.filters.append(ReverseCommitFilter())
 
 
+@subcommand.arg('-i', '--interactive', action='store_true', default=False,
+                help='Let the user edit the list of commits before applying.')
 @subcommand.arg('-f', '--force', dest='force', required=False, action='store_true',
                 default=False,
                 help='Force overwrite of existing import branch if it exists.')
@@ -382,7 +419,7 @@ def do_import_upstream(args):
     importupstream.create_import(force=args.force)
     logger.notice("Successfully created import branch")
 
-    importupstream.start(strategy)
+    importupstream.apply(strategy, args.interactive)
 
 
 
