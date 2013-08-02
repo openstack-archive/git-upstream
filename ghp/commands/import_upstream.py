@@ -31,7 +31,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
     """
 
     def __init__(self, branch=None, upstream=None, import_branch=None,
-                 extra_branches=None):
+                 extra_branches=None, *args, **kwargs):
         self._branch = branch
         self._upstream = upstream
         self._import_branch = import_branch
@@ -39,7 +39,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
         # make sure to correctly initialise inherited objects before performing
         # any computation
-        super(ImportUpstream, self).__init__()
+        super(ImportUpstream, self).__init__(*args, **kwargs)
 
         if self.repo.bare:
             raise ImportUpstreamError("Cannot perform imports in bare repos")
