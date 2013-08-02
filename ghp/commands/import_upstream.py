@@ -336,11 +336,8 @@ def do_import_upstream(args):
     strategy = ImportStrategiesFactory.createStrategy(args.strategy,
                                                       branch=args.branch)
 
-    commit = getattr(args, 'upstream_commit', None) or args.upstream_branch
     logger.notice("Starting import of upstream")
-    importupstream.create_import(commit,
-                                 checkout=getattr(args, 'checkout', None),
-                                 force=getattr(args, 'force', None))
+    importupstream.create_import(force=args.force)
     logger.notice("Successfully created import branch")
 
     importupstream.start(strategy)
