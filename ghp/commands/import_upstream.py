@@ -41,26 +41,32 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         # any computation
         super(ImportUpstream, self).__init__(*args, **kwargs)
 
+        # test that we can use this git repo
+        if not self.is_detached():
+            raise ImportUpstreamError("In 'detached HEAD' state")
+
         if self.repo.bare:
             raise ImportUpstreamError("Cannot perform imports in bare repos")
 
         if self.branch == 'HEAD':
             self._branch = self.repo.active_branch
 
-        branches = {
-            'upstream': self.upstream,
-            'branch': self.branch
-        }
+        # validate branches exist and log all failures
+        branches = [
+            self.branch,
+            self.upstream
+        ]
+        branches.extend(self.extra_branches)
 
-        if self._extra_branches != []:
-            branches.update({'extra branch %d' % idx: value
-                             for (idx, value) in enumerate(self.extra_branches, 1)})
-
-        for branch_type, branch in branches.iteritems():
+        invalid_ref = False
+        for branch in branches:
             if not any(head for head in self.repo.heads if head.name == branch):
-                msg = "Specified %s not found: '%s'"
-                self.log.error(msg, branch_type, branch)
-                raise ImportUpstreamError(msg % (branch_type, branch))
+                msg = "Specified ref does not exist: '%s'"
+                self.log.error(msg, branch)
+                invalid_ref = True
+
+        if invalid_ref:
+            raise ImportUpstreamError("Invalid ref")
 
     @property
     def branch(self):

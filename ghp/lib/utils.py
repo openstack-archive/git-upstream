@@ -31,3 +31,6 @@ class GitMixin(object):
     @property
     def git(self):
         return self.__git
+
+    def is_detached(self):
+        return self.git.symbolic_ref("HEAD", q=True, with_exceptions=False)
