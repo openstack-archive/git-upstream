@@ -335,6 +335,20 @@ def do_import_upstream(args):
     logger.notice("Searching for previous import")
     strategy = ImportStrategiesFactory.createStrategy(args.strategy,
                                                       branch=args.branch)
+    # if last commit in the strategy was a merge, then the additional branches that
+    # were merged in previously can be extracted based on the commits merged.
+    prev_import_merge = strategy[-1]
+    if len(prev_import_merge.parents) > 1:
+        idx = next((idx for idx, commit in enumerate(prev_import_merge.parents)
+                    if commit.id == strategy.searcher.commit.id), None)
+
+        if idx:
+            additional_commits = prev_import_merge.parents[idx + 1:]
+            if additional_commits and not args.branches:
+                logger.warning("""\
+                    **************** WARNING ****************
+                    Previous import merged additional branches but non have
+                    been specified on the command line for this import.\n""")
 
     logger.notice("Starting import of upstream")
     importupstream.create_import(force=args.force)
