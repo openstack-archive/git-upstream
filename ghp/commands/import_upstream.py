@@ -154,33 +154,46 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             import_branch = self.import_branch
 
         # use describe in order to be certain about unique identifying 'commit'
-        import_describe = self.git.describe(commit, tags=True,
+        # Create a describe string with the following format:
+        #    <describe upstream>[-<extra branch abbref hash>]*
+        #
+        # Simply appends the 7 character ref abbreviation for each extra branch
+        # prefixed with '-', for each extra branch in the order they are given.
+        describe_commit = self.git.describe(commit, tags=True,
                                             with_exceptions=False)
-        if not import_describe:
+        if not describe_commit:
             self.log.warning("No tag describes the upstream branch")
-            import_describe = self.git.describe(commit, always=True, tags=True)
+            describe_commit = self.git.describe(commit, always=True, tags=True)
 
         self.log.info("""\
                     Using '%s' to describe:
                         %s
-                    """, import_describe, commit)
-        self._import_branch = import_branch.format(import_describe)
+                    """, describe_commit, commit)
+        describe_branches = [describe_commit]
 
-        self.log.debug("Creating and switching to import branch '%s' created "
-                       "from '%s' (%s)", self.import_branch, self.upstream, commit)
+        describe_branches.extend([self.git.rev_parse(b, short=True)
+                                  for b in self.extra_branches])
+        import_describe = "-".join(describe_branches)
+        self._import_branch = self.import_branch.format(
+            describe=import_describe)
+
+        self._import_branch = import_branch.format(describe=import_describe)
+        base = self._import_branch + "-base"
+        self.log.debug("Creating and switching to import branch base '%s' "
+                       "created from '%s' (%s)", base, self.upstream, commit)
 
         self.log.info(
             """\
             Checking if import branch '%s' already exists:
                 git branch --list %s
-            """, self.import_branch, self.import_branch)
-        if self.git.show_ref("refs/heads/" + self.import_branch, verify=True,
+            """, base, base)
+        if self.git.show_ref("refs/heads/" + base, verify=True,
                              with_exceptions=False) and not force:
             msg = "Import branch '%s' already exists, set 'force' to replace"
             self.log.error(msg, self.import_branch)
             raise ImportUpstreamError(msg % self.import_branch)
 
-        self._set_branch(self.import_branch, commit, checkout, force)
+        self._set_branch(base, commit, checkout, force)
 
         if self.extra_branches:
             self.log.info(
@@ -188,9 +201,9 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 Merging additional branch(es) '%s' into import branch '%s'
                     git checkout %s
                     git merge %s
-                """, ", ".join(self.extra_branches), self.import_branch,
-                self.import_branch, " ".join(self.extra_branches))
-            self.git.checkout(self.import_branch)
+                """, ", ".join(self.extra_branches), base, base,
+                " ".join(self.extra_branches))
+            self.git.checkout(base)
             self.git.merge(*self.extra_branches)
 
     def start(self, strategy):
@@ -317,7 +330,7 @@ class LocateChangesWalk(LocateChangesStrategy):
 @subcommand.arg('--into', dest='branch', metavar='<branch>', default='HEAD',
                 help='Branch to take changes from, and replace with imported branch.')
 @subcommand.arg('--import-branch', metavar='<import-branch>',
-                help='Name of import branch to use', default='import/{0}')
+                help='Name of import branch to use', default='import/{describe}')
 @subcommand.arg('upstream_branch', metavar='<upstream-branch>', nargs='?',
                 default='upstream/master',
                 help='Upstream branch to import. Must be specified if '
