@@ -35,7 +35,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
     """
 
     def __init__(self, branch=None, upstream=None, import_branch=None,
-                 extra_branches=None, *args, **kwargs):
+                 extra_branches=[], *args, **kwargs):
         self._branch = branch
         self._upstream = upstream
         self._import_branch = import_branch
@@ -400,6 +400,9 @@ def do_import_upstream(args):
     logger.notice("Searching for previous import")
     strategy = ImportStrategiesFactory.createStrategy(args.strategy,
                                                       branch=args.branch)
+    if len(strategy) == 0:
+        raise ImportUpstreamError("Cannot find previous import")
+
     # if last commit in the strategy was a merge, then the additional branches that
     # were merged in previously can be extracted based on the commits merged.
     prev_import_merge = strategy[-1]
