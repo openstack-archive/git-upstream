@@ -146,7 +146,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             """, self.import_branch, self.import_branch)
         if self.git.show_ref("refs/heads/" + self.import_branch, verify=True,
                              with_exceptions=False) and not force:
-            msg = "Import branch '%s' already exists, use force to replace"
+            msg = "Import branch '%s' already exists, set 'force' to replace"
             self.log.error(msg, self.import_branch)
             raise ImportUpstreamError(msg % self.import_branch)
 
