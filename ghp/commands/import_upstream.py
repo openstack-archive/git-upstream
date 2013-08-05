@@ -207,6 +207,53 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self.git.checkout(base)
             self.git.merge(*self.extra_branches)
 
+    def _linearise(self, branch, sequence, previous_import):
+
+        counter = len(sequence) - 1
+        ancestors = set()
+
+        self._set_branch(branch, previous_import, checkout=True, force=True)
+        root = previous_import.id
+        while counter > 0:
+            # add commit to list of ancestors to check
+            ancestors.add(root)
+
+            # look for merge commits that are not part of ancestry path
+            for idx in xrange(counter - 1, -1, -1):
+                commit = sequence[idx]
+                # if there is only one parent, no need to check the others
+                if len(commit.parents) < 2:
+                    ancestors.add(commit.id)
+                elif any(p.id not in ancestors for p in commit.parents):
+                    self.log.debug("Rebase upto commit SHA1: %s", commit.id)
+                    idx = idx + 1
+                    break
+                else:
+                    ancestors.add(commit.id)
+            tip = sequence[idx].id
+
+            self.log.info("Rebasing from %s to %s", root, tip)
+            previous = self.git.rev_parse(branch)
+            self.log.info("Rebasing onto '%s'", previous)
+            if root == previous and idx == 0:
+                # special case, we are already linear
+                self.log.info("Already in a linear layout")
+                return
+            self._set_branch(branch, tip, force=True)
+            try:
+                self.log.debug(
+                    """\
+                        git rebase -p --onto=%s \\
+                            %s %s
+                    """, previous, root, branch)
+                self.git.rebase(root, branch, onto=previous, p=True)
+            except:
+                self.git.rebase(abort=True, with_exceptions=False)
+                raise
+            counter = idx - 1
+            # set root commit for next loop
+            root = sequence[counter].id
+
     def apply(self, strategy, interactive=False):
         """Apply list of commits given onto latest import of upstream"""
 
@@ -218,10 +265,43 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
         base = self.import_branch + "-base"
 
-        first = next(strategy.filtered_iter())
         self._set_branch(self.import_branch, self.branch, force=True)
+        self.log.info(
+            """\
+            Creating import branch '%s' from specified commit '%s' in prep to
+            linearize the local changes before transposing to the new upstream:
+                git branch --force %s %s
+            """, self.import_branch, self.branch, self.import_branch,
+            self.branch)
+
+        self.log.notice("Attempting to linearise previous changes")
+        # attempt to silently linearize the current carried changes as a branch
+        # based on the previous located import commit. This provides a sane
+        # abort result for if the user needs to abort the rebase of this branch
+        # onto the new point upstream that was requested to import from.
+        try:
+            self._linearise(self.import_branch, strategy, strategy.searcher.commit)
+        except:
+            # Could ask user if they want to try and use the non clean route
+            # provided they don't mind that 'git rebase --abort' will result
+            # in a virtually useless local import branch
+            self.log.warning(
+                """\
+
+                Exception occurred during linearisation of local changes on to
+                previous import to simplify behaviour should user need to abort
+                the rebase that applies these changes to the latest import
+                point. Attempting to tidy up state.
+
+                Do not Ctrl+C unless you wish to need to clean up your git
+                repository by hand.
+
+                """)
+            # reset head back to the tip of the changes to be rebased
+            self._set_branch(self.import_branch, self.branch, force=True)
 
         rebase = RebaseEditor(interactive, repo=self.repo)
+        first = next(strategy.filtered_iter())
 
         self.log.info(
             """\
