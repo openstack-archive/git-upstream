@@ -109,8 +109,6 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         automatically if checkout is true.
         """
 
-        # use describe directly in order to be certain about unique identifying the
-        # commit
         if not commit:
             commit = self.upstream
 
@@ -122,8 +120,21 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self.log.error(msg, commit)
             raise ImportUpstreamError((msg + ": %s"), commit, e)
 
-        import_describe = self.git.describe(commit)
-        self._import_branch = self.import_branch.format(import_describe)
+        if not import_branch:
+            import_branch = self.import_branch
+
+        # use describe in order to be certain about unique identifying 'commit'
+        import_describe = self.git.describe(commit, tags=True,
+                                            with_exceptions=False)
+        if not import_describe:
+            self.log.warning("No tag describes the upstream branch")
+            import_describe = self.git.describe(commit, always=True, tags=True)
+
+        self.log.info("""\
+                    Using '%s' to describe:
+                        %s
+                    """, import_describe, commit)
+        self._import_branch = import_branch.format(import_describe)
 
         self.log.debug("Creating and switching to import branch '%s' created "
                        "from '%s' (%s)", self.import_branch, self.upstream, commit)
