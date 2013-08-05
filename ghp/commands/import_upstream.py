@@ -97,7 +97,37 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         """
         return self._extra_branches
 
-    def create_import(self, commit=None, checkout=False, force=False):
+    def _set_branch(self, branch, commit, checkout=False, force=False):
+
+        if self.repo.active_branch == branch:
+            self.log.info(
+                """\
+                Resetting branch '%s' to specified commit '%s'
+                    git reset --hard %s
+                """, branch, commit, commit)
+            self.git.reset(commit, hard=True)
+        elif checkout:
+            if force:
+                checkout_opt = '-B'
+            else:
+                checkout_opt = '-b'
+
+            self.log.info(
+                """\
+                Checking out branch '%s' using specified commit '%s'
+                    git checkout %s %s %s
+                """, branch, commit, checkout_opt, branch, commit)
+            self.git.checkout(checkout_opt, branch, commit)
+        else:
+            self.log.info(
+                """\
+                Creating  branch '%s' from specified commit '%s'
+                    git branch --force %s %s
+                """, branch, commit, branch, commit)
+            self.git.branch(branch, commit, force=force)
+
+    def create_import(self, commit=None, import_branch=None, checkout=False,
+                      force=False):
         """
         Create the import branch from the specified commit.
 
@@ -150,33 +180,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self.log.error(msg, self.import_branch)
             raise ImportUpstreamError(msg % self.import_branch)
 
-        if self.repo.active_branch == self.import_branch:
-            self.log.info(
-                """\
-                Resetting import branch '%s' to specified commit '%s'
-                    git reset --hard %s
-                """, self.import_branch, commit, commit)
-            self.git.reset(commit, hard=True)
-        elif checkout:
-            if force:
-                checkout_opt = '-B'
-            else:
-                checkout_opt = '-b'
-
-            self.log.info(
-                """\
-                Checking out import branch '%s' using specified commit '%s'
-                    git checkout %s %s %s
-                """, self.import_branch, commit, checkout_opt,
-                self.import_branch, commit)
-            self.git.checkout(checkout_opt, self.import_branch, commit)
-        else:
-            self.log.info(
-                """\
-                Creating import branch '%s' from specified commit '%s'
-                    git branch --force %s %s
-                """, self.import_branch, commit, self.import_branch, commit)
-            self.git.branch(self.import_branch, commit, force=force)
+        self._set_branch(self.import_branch, commit, checkout, force)
 
         if self.extra_branches:
             self.log.info(
