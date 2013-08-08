@@ -20,6 +20,8 @@ from ghp import version
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+version.write_version_file()
+
 setup(
     name="hpgit",
     version=version.version,
