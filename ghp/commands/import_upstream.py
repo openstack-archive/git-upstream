@@ -362,7 +362,8 @@ class ImportStrategiesFactory(object):
         return cls.__strategies.keys()
 
 
-from ghp.lib.searchers import NoMergeCommitFilter, ReverseCommitFilter
+from ghp.lib.searchers import (NoMergeCommitFilter, ReverseCommitFilter,
+                               DiscardDuplicateGerritChangeId)
 
 
 class LocateChangesStrategy(GitMixin, Sequence):
@@ -421,11 +422,22 @@ class LocateChangesWalk(LocateChangesStrategy):
 
     _strategy = "drop"
 
-    def __init__(self, branch="HEAD", *args, **kwargs):
+    def __init__(self, branch="HEAD", search_ref=None, *args, **kwargs):
         self.searcher = UpstreamMergeBaseSearcher(branch=branch)
-        super(self.__class__, self).__init__(*args, **kwargs)
+        self.search_ref = search_ref
+        super(LocateChangesWalk, self).__init__(*args, **kwargs)
+
+    def filtered_iter(self):
+        # may wish to make class used to remove duplicate objects configurable
+        # through hpgit specific 'git config' settings
+        if self.search_ref:
+            self.filters.append(
+                DiscardDuplicateGerritChangeId(self.search_ref,
+                                               limit=self.searcher.commit))
         self.filters.append(NoMergeCommitFilter())
         self.filters.append(ReverseCommitFilter())
+
+        return super(LocateChangesWalk, self).filtered_iter()
 
 
 @subcommand.arg('-i', '--interactive', action='store_true', default=False,
@@ -478,8 +490,9 @@ def do_import_upstream(args):
                                     extra_branches=args.branches)
 
     logger.notice("Searching for previous import")
-    strategy = ImportStrategiesFactory.createStrategy(args.strategy,
-                                                      branch=args.branch)
+    strategy = ImportStrategiesFactory.createStrategy(
+        args.strategy, branch=args.branch, search_ref=args.upstream_branch)
+
     if len(strategy) == 0:
         raise ImportUpstreamError("Cannot find previous import")
 

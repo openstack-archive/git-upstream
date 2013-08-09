@@ -9,10 +9,11 @@
 #
 
 from ghp.lib.utils import GitMixin
+from ghp.lib.compat import HpgitCompatCommit as Commit
 from ghp.log import LogDedentMixin
 
 from abc import ABCMeta, abstractmethod
-from git.commit import Commit
+import re
 
 
 class Searcher(GitMixin):
@@ -413,6 +414,126 @@ class BeforeFirstParentCommitFilter(LogDedentMixin, CommitFilter):
                 self.log.debug("Discarding all commits before '%s'",
                                commit.id)
                 break
+
+
+class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
+    """
+    Filter out commit objects where the message footer contains a ChangeId
+    string that is already available in the history of commit object provided
+    to the constructor.
+
+    ChangeId's are used by the Gerrit Code Review software to track changes
+    through multiple amendments, http://code.google.com/p/gerrit/.
+
+    :param string search_ref: git reference to search for duplicate ChangeIds
+                             (required).
+    :param Commit limit: commit object to ignore searching history after
+                        (optional).
+    """
+
+    def __init__(self, search_ref, limit=None, *args, **kwargs):
+
+        super(DiscardDuplicateGerritChangeId, self).__init__(*args, **kwargs)
+
+        if not self.is_valid_commit(search_ref):
+            raise ValueError("Invalid value for 'search_ref': %s" % search_ref)
+        self.search_ref = search_ref
+
+        if limit:
+            if not hasattr(limit, 'id'):
+                raise ValueError("Invalid object: no 'id' attribute for 'limit'")
+            if not self.is_valid_commit(limit.id):
+                raise ValueError("'limit' object does not contain a valid SHA1")
+        self.limit = limit
+
+        self._regex = None
+
+    @property
+    def regex(self):
+        # compile the regex object on first usage
+        if not self._regex:
+            self._regex = re.compile("^Change-Id: ", re.I)
+        return self._regex
+
+    def _get_rev_range(self):
+
+        if self.limit:
+            return "%s..%s" % (self.limit.id, self.search_ref)
+        else:
+            return self.search_ref
+
+    def _get_change_id(self, commit):
+        """
+        Returns the Change-Id string from the footer of the given commit.
+
+        Will ignore any instances outside of the footer section
+        """
+        # read the commit message in reverse to access the
+        # footer first but ignore subject and first blank line
+        for line in reversed(commit.message.splitlines()[1:]):
+            line = line.strip()
+            # exit on the first blank line found since that indicates
+            # we're reached the top of the footer section
+            if not line:
+                break
+            if self.regex.match(line):
+                return line
+        return
+
+    def filter(self, commit_iter):
+
+        self.log.info(
+            """\
+            Filtering out all commits that have a Change-Id that matches one
+            found in the given search ref: %s
+            """, self.search_ref)
+
+        for commit in commit_iter:
+            change_id = self._get_change_id(commit)
+            # if there is no change_id to compare against, return the commit
+            if not change_id:
+                self.log.debug(
+                    """\
+                    Including change missing 'Change-Id'
+                        Commit: %s %s
+                        Message: %s
+                    """, commit.id[:7], commit.message.splitlines()[0],
+                    commit.message)
+                yield commit
+                continue
+
+            # retrieve all matching commits because we need to check
+            # each match for whether the changeId is actually in
+            # the footer or just included as a reference.
+            matching_commits = Commit.iter_items(self.repo,
+                                                 self._get_rev_range(),
+                                                 regexp_ignore_case=True,
+                                                 grep="^%s$" % change_id)
+
+            duplicate_change_id = None
+            for possible in matching_commits:
+                duplicate_change_id = self._get_change_id(possible)
+                if duplicate_change_id == change_id:
+                    break
+
+            if duplicate_change_id and duplicate_change_id == change_id:
+                self.log.debug(
+                    """\
+                    Skipping duplicate Change-Id in search ref
+                        %s
+                        Commit: %s %s
+                    """, change_id, commit.id[:7],
+                    commit.message.splitlines()[0])
+                continue
+
+            # no match in the search ref, so include commit
+            self.log.debug(
+                """\
+                Including unmatched change
+                    %s
+                    Commit: %s %s
+                """, change_id, commit.id[:7], commit.message.splitlines()[0])
+            yield commit
 
 
 class CommitSHA1Filter(CommitFilter):

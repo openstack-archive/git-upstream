@@ -43,3 +43,30 @@ class GitMixin(object):
 
     def is_detached(self):
         return self.git.symbolic_ref("HEAD", q=True, with_exceptions=False)
+
+    def get_name(self, sha1, pattern=None):
+        """
+        Return a symbolic name corresponding to a SHA1
+
+        Will return reference names using the commit revision modifier strings
+        to identify the given SHA1. Or will return nothing if SHA1 cannot be
+        identified relative to any existing reference.
+        """
+        if pattern:
+            return self.git.name_rev(sha1, name_only=False, refs=pattern,
+                                     with_exceptions=False)
+        else:
+            return self.git.name_rev(sha1, name_only=False,
+                                     with_exceptions=False)
+
+    def is_valid_commit(self, sha1):
+        """
+        Check if given SHA1 refers to a commit object on a valid ref.
+
+        This can be used to test if any name or SHA1 refers to a commit
+        reachable by walking any of the refs under the .git/refs.
+        """
+
+        # get_name will return a string if the sha1 is reachable from an
+        # existing reference.
+        return bool(self.get_name(sha1))
