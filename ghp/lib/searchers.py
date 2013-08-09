@@ -536,9 +536,9 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
             yield commit
 
 
-class CommitSHA1Filter(CommitFilter):
+class TransformCommitToSHA1(CommitFilter):
     """
-    Trim output to the SHA1's of each commit
+    Discard 'Commit' objects and simply return the SHA1 id's
     """
 
     def filter(self, commit_iter):
