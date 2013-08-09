@@ -257,11 +257,12 @@ class ImportUpstream(LogDedentMixin, GitMixin):
     def apply(self, strategy, interactive=False):
         """Apply list of commits given onto latest import of upstream"""
 
+        commit_list = list(strategy.filtered_iter())
         self.log.debug(
             """\
             Should apply the following list of commits
                 %s
-            """, "\n    ".join([c.id for c in strategy.filtered_iter()]))
+            """, "\n    ".join([c.hexsha for c in commit_list]))
 
         base = self.import_branch + "-base"
 
@@ -301,7 +302,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self._set_branch(self.import_branch, self.branch, force=True)
 
         rebase = RebaseEditor(interactive, repo=self.repo)
-        first = next(strategy.filtered_iter())
+        first = commit_list[0]
 
         self.log.info(
             """\
@@ -309,7 +310,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 git rebase --onto %s \\
                     %s %s
             """, base, first.parents[0].id, self.import_branch)
-        status, out, err = rebase.run(strategy.filtered_iter(),
+        status, out, err = rebase.run(commit_list,
                                       first.parents[0].id, self.import_branch,
                                       onto=base)
         if status:
