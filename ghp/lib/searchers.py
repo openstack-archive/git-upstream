@@ -9,8 +9,12 @@
 #
 
 from ghp.lib.utils import GitMixin
-from ghp.lib.compat import HpgitCompatCommit as Commit
 from ghp.log import LogDedentMixin
+
+try:
+    from git.objects.commit import Commit
+except ImportError:
+    from ghp.lib.pygitcompat import HpgitCompatCommit as Commit
 
 from abc import ABCMeta, abstractmethod
 import re
@@ -71,15 +75,15 @@ class Searcher(GitMixin):
             """\
             Walking the ancestry path between found commit and target
                 git rev-list --parents --ancestry-path %s..%s
-            """, self.commit.id, self.branch)
+            """, self.commit.hexsha, self.branch)
 
         # depending on how many commits are returned, may need to examine use
         # of a generator rather than storing the entire list. Such a generator
         # would require a custom git object or direct use of popen
-        commit_list = Commit.find_all(self.repo,
-                                      "{0}..{1}".format(self.commit.id,
-                                                        self.branch),
-                                      topo_order=True, ancestry_path=True)
+        commit_list = Commit.iter_items(self.repo,
+                                        "{0}..{1}".format(self.commit.hexsha,
+                                                          self.branch),
+                                        topo_order=True, ancestry_path=True)
 
         # chain the filters as generators so that we don't need to allocate new
         # lists for each step in the filter chain.
@@ -92,7 +96,7 @@ class Searcher(GitMixin):
             """\
             commits found:
                 %s
-            """, ("\n" + " " * 4).join([c.id for c in commits]))
+            """, ("\n" + " " * 4).join([c.hexsha for c in commits]))
 
         return commits
 
@@ -252,12 +256,12 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
                                  no_walk=True)
         # now that we have the sha1, make sure to save the commit object
         self.commit = self.repo.commit(sha1)
-        self.log.debug("Most recent merge-base commit is: '%s'", self.commit.id)
+        self.log.debug("Most recent merge-base commit is: '%s'", self.commit.hexsha)
 
         if not self.commit:
             raise RuntimeError("Failed to locate suitable merge-base")
 
-        return self.commit.id
+        return self.commit.hexsha
 
     def list(self, include_all=False):
         """
@@ -333,16 +337,16 @@ class CommitMessageSearcher(LogDedentMixin, Searcher):
         commit from which to return a list of commits since this point.
         """
 
-        commits = Commit.find_all(self.repo, self.branch, grep=self.pattern,
-                                  max_count=1, extended_regexp=True)
-        if not commits:
+        commits = Commit.iter_items(self.repo, self.branch, grep=self.pattern,
+                                    max_count=1, extended_regexp=True)
+
+        self.commit = next(commits, None)
+        if not self.commit:
             raise RuntimeError("Failed to locate a pattern match")
 
-        self.commit = commits.pop(0)
+        self.log.notice("Commit matching search pattern is: '%s'", self.commit.hexsha)
 
-        self.log.notice("Commit matching search pattern is: '%s'", self.commit.id)
-
-        return self.commit.id
+        return self.commit.hexsha
 
     def list(self, include=True):
         """
@@ -410,9 +414,9 @@ class BeforeFirstParentCommitFilter(LogDedentMixin, CommitFilter):
             # matches the stop commit otherwise we'll also trim the commit
             # before the one we wanted to match as well.
             yield commit
-            if any(parent.id == self.stop for parent in commit.parents):
+            if any(parent.hexsha == self.stop for parent in commit.parents):
                 self.log.debug("Discarding all commits before '%s'",
-                               commit.id)
+                               commit.hexsha)
                 break
 
 
@@ -440,9 +444,9 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
         self.search_ref = search_ref
 
         if limit:
-            if not hasattr(limit, 'id'):
-                raise ValueError("Invalid object: no 'id' attribute for 'limit'")
-            if not self.is_valid_commit(limit.id):
+            if not hasattr(limit, 'hexsha'):
+                raise ValueError("Invalid object: no hexsha attribute for 'limit'")
+            if not self.is_valid_commit(limit.hexsha):
                 raise ValueError("'limit' object does not contain a valid SHA1")
         self.limit = limit
 
@@ -458,7 +462,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
     def _get_rev_range(self):
 
         if self.limit:
-            return "%s..%s" % (self.limit.id, self.search_ref)
+            return "%s..%s" % (self.limit.hexsha, self.search_ref)
         else:
             return self.search_ref
 
@@ -497,7 +501,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
                     Including change missing 'Change-Id'
                         Commit: %s %s
                         Message: %s
-                    """, commit.id[:7], commit.message.splitlines()[0],
+                    """, commit.hexsha[:7], commit.message.splitlines()[0],
                     commit.message)
                 yield commit
                 continue
@@ -522,7 +526,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
                     Skipping duplicate Change-Id in search ref
                         %s
                         Commit: %s %s
-                    """, change_id, commit.id[:7],
+                    """, change_id, commit.hexsha[:7],
                     commit.message.splitlines()[0])
                 continue
 
@@ -532,7 +536,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
                 Including unmatched change
                     %s
                     Commit: %s %s
-                """, change_id, commit.id[:7], commit.message.splitlines()[0])
+                """, change_id, commit.hexsha[:7], commit.message.splitlines()[0])
             yield commit
 
 
@@ -543,7 +547,7 @@ class TransformCommitToSHA1(CommitFilter):
 
     def filter(self, commit_iter):
         for commit in commit_iter:
-            yield commit.id
+            yield commit.hexsha
 
 
 class ReverseCommitFilter(LogDedentMixin, CommitFilter):

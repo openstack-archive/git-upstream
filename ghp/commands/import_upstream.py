@@ -100,7 +100,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
     def _set_branch(self, branch, commit, checkout=False, force=False):
 
-        if self.repo.active_branch == branch:
+        if str(self.repo.active_branch) == branch:
             self.log.info(
                 """\
                 Resetting branch '%s' to specified commit '%s'
@@ -213,7 +213,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         ancestors = set()
 
         self._set_branch(branch, previous_import, checkout=True, force=True)
-        root = previous_import.id
+        root = previous_import.hexsha
         while counter > 0:
             # add commit to list of ancestors to check
             ancestors.add(root)
@@ -223,14 +223,14 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 commit = sequence[idx]
                 # if there is only one parent, no need to check the others
                 if len(commit.parents) < 2:
-                    ancestors.add(commit.id)
-                elif any(p.id not in ancestors for p in commit.parents):
-                    self.log.debug("Rebase upto commit SHA1: %s", commit.id)
+                    ancestors.add(commit.hexsha)
+                elif any(p.hexsha not in ancestors for p in commit.parents):
+                    self.log.debug("Rebase upto commit SHA1: %s", commit.hexsha)
                     idx = idx + 1
                     break
                 else:
-                    ancestors.add(commit.id)
-            tip = sequence[idx].id
+                    ancestors.add(commit.hexsha)
+            tip = sequence[idx].hexsha
 
             self.log.info("Rebasing from %s to %s", root, tip)
             previous = self.git.rev_parse(branch)
@@ -252,7 +252,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 raise
             counter = idx - 1
             # set root commit for next loop
-            root = sequence[counter].id
+            root = sequence[counter].hexsha
 
     def apply(self, strategy, interactive=False):
         """Apply list of commits given onto latest import of upstream"""
@@ -309,9 +309,9 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             Rebase changes, dropping merges through editor:
                 git rebase --onto %s \\
                     %s %s
-            """, base, first.parents[0].id, self.import_branch)
+            """, base, first.parents[0].hexsha, self.import_branch)
         status, out, err = rebase.run(commit_list,
-                                      first.parents[0].id, self.import_branch,
+                                      first.parents[0].hexsha, self.import_branch,
                                       onto=base)
         if status:
             if err and err.startswith("Nothing to do"):
@@ -502,7 +502,7 @@ def do_import_upstream(args):
     prev_import_merge = strategy[-1]
     if len(prev_import_merge.parents) > 1:
         idx = next((idx for idx, commit in enumerate(prev_import_merge.parents)
-                    if commit.id == strategy.searcher.commit.id), None)
+                    if commit.hexsha == strategy.searcher.commit.hexsha), None)
 
         if idx:
             additional_commits = prev_import_merge.parents[idx + 1:]

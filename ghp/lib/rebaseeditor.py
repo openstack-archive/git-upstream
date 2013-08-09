@@ -56,7 +56,7 @@ class RebaseEditor(GitMixin, LogDedentMixin):
         return self._editor
 
     def _write_todo(self, commits, *args, **kwargs):
-        todo_file = os.path.join(self.repo.path, REBASE_EDITOR_TODO)
+        todo_file = os.path.join(self.repo.git_dir, REBASE_EDITOR_TODO)
         if os.path.exists(todo_file):
             os.remove(todo_file)
 
@@ -76,9 +76,9 @@ class RebaseEditor(GitMixin, LogDedentMixin):
         with open(todo_file, "w") as todo:
             for commit in commits:
                 if not root:
-                    root = commit.parents[0].id
+                    root = commit.parents[0].hexsha
                 subject = commit.message.splitlines()[0]
-                todo.write("pick %s %s\n" % (commit.id[:7], subject))
+                todo.write("pick %s %s\n" % (commit.hexsha[:7], subject))
 
             # if root isn't set at this point, then there were no commits
             if not root:
@@ -86,7 +86,7 @@ class RebaseEditor(GitMixin, LogDedentMixin):
 
             todo.write(TODO_EPILOGUE %
                        {'shortrevisions': self._short_revisions(root,
-                                                                commit.id),
+                                                                commit.hexsha),
                         'shortonto': self._short_onto(onto or root)})
 
         return todo_file

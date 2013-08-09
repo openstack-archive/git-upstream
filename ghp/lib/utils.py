@@ -9,11 +9,15 @@
 #
 
 from ghp.errors import HpgitError
+from ghp.lib.pygitcompat import Repo
 
-from git import Repo
-from git.errors import InvalidGitRepositoryError
 import os
 import sys
+
+try:
+    from git.exc import InvalidGitRepositoryError
+except ImportError:
+    from git.errors import InvalidGitRepositoryError
 
 
 class GitMixin(object):

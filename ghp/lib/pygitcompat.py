@@ -8,7 +8,20 @@
 # under vendor's standard commercial license.
 #
 
-from git import Commit
+import git
+from git import Commit, Repo
+
+
+class HpgitCompatRepo(Repo):
+
+    @property
+    def git_dir(self):
+        return self.path
+
+if not hasattr(Repo, 'git_dir'):
+    Repo = HpgitCompatRepo
+    # Monkey patch old python-git library to use HpgitCompatRepo instead of Repo
+    git.Repo = HpgitCompatRepo
 
 
 class HpgitCompatCommit(Commit):
@@ -61,3 +74,27 @@ class HpgitCompatCommit(Commit):
                 else:
                     break
         return commits
+
+    @property
+    def hexsha(self):
+        return self.id
+
+    @classmethod
+    def iter_items(cls, repo, ref, path='', **kwargs):
+        """
+        Wrap call to find_all method in older versions of python-git
+        """
+        results = cls.find_all(repo, ref, path='', **kwargs)
+        if type(results) == list:
+            # Callers are expecting a generator
+            for item in results:
+                yield item
+        elif hasattr(results, '__iter__') and not hasattr(results, '__len__'):
+            yield results
+        else:
+            raise RuntimeError("Unexpected type returned from 'find_all'")
+
+if not hasattr(Commit, 'iter_items'):
+    Commit = HpgitCompatCommit
+    # monkey patch class so that Repo will use the patched class
+    git.commit.Commit = HpgitCompatCommit
