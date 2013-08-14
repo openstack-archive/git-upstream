@@ -2,10 +2,21 @@ Source: hpgit
 Section: vcs
 Priority: optional
 Maintainer: Darragh Bailey <dbailey@hp.com>
-Build-Depends: debhelper (>= 7.0.50~), git
-Standards-Version: 3.9.1
+Build-Depends: debhelper (>= 7.0.50~),
+ python-all-dev (>= 2.6.6-3~)
+Build-Depends-Indep: python-git
+XS-Python-Version: >=2.6
+Standards-Version: 3.9.3
 
 Package: hpgit
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, git
-Description: Git extensions to provide high-level repository operations for the HPCS workflow
+Section: python
+XB-Python-Version: ${python:Versions}
+Depends: python-git
+ ${shlibs:Depends},
+ ${misc:Depends},
+ ${python:Depends}
+Provides: ${python:Provides}
+Description: Git extensions for the HPCS workflow
+ Git extensions to provide high-level abstraction for complex operations
+ that support the HPCS workflow.
