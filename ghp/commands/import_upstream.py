@@ -317,7 +317,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             if err and err.startswith("Nothing to do"):
                 # cancelled by user
                 self.log.notice("Cancelled by user")
-                return
+                return False
 
             self.log.error("Rebase failed, will need user intervention to "
                            "resolve.")
@@ -328,20 +328,74 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
             # once we support resuming/finishing add a message here to tell the
             # user to rerun this tool with the appropriate options to complete
-            return
+            return False
 
         self.log.notice("Successfully applied all locally carried changes")
+        return True
 
     def resume(self, args):
         """Resume previous partial import"""
         raise NotImplementedError
 
-    def finish(self, args):
+    def finish(self):
         """
         Finish merge according to the selected strategy while performing
         suitable verification checks.
         """
-        raise NotImplementedError
+        self.log.info("No verification checks enabled")
+        self.git.checkout(self.branch)
+        current_sha = self.git.rev_parse("HEAD")
+
+        try:
+            self.log.info(
+                """\
+                Merging by inverting the 'ours' strategy discard all changes
+                and replace existing branch contents with the new import.
+                """)
+            self.log.info(
+                """\
+                Merging import branch to HEAD and ignoring changes:
+                    git merge -s ours --no-commit %s
+                """, self.import_branch)
+            self.git.merge('-s', 'ours', self.import_branch, no_commit=True)
+            self.log.info(
+                """\
+                Replacing tree contents with those from the import branch:
+                    git read-tree %s
+                """, self.import_branch)
+            self.git.read_tree(self.import_branch)
+            self.log.info(
+                """\
+                Committing merge commit:
+                    git commit --no-edit
+                """)
+            self.git.commit(no_edit=True)
+            self.log.info(
+                """\
+                Checking out updated index:
+                    git checkout -- .
+                """)
+            self.git.checkout("--", ".")
+            # finally test that everything worked correctly by comparing if
+            # the tree object id's match
+            if self.git.rev_parse("HEAD^{tree}") != \
+                    self.git.rev_parse("%s^{tree}" % self.import_branch):
+                raise ImportUpstreamError("Resulting tree does not match import")
+        except (GitCommandError, ImportUpstreamError):
+            self.log.error(
+                """\
+                Failed to finish import by merging branch:
+                    '%s'
+                into and replacing the contents of:
+                    '%s'
+                """, self.import_branch, self.branch)
+            self._set_branch(self.branch, current_sha, force=True)
+            return False
+        except:
+            self.log.exception("Unknown exception during finish")
+            self._set_branch(self.branch, current_sha, force=True)
+            raise
+        return True
 
 
 class ImportStrategiesFactory(object):
@@ -447,7 +501,7 @@ class LocateChangesWalk(LocateChangesStrategy):
                 default=False,
                 help='Force overwrite of existing import branch if it exists.')
 @subcommand.arg('--merge', dest='merge', required=False, action='store_true',
-                default=False,
+                default=True,
                 help='Merge the resulting import branch into the target branch '
                      'once complete')
 @subcommand.arg('--no-merge', dest='merge', required=False, action='store_false',
@@ -516,8 +570,30 @@ def do_import_upstream(args):
     importupstream.create_import(force=args.force)
     logger.notice("Successfully created import branch")
 
-    importupstream.apply(strategy, args.interactive)
+    if not importupstream.apply(strategy, args.interactive):
+        logger.notice("Import cancelled")
+        return False
 
+    if not args.merge:
+        logger.notice(
+            """\
+            Import complete, not merging to target branch '%s' as requested.
+            """, args.branch)
+        return True
+
+    logger.notice("Merging import to requested branch '%s'", args.branch)
+    if importupstream.finish():
+        logger.notice(
+            """\
+            Successfully finished import:
+                target branch: '%s'
+                upstream branch: '%s'
+                import branch: '%s'
+            """, args.branch, args.upstream_branch,
+            importupstream.import_branch)
+        if args.branches:
+            for branch in args.branches:
+                logger.notice("    extra branch: '%s'", branch)
 
 
 # vim:sw=4:sts=4:ts=4:et:
