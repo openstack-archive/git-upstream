@@ -588,12 +588,11 @@ def do_import_upstream(args):
             Successfully finished import:
                 target branch: '%s'
                 upstream branch: '%s'
-                import branch: '%s'
-            """, args.branch, args.upstream_branch,
+                import branch: '%s'""", args.branch, args.upstream_branch,
             importupstream.import_branch)
         if args.branches:
             for branch in args.branches:
-                logger.notice("    extra branch: '%s'", branch)
+                logger.notice("    extra branch: '%s'", branch, dedent=False)
 
 
 # vim:sw=4:sts=4:ts=4:et:
