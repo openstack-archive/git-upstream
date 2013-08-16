@@ -145,7 +145,7 @@ class RebaseEditor(GitMixin, LogDedentMixin):
         if self._interactive:
             # spawn the editor
             user_editor = self.git_sequence_editor or self.git_editor
-            status = call([user_editor, todo_file])
+            status = call("%s %s" % (user_editor, todo_file), shell=True)
             if status:
                 return (status, None, "Editor returned non-zero exit code")
 
