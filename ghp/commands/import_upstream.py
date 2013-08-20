@@ -53,7 +53,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             raise ImportUpstreamError("Cannot perform imports in bare repos")
 
         if self.branch == 'HEAD':
-            self._branch = self.repo.active_branch
+            self._branch = str(self.repo.active_branch)
 
         # validate branches exist and log all failures
         branches = [
