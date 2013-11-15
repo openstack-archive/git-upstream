@@ -33,6 +33,7 @@ setup(
     url="https://wiki.hpcloud.net/display/auto/hpgit",
     scripts=['git-hp'],
     packages=find_packages(exclude=['test']),
+    install_requires=['GitPython'],
     long_description=read('README'),
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
