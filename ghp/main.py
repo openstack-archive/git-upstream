@@ -24,6 +24,7 @@ import ghp.version
 import subcommand
 import argparse
 from argparse import ArgumentParser
+import argcomplete
 import logging
 import sys
 
@@ -92,6 +93,7 @@ def main(argv):
         help(parser, argv)
         return 0
 
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     if args.func == help:
         help(parser, args, cmds)
