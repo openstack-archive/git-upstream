@@ -12,6 +12,7 @@
 
 import os
 from setuptools import setup, find_packages
+from create_manpage import create_manpage
 from ghp import version
 
 
@@ -35,6 +36,7 @@ setup(
     packages=find_packages(exclude=['test']),
     install_requires=['GitPython','argcomplete'],
     long_description=read('README'),
+    cmdclass={'create_manpage': create_manpage},
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Topic :: Utilities",
