@@ -33,7 +33,7 @@ setup(
     url="https://wiki.hpcloud.net/display/auto/hpgit",
     scripts=['git-hp'],
     packages=find_packages(exclude=['test']),
-    install_requires=['GitPython','argcomplete'],
+    install_requires=['GitPython'],
     long_description=read('README'),
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
@@ -41,3 +41,11 @@ setup(
         "License :: Other/Proprietary License",
     ],
 )
+
+try:
+    import argcomplete
+    print('Make sure to copy bash_completion/hpgit in appropriate location ' +
+          '(e.g. ~/.bash_completion)')
+except ImportError:
+    print('Warning: argcomplete package is not installed, autocomplete will' +
+          ' not work.')
