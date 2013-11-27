@@ -302,35 +302,41 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self._set_branch(self.import_branch, self.branch, force=True)
 
         rebase = RebaseEditor(interactive, repo=self.repo)
-        first = commit_list[0]
+        if len(commit_list):
+            first = commit_list[0]
 
-        self.log.info(
-            """\
-            Rebase changes, dropping merges through editor:
-                git rebase --onto %s \\
-                    %s %s
-            """, base, first.parents[0].hexsha, self.import_branch)
-        status, out, err = rebase.run(commit_list,
-                                      first.parents[0].hexsha, self.import_branch,
-                                      onto=base)
-        if status:
-            if err and err.startswith("Nothing to do"):
-                # cancelled by user
-                self.log.notice("Cancelled by user")
+            self.log.info(
+                """\
+                Rebase changes, dropping merges through editor:
+                    git rebase --onto %s \\
+                        %s %s
+                """, base, first.parents[0].hexsha, self.import_branch)
+            status, out, err = rebase.run(commit_list,
+                                          first.parents[0].hexsha,
+                                          self.import_branch,
+                                          onto=base)
+            if status:
+                if err and err.startswith("Nothing to do"):
+                    # cancelled by user
+                    self.log.notice("Cancelled by user")
+                    return False
+
+                self.log.error("Rebase failed, will need user intervention to "
+                               "resolve.")
+                if out:
+                    self.log.notice(out)
+                if err:
+                    self.log.notice(err)
+
+                # once we support resuming/finishing add a message here to tell
+                # the user to rerun this tool with the appropriate options to
+                # complete
                 return False
 
-            self.log.error("Rebase failed, will need user intervention to "
-                           "resolve.")
-            if out:
-                self.log.notice(out)
-            if err:
-                self.log.notice(err)
-
-            # once we support resuming/finishing add a message here to tell the
-            # user to rerun this tool with the appropriate options to complete
-            return False
-
-        self.log.notice("Successfully applied all locally carried changes")
+            self.log.notice("Successfully applied all locally carried changes")
+        else:
+            self.log.warning("Warning, nothing to do: locally carried " +
+                             "changes already rebased onto " + self.upstream)
         return True
 
     def resume(self, args):
