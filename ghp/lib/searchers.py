@@ -245,18 +245,22 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
             if base:
                 merge_bases.add(base)
 
-        self.log.info(
-            """\
-            Order the possible merge-base commits in descendent order, to
-            find the most recent one used irrespective of date:
-                git rev-list --topo-order --max-count=1 --no-walk \\
-                    %s
-            """, (" \\\n" + " " * 8).join(merge_bases))
-        sha1 = self.git.rev_list(*merge_bases, topo_order=True, max_count=1,
-                                 no_walk=True)
-        # now that we have the sha1, make sure to save the commit object
-        self.commit = self.repo.commit(sha1)
-        self.log.debug("Most recent merge-base commit is: '%s'", self.commit.hexsha)
+        if len(merge_bases) == 0:
+            self.log.notice("Merge-base couldn't be found: it seems there "+
+                            "is no common ancestor for the involved branches")
+        else:
+            self.log.info(
+                """\
+                Order the possible merge-base commits in descendent order, to
+                find the most recent one used irrespective of date:
+                    git rev-list --topo-order --max-count=1 --no-walk \\
+                        %s
+                """, (" \\\n" + " " * 8).join(merge_bases))
+            sha1 = self.git.rev_list(*merge_bases, topo_order=True, max_count=1,
+                                     no_walk=True)
+            # now that we have the sha1, make sure to save the commit object
+            self.commit = self.repo.commit(sha1)
+            self.log.debug("Most recent merge-base commit is: '%s'", self.commit.hexsha)
 
         if not self.commit:
             raise RuntimeError("Failed to locate suitable merge-base")
