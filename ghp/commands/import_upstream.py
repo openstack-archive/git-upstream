@@ -258,6 +258,10 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         """Apply list of commits given onto latest import of upstream"""
 
         commit_list = list(strategy.filtered_iter())
+        if len(commit_list) == 0:
+            self.log.notice("There are no local changes to be applied!")
+            return False
+
         self.log.debug(
             """\
             Should apply the following list of commits
