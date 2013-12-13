@@ -25,6 +25,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+hpgit.1
 
 # Installer logs
 pip-log.txt
