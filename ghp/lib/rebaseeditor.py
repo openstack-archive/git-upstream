@@ -15,8 +15,7 @@ import ghp
 from subprocess import call
 import os
 
-REBASE_EDITOR_SCRIPT = os.path.abspath(
-    os.path.join(os.path.dirname(ghp.__file__), "scripts", "rebase-editor.py"))
+REBASE_EDITOR_SCRIPT = "rebase-editor.py"
 
 # insure name of file will match any naming filters used by editors to
 # enable syntax highlighting
