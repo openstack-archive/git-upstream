@@ -505,6 +505,9 @@ class LocateChangesWalk(LocateChangesStrategy):
         return super(LocateChangesWalk, self).filtered_iter()
 
 
+@subcommand.arg('-d', '--dry-run', dest='dry_run', action='store_true',
+                default=False,
+                help='Only print out the list of commits that would be applied.')
 @subcommand.arg('-i', '--interactive', action='store_true', default=False,
                 help='Let the user edit the list of commits before applying.')
 @subcommand.arg('-f', '--force', dest='force', required=False, action='store_true',
@@ -575,6 +578,18 @@ def do_import_upstream(args):
                     **************** WARNING ****************
                     Previous import merged additional branches but non have
                     been specified on the command line for this import.\n""")
+
+    if args.dry_run:
+        commit_list = [c.hexsha[:6] + " - " + c.summary[:60] +
+                       (c.summary[60:] and "...")
+                       for c in list(strategy.filtered_iter())]
+        logger.notice("""\
+            Requested a dry-run: printing the list of commit that should be rebased
+
+                %s
+            """, "\n    ".join(commit_list))
+        return True
+
 
     logger.notice("Starting import of upstream")
     importupstream.create_import(force=args.force)
