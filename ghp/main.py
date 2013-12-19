@@ -20,6 +20,7 @@ import ghp.commands as commands
 from ghp.errors import HpgitError
 import ghp.log as log
 import ghp.version
+from ghp.lib import utils
 
 import subcommand
 import argparse
@@ -140,6 +141,10 @@ def main(argv):
         format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
         filehandler.setFormatter(logging.Formatter(format))
         logger.addHandler(filehandler)
+
+    if not utils.check_git_version(1,7,5):
+        logger.fatal("Hpgit requires git version 1.7.5 or later")
+        sys.exit(1)
 
     try:
         args.func(args)

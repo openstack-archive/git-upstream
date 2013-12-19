@@ -10,7 +10,9 @@
 
 from ghp.errors import HpgitError
 from ghp.lib.pygitcompat import Repo
+from git import Git
 
+import re
 import os
 import sys
 
@@ -74,3 +76,25 @@ class GitMixin(object):
         # get_name will return a string if the sha1 is reachable from an
         # existing reference.
         return bool(self.get_name(sha1))
+
+
+def check_git_version(major, minor, revision):
+    """
+    Check git version PythonGit (and hpgit) will be using is greater of equal
+    than major.minor.revision)
+    """
+
+    regex = re.compile("^git version ([0-9]+)\.([0-9]+)\.([0-9]+)(\.(.+))*$")
+    git = Git()
+
+    groups = regex.search(git.version()).groups()
+    if int(groups[0]) > major:
+        return True
+    elif int(groups[0]) == major:
+        if int(groups[1]) > minor:
+            return True
+        elif int(groups[1]) == minor:
+            if int(groups[2]) >= revision:
+                return True
+
+    return False
