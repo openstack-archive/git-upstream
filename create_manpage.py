@@ -15,13 +15,14 @@ import argparse
 from distutils.command.build import build
 from distutils.core import Command
 from distutils.errors import DistutilsOptionError
-from ghp import main
 
 class create_manpage(Command):
 
     user_options = []
 
     def initialize_options(self):
+        from ghp import main
+
         self._output = self.distribution.get_name() + '.1'
         self._seealso = ["git:1"]
         self._today = datetime.date.today()
