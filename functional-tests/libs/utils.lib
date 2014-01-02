@@ -1,0 +1,61 @@
+# Utility functions/macros
+
+if [ -z "$BASE_TEST_DIR" ]; then
+  log ERROR "Please define BASE_TEST_DIR variable"
+  exit 1
+fi
+
+TEST_NAME=$(basename $0 | cut -d_ -f2- | cut -d'.' -f 1)
+TEST_DIR="$BASE_TEST_DIR/test-dir_$TEST_NAME"
+
+function _clean_up() {
+  if [ -z "$LEAVE_DIR" ]; then
+    log DEBUG "Removing test directory"
+    rm -rf $TEST_DIR
+  fi
+}
+
+VERBOSITY=${VERBOSITY:-INFO}
+set_verbority $VERBOSITY
+
+mkdir -p "$TEST_DIR"
+# Define an handler for clean_up
+trap "_clean_up; exit 0" EXIT
+
+function prepare_for_hpgit() {
+  local TEST_DIR="$1"
+  local REPO_NAME="$2"
+  local UPSTREAM_REPO="$3"
+  local TEST_BASE_REF="$4"
+  local TEST_NAME="$5"
+
+  log DEBUG "Creating bare repo '$REPO_NAME.bare'"
+  rm -rf $TEST_DIR/$REPO_NAME.bare >/dev/null 2>&1
+  mkdir $TEST_DIR/$REPO_NAME.bare
+  pushd $TEST_DIR/$REPO_NAME.bare >/dev/null
+  git init --bare --quiet || return 1
+  popd >/dev/null
+
+  log DEBUG "Cloning repo $REPO_NAME"
+  rm -rf $TEST_DIR/$REPO_NAME >/dev/null 2>&1
+  mkdir $TEST_DIR/$REPO_NAME
+
+  pushd $TEST_DIR/$REPO_NAME >/dev/null
+  git init --quiet || return 1
+  git config push.default simple --quiet || return 1
+  git remote add origin $TEST_DIR/$REPO_NAME.bare || return 1
+
+  log DEBUG "Fetching upstream testing version"
+  git remote add upstream $UPSTREAM_REPO || return 1
+  git fetch --all --quiet >/dev/null || return 1
+  git for-each-ref refs/remotes/upstream --format "%(refname:short)" | \
+    sed -e 's:\(upstream/\(.*\)\)$:\1\:refs/heads/upstream/\2:' | \
+      xargs git push --quiet --tags origin || return 1
+
+  log DEBUG "Creating a new branch from version $TEST_BASE_REF"
+  git checkout -b import/$TEST_NAME $TEST_BASE_REF --quiet || return 1
+
+  git checkout -b master --quiet || return 1
+  popd >/dev/null
+}
+

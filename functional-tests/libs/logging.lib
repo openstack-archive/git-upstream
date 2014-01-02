@@ -1,0 +1,87 @@
+# Utility functions/macros for logging
+
+_VERBOSITY="INFO"
+_VERBOSITIES="ERROR WARNING INFO DEBUG"
+
+function list_contains() {
+  if [ $# -ne 2 ]; then
+    _log "FATAL" "Invalid number of argument! \
+      (${BASH_SOURCE[1]##*/} ${BASH_LINENO[0]}::list_contains())"
+    exit 127
+  fi
+
+  local list=$1
+  local obj=$2
+
+  for word in $list; do
+    [ "$word" == "$obj" ] && return 0
+  done
+  return 1
+}
+
+function set_verbority() {
+  if [ $# -ne 1 ]; then
+    _log "FATAL" "Invalid number of argument! \
+      (${BASH_SOURCE[1]##*/} ${BASH_LINENO[0]}::set_verbority())"
+    exit 127
+  fi
+
+  local verb=$1
+
+  if list_contains "$_VERBOSITIES" "$1"; then
+    _VERBOSITY=$verb
+  else
+    _log "FATAL" "Invalid verbosity level specified: '$1'"
+    exit 127
+  fi
+}
+
+# Return 0 if current VERBISITY is greater equal than the argument
+function check_verbosity() {
+  if [ $# -ne 1 ]; then
+    _log "FATAL" "Invalid number of argument! \
+      (${BASH_SOURCE[1]##*/} ${BASH_LINENO[0]}::check_verbosity())"
+    exit 127
+  fi
+
+  local verb=$1
+
+  for verbosity in $_VERBOSITIES; do
+    if [ "$verbosity" == "$verb" ]; then
+      return 0
+    elif [ "$_VERBOSITY" == "$verbosity" ]; then
+      return 1
+    fi
+  done
+
+  return 1
+}
+
+function _log() {
+  local level=$1
+  shift
+  local messages=$@
+  printf "[%-7s] %s\n" "$level" "$messages"
+}
+
+function log() {
+  if [ $# -ne 2 ]; then
+    _log "FATAL" "Invalid number of argument! \
+      (${BASH_SOURCE[1]##*/} ${BASH_LINENO[0]}::log())"
+    exit 127
+  fi
+
+  local level=$1
+  shift
+  local messages=$@
+
+  list_contains "$_VERBOSITIES" "$level"
+  if [ $? -ne 0 ]; then
+    _log "FATAL" "Invalid verbosity level specified: '$1'"
+    exit 127
+  fi
+
+  if check_verbosity $level; then
+    _log "$level" "$messages"
+  fi
+}
