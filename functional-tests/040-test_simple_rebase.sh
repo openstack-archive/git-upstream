@@ -13,7 +13,7 @@ CHERRY_PICKS="19b89746d08fa224bb8aba12106dbc330cb5d019 \
               5d4fbe79037c3b2516216258a907d3a02f0b205c"
 TEST_REBASE_REF="fd3524e1b7353cda228b6fb73c3a2d34a4fee4de"
 
-SUCCESS_SHA1="b8aee554fd9e22c05cfd8c20f6c19d26320fc293 ?-"
+SUCCESS_SHA1="e1dfee279aa5b6b05296a97b4eba8dde0b6eea4b ?-"
 
 function test_simple_rebase() {
   log DEBUG "Starting $TEST_NAME::$FUNCNAME"
@@ -58,7 +58,7 @@ EOP
 
   git-hp import-upstream import/$TEST_NAME-new >/dev/null || return 1
 
-  local test_sha1="$(git log --pretty=format:"%s"|sort | shasum -p -)"
+  local test_sha1="$(git show --numstat | tail -9 | shasum -p -)"
   if [ "$test_sha1" != "$SUCCESS_SHA1" ]
   then
     popd >/dev/null
