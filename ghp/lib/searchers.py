@@ -16,6 +16,8 @@ try:
 except ImportError:
     from ghp.lib.pygitcompat import HpgitCompatCommit as Commit
 
+from git import Head
+
 from abc import ABCMeta, abstractmethod
 import re
 
@@ -348,7 +350,7 @@ class CommitMessageSearcher(LogDedentMixin, Searcher):
         if not self.commit:
             raise RuntimeError("Failed to locate a pattern match")
 
-        self.log.notice("Commit matching search pattern is: '%s'", self.commit.hexsha)
+        self.log.debug("Commit matching search pattern is: '%s'", self.commit.hexsha)
 
         return self.commit.hexsha
 
@@ -380,6 +382,150 @@ class CommitFilter(object):
     @abstractmethod
     def filter(self, commit_iter):
         pass
+
+
+class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
+    """
+    Prunes all commits that have a note with the "Superseded-by:" header
+    containing a Change-Id present in upstream tracking branch
+
+    :param string search_ref: git reference to search for ChangeIds (required).
+    :param Commit limit: commit object to ignore searching history after
+                        (optional).
+    """
+
+    SUPERSEDE_HEADER = 'Superseded-by:'
+    NOTE_REF = 'refs/notes/upstream-merge'
+
+    def __init__(self, search_ref, limit=None, *args, **kwargs):
+
+        super(SupersededCommitFilter, self).__init__(*args, **kwargs)
+
+        if not self.is_valid_commit(search_ref):
+            raise ValueError("Invalid value for 'search_ref': %s" % search_ref)
+        self.search_ref = search_ref
+
+        if limit:
+            if not hasattr(limit, 'hexsha'):
+                raise ValueError(
+                    "Invalid object: no hexsha attribute for 'limit'")
+            if not self.is_valid_commit(limit.hexsha):
+                raise ValueError("'limit' object does not contain a valid SHA1")
+        self.limit = limit
+
+        self._regex = None
+
+    def _get_rev_range(self):
+
+        if self.limit:
+            return "%s..%s" % (self.limit.hexsha, self.search_ref)
+        else:
+            return self.search_ref
+
+    def _get_change_id(self, commit):
+        """
+        Returns the Change-Id string from the footer of the given commit.
+
+        Will ignore any instances outside of the footer section
+        """
+        # read the commit message in reverse to access the
+        # footer first but ignore subject and first blank line
+        for line in reversed(commit.message.splitlines()[1:]):
+            line = line.strip()
+            # exit on the first blank line found since that indicates
+            # we're reached the top of the footer section
+            if not line:
+                break
+
+            cid = re.search('^Change-Id:\s*(.+)$', line, re.IGNORECASE)
+            if cid:
+                return cid.group(1)
+        return
+
+    def filter(self, commit_iter):
+
+        self.log.info(
+            """\
+            Filtering out all commits marked with a Superseded-by Change-Id
+            which is present in '%s'
+            """, self.search_ref)
+
+        supersede_re = re.compile('^%s\s*(.+)\s*$' %
+                                  SupersededCommitFilter.SUPERSEDE_HEADER,
+                                  re.IGNORECASE | re.MULTILINE)
+
+        for commit in commit_iter:
+            commit_note = commit.note(note_ref=SupersededCommitFilter.NOTE_REF)
+            # include non-annotated commits
+            if not commit_note:
+                yield commit
+                continue
+
+            # include annotated commits which don't have a SUPERSEDE_HEADER
+            superseding_change_ids = supersede_re.findall(commit_note)
+            if not superseding_change_ids:
+                yield commit
+                continue
+
+            # search for all the change-ids in matches (egrep regex)
+            commits_grep_re = '^Change-Id:\\s*\(%s\)\\s*$' % \
+                              '|'.join(superseding_change_ids)
+
+            # retrieve all matching commits because we need to check
+            # each match for whether the changeId is actually in
+            # the footer or just included as a reference.
+            matching_commits = Commit.iter_items(self.repo,
+                                                 self._get_rev_range(),
+                                                 regexp_ignore_case=True,
+                                                 grep=commits_grep_re)
+
+            for possible in matching_commits:
+                change_id = self._get_change_id(possible)
+                if change_id:
+                    superseding_change_ids.remove(change_id)
+
+            # include commits which have some superseding change-ids not
+            # present in upstream
+            if superseding_change_ids:
+                self.log.debug(
+                """\
+                Including commit '%s %s'
+                    because the following superseding change-ids have not been
+                    found:
+                    %s
+                """, commit.hexsha[:7], commit.message.splitlines()[0],
+                   '\n'.join(superseding_change_ids))
+                yield commit
+                continue
+
+            self.log.debug(
+                """\
+                Filtering out commit '%s %s'
+                    because it has been marked as superseded by the following
+                    note:
+                    %s
+                """, commit.hexsha[:7], commit.message.splitlines()[0],
+                   commit_note)
+
+class DroppedCommitFilter(LogDedentMixin, CommitFilter):
+    """
+    Prunes all commits that have a note with the Dropped: header
+    """
+
+    DROPPED_HEADER = 'Dropped:'
+    NOTE_REF = 'refs/notes/upstream-merge'
+
+    def filter(self, commit_iter):
+        for commit in commit_iter:
+            commit_note = commit.note(note_ref=DroppedCommitFilter.NOTE_REF)
+            if not commit_note:
+                yield commit
+            elif not re.match('^%s.+' % DroppedCommitFilter.DROPPED_HEADER,
+                              commit_note, re.IGNORECASE | re.MULTILINE):
+                yield commit
+            else:
+                self.log.debug("Dropping commit '%s' as requested:", commit)
+                self.log.debug(commit_note)
 
 
 class MergeCommitFilter(CommitFilter):

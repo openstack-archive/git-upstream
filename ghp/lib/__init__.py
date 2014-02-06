@@ -7,3 +7,5 @@
 # Technical Data for Commercial Items are licensed to the U.S. Government
 # under vendor's standard commercial license.
 #
+
+from ghp.lib import note

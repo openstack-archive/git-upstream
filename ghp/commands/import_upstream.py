@@ -428,7 +428,8 @@ class ImportStrategiesFactory(object):
 
 
 from ghp.lib.searchers import (NoMergeCommitFilter, ReverseCommitFilter,
-                               DiscardDuplicateGerritChangeId)
+                               DiscardDuplicateGerritChangeId,
+                               SupersededCommitFilter, DroppedCommitFilter)
 
 
 class LocateChangesStrategy(GitMixin, Sequence):
@@ -501,6 +502,9 @@ class LocateChangesWalk(LocateChangesStrategy):
                                                limit=self.searcher.commit))
         self.filters.append(NoMergeCommitFilter())
         self.filters.append(ReverseCommitFilter())
+        self.filters.append(DroppedCommitFilter())
+        self.filters.append(
+            SupersededCommitFilter(self.search_ref, limit=self.searcher.commit))
 
         return super(LocateChangesWalk, self).filtered_iter()
 
@@ -589,7 +593,6 @@ def do_import_upstream(args):
                 %s
             """, "\n    ".join(commit_list))
         return True
-
 
     logger.notice("Starting import of upstream")
     importupstream.create_import(force=args.force)
