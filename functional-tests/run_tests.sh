@@ -82,6 +82,14 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-for test in $(ls [[:digit:]][[:digit:]][[:digit:]]-test*); do
-  $BASE_DIR/$test
-done
+if [ "$#" -ge "1" ]; then
+  for test_number in "$@"; do
+    for test in $(ls $test_number-test*); do
+      $BASE_DIR/$test
+    done
+  done
+else
+  for test in $(ls [[:digit:]][[:digit:]][[:digit:]]-test*); do
+    $BASE_DIR/$test
+  done
+fi
