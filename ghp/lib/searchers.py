@@ -117,7 +117,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
     to search any namespace pattern.
 
     If not restricted to search specific remotes, it will search all
-    available remote references matching the patern for the most recent merge
+    available remote references matching the pattern for the most recent merge
     base available.
     """
 
@@ -162,7 +162,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
 
         Additional since 'git rev-list' doesn't accept patterns as commit refs
         it's better to make use of 'git for-each-ref' and how it does pattern
-        matching in order to generate a list of refernces to pass to rev-list
+        matching in order to generate a list of references to pass to rev-list
         to walk.
 
         After determining all the references to look at, because of the

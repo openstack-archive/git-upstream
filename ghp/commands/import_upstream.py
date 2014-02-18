@@ -488,7 +488,8 @@ class LocateChangesWalk(LocateChangesStrategy):
     _strategy = "drop"
 
     def __init__(self, branch="HEAD", search_ref=None, *args, **kwargs):
-        self.searcher = UpstreamMergeBaseSearcher(branch=branch)
+        self.searcher = UpstreamMergeBaseSearcher(branch=branch,
+                                                  pattern=search_ref)
         self.search_ref = search_ref
         super(LocateChangesWalk, self).__init__(*args, **kwargs)
 
