@@ -19,7 +19,7 @@ function test_help_output() {
       "$help1" != "$help2" -o "$help2" != "$help3" ] && return 1 || return 0
 }
 
-for com in "" "import-upstream" ; do
+for com in "" "import-upstream" "drop" "supersede" ; do
   test_help_output $com && log INFO "test_help_output::${com:-null} passed." || \
                            log ERROR "test_help_output::${com:-null} failed!"
 done
