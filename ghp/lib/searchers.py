@@ -469,7 +469,7 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
 
             # search for all the change-ids in matches (egrep regex)
             commits_grep_re = '^Change-Id:\\s*\(%s\)\\s*$' % \
-                              '|'.join(superseding_change_ids)
+                              '\|'.join(superseding_change_ids)
 
             # retrieve all matching commits because we need to check
             # each match for whether the changeId is actually in
@@ -494,7 +494,7 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
                     found:
                     %s
                 """, commit.hexsha[:7], commit.message.splitlines()[0],
-                   '\n'.join(superseding_change_ids))
+                   '\n    '.join(superseding_change_ids))
                 yield commit
                 continue
 
