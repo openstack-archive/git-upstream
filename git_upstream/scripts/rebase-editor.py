@@ -1,12 +1,19 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2012, 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
-# Confidential computer software. Valid license from HP required for
-# possession, use or copying. Consistent with FAR 12.211 and 12.212,
-# Commercial Computer Software, Computer Software Documentation, and
-# Technical Data for Commercial Items are licensed to the U.S. Government
-# under vendor's standard commercial license.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
 """
@@ -89,11 +96,12 @@ if __name__ == '__main__':
 
     # calling code should only override one of the two editor variables,
     # starting with the one with the highest precedence
+    editor=None
     env = os.environ
     for var in ['GIT_SEQUENCE_EDITOR', 'GIT_EDITOR']:
-        editor = env.get('HPGIT_' + var, None)
+        editor = env.get('GIT_UPSTREAM_' + var, None)
         if editor:
-            del env['HPGIT_' + var]
+            del env['GIT_UPSTREAM_' + var]
             env[var] = editor
             break
 

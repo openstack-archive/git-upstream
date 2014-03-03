@@ -14,7 +14,7 @@ TEST_REBASE_REF="fd3524e1b7353cda228b6fb73c3a2d34a4fee4de"
 SUCCESS_SHA1="b8c16b3dd8883d02b4b65882ad5467c9f5e7beb9 ?-"
 
 function _common() {
-  prepare_for_hpgit $TEST_DIR $REPO_NAME $UPSTREAM_REPO $TEST_BASE_REF \
+  prepare_for_git_upstream $TEST_DIR $REPO_NAME $UPSTREAM_REPO $TEST_BASE_REF \
                     $TEST_NAME
 
   pushd $TEST_DIR/$REPO_NAME >/dev/null
@@ -63,9 +63,9 @@ function test_new() {
 
   local commit_sha1=$(git log -1 --format='%H')
 
-  git-hp drop $commit_sha1
+  git-upstream drop $commit_sha1
 
-  git-hp import-upstream import/$TEST_NAME-new >/dev/null || return 1
+  git-upstream import import/$TEST_NAME-new >/dev/null || return 1
 
   git show --numstat | grep '0\s\s*1\s\s*nothing' >/dev/null
   if [ "$?" -ne 0 ]; then
@@ -83,9 +83,9 @@ function test_already_present() {
 
   local commit_sha1=$(git log -1 --format='%H')
 
-  git-hp drop $commit_sha1
+  git-upstream drop $commit_sha1
 
-  git-hp drop $commit_sha1 2>&1 | \
+  git-upstream drop $commit_sha1 2>&1 | \
        grep "Drop note has not been added as '$commit_sha1' already has one" \
             >/dev/null
   if [ "$?" -ne 0 ]; then

@@ -1,7 +1,7 @@
-Source: hpgit
+Source: git-upstream
 Section: vcs
 Priority: optional
-Maintainer: Darragh Bailey <dbailey@hp.com>
+Maintainer: Davide Guerri <davide.guerri@hp.com>
 Build-Depends: debhelper (>= 7.0.50~),
  python-all-dev (>= 2.6.6-3~)
 Build-Depends-Indep: python-git,
@@ -9,7 +9,7 @@ Build-Depends-Indep: python-git,
 XS-Python-Version: >=2.6
 Standards-Version: 3.9.3
 
-Package: hpgit
+Package: git-upstream
 Architecture: all
 Section: python
 XB-Python-Version: ${python:Versions}
@@ -18,6 +18,8 @@ Depends: python-git
  ${misc:Depends},
  ${python:Depends}
 Provides: ${python:Provides}
-Description: Git extensions for the HPCS workflow
+Description: Git extensions which ease the rebasing of local-carried patches
+ on top of upstream repositories.
  Git extensions to provide high-level abstraction for complex operations
- that support the HPCS workflow.
+ that support the rebasing of local-carried patches  on top of upstream
+ repositories.

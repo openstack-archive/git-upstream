@@ -1,13 +1,20 @@
-#!/usr/bin/env python
 #
-# Copyright (c) 2012, 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
-# Confidential computer software. Valid license from HP required for
-# possession, use or copying. Consistent with FAR 12.211 and 12.212,
-# Commercial Computer Software, Computer Software Documentation, and
-# Technical Data for Commercial Items are licensed to the U.S. Government
-# under vendor's standard commercial license.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 
 """
 Command-line tool for the HP Cloud workflow
@@ -16,20 +23,20 @@ Main parser module, which after parsing the top level options will hand
 off to the collected subcommands parsers.
 """
 
-import ghp.commands as commands
-from ghp.errors import HpgitError
-import ghp.log as log
-import ghp.version
-from ghp.lib import utils
+import git_upstream.commands as commands
+from git_upstream.errors import GitUpstreamError
+import git_upstream.log as log
+import git_upstream.version
+from git_upstream.lib import utils
 
 import subcommand
 import argparse
 from argparse import ArgumentParser
 try:
     import argcomplete
-    argparse_loaded=True
+    argparse_loaded = True
 except ImportError:
-    argparse_loaded=False
+    argparse_loaded = False
 import logging
 import sys
 
@@ -38,10 +45,9 @@ def get_parser():
     parser = ArgumentParser(
         description=__doc__.strip(),
         epilog='See "%(prog)s help COMMAND" for help on a specific command.',
-        add_help=False,
-    )
+        add_help=False)
     parser.add_argument('--version', action='version',
-                        version='%(prog)s ' + ghp.version.version)
+                        version='%(prog)s ' + git_upstream.version.version)
     parser.add_argument('-h', '--help', action='help',
                         help='show this help message and exit')
     group = parser.add_mutually_exclusive_group()
@@ -74,7 +80,7 @@ def get_parser():
 
     subcommand_parsers = commands.get_subcommands(subparsers)
 
-    return (subcommand_parsers, parser)
+    return subcommand_parsers, parser
 
 
 @subcommand.arg('command', metavar='<command>', nargs='?',
@@ -106,7 +112,7 @@ def main(argv):
         return 0
 
     args.log_level = getattr(logging, args.log_level.upper(), logging.NOTSET)
-    console_log_level = getattr(logging, log.getIncrementLevel(args.verbose),
+    console_log_level = getattr(logging, log.get_increment_level(args.verbose),
                                 logging.NOTSET)
     if args.quiet:
         console_log_level = logging.NOTSET
@@ -117,7 +123,7 @@ def main(argv):
                           for value in args.log_level, console_log_level
                           if value != logging.NOTSET
                           ] + [logging.ERROR])
-    logger = log.getLogger()
+    logger = log.get_logger()
     logger.setLevel(main_log_level)
 
     if not args.quiet:
@@ -129,28 +135,28 @@ def main(argv):
         logger.addHandler(console)
 
     # make sure error and critical messages go to stderr and aren't suppressed
-    errcon = logging.StreamHandler(sys.stderr)
-    errcon.setLevel(logging.ERROR)
-    errcon.addFilter(log.LevelFilterIgnoreBelow(logging.ERROR))
-    errcon.setFormatter(logging.Formatter("%(levelname)-8s: %(message)s"))
-    logger.addHandler(errcon)
+    err_con = logging.StreamHandler(sys.stderr)
+    err_con.setLevel(logging.ERROR)
+    err_con.addFilter(log.LevelFilterIgnoreBelow(logging.ERROR))
+    err_con.setFormatter(logging.Formatter("%(levelname)-8s: %(message)s"))
+    logger.addHandler(err_con)
 
     if args.log_file:
         filehandler = logging.FileHandler(args.log_file)
         filehandler.setLevel(args.log_level)
-        format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
-        filehandler.setFormatter(logging.Formatter(format))
+        _format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
+        filehandler.setFormatter(logging.Formatter(_format))
         logger.addHandler(filehandler)
 
-    if not utils.check_git_version(1,7,5):
-        logger.fatal("Hpgit requires git version 1.7.5 or later")
+    if not utils.check_git_version(1, 7, 5):
+        logger.fatal("Git-Upstream requires git version 1.7.5 or later")
         sys.exit(1)
 
     try:
         args.func(args)
-    except HpgitError, e:
+    except GitUpstreamError, e:
         logger.fatal("%s", e[0])
-        logger.debug("HpgitError: %s", e[0], exc_info=e)
+        logger.debug("Git-Upstream: %s", e[0], exc_info=e)
         sys.exit(1)
 
 # vim:sw=4:sts=4:ts=4:et:

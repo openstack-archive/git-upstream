@@ -24,7 +24,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-hpgit.1
+git-upstream.1
 
 # Installer logs
 pip-log.txt

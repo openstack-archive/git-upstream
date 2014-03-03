@@ -4,8 +4,8 @@ Just run
 
     run_tests.sh
 
-That script will install a virtual env with hpgit (from the current repo clone)
-and will run every script which name match the following regex:
+That script will install a virtual env with git-upstream (from the current repo
+clone) and will run every script which name match the following regex:
 
     ([0-9]{3})-test_(.+).sh
 
@@ -15,7 +15,7 @@ It's also possible to run single tests creating a test directory and running
 
     BASE_TEST_DIR=<your base test dir> 0xx-test_<your test name>.sh
 
-But that will need a git-hp executable in yout path.
+But that will need a git-upstream executable in your path.
 
 
 # Creating more tests
@@ -57,9 +57,9 @@ TEST_DIR            Testing directory. Objects pertaining a test should be
 
 TEST_NAME           The name of current test. Extracted from the test filename.
 
-prepare_for_hpgit() Using the current hpgit repo, create an initial
-                    configuration useful for testing hp-git. After invoking it
-                    a  "$TEST_DIR/$REPO_NAME"
+prepare_for_git_upstream() Using the current git-upstream repo, create an
+                           initial onfiguration useful for testing hp-git.
+                           After invoking it a  "$TEST_DIR/$REPO_NAME"
 
 ## Environment variable used by the test framework
 

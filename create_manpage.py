@@ -1,11 +1,18 @@
 #
-# Copyright (c) 2012, 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
-# Confidential computer software. Valid license from HP required for
-# possession, use or copying. Consistent with FAR 12.211 and 12.212,
-# Commercial Computer Software, Computer Software Documentation, and
-# Technical Data for Commercial Items are licensed to the U.S. Government
-# under vendor's standard commercial license.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
 """ Automatically generate the man page from argparse"""
@@ -14,17 +21,17 @@ import datetime
 import argparse
 from distutils.command.build import build
 from distutils.core import Command
-from distutils.errors import DistutilsOptionError
 
-class create_manpage(Command):
+
+class CreateManpage(Command):
 
     user_options = []
 
     def initialize_options(self):
-        from ghp import main
+        from git_upstream import main
 
         self._output = self.distribution.get_name() + '.1'
-        self._seealso = ["git:1"]
+        self._see_also = ["git:1"]
         self._today = datetime.date.today()
         self._commands, self._parser = main.get_parser()
         self._parser.formatter = ManPageFormatter()
@@ -37,22 +44,23 @@ class create_manpage(Command):
 
     def _write_header(self):
         version = self.distribution.get_version()
-        appname = self.distribution.get_name()
-        ret = []
-        ret.append('.TH %s 1 %s "%s v.%s"\n' % (self._markup(appname),
-                                      self._today.strftime('%Y\\-%m\\-%d'),
-                                      appname, version))
+        app_name = self.distribution.get_name()
+        ret = list()
+        ret.append('.TH %s 1 %s "%s v.%s"\n' % (self._markup(app_name),
+                                                self._today.strftime(
+                                                    '%Y\\-%m\\-%d'),
+                                                app_name, version))
         description = self.distribution.get_description()
         if description:
-            name = self._markup('%s - %s' % (self._markup(appname),
+            name = self._markup('%s - %s' % (app_name,
                                              description.splitlines()[0]))
         else:
-            name = self._markup(appname)
+            name = app_name
         ret.append('.SH NAME\n%s\n' % name)
         synopsis = self._parser.format_help()
         if synopsis:
-            synopsis = synopsis.replace('%s ' % appname, '')
-            ret.append('.SH SYNOPSIS\n.B %s\n%s\n' % (self._markup(appname),
+            synopsis = synopsis.replace('%s ' % app_name, '')
+            ret.append('.SH SYNOPSIS\n.B %s\n%s\n' % (app_name,
                                                       synopsis))
         long_desc = self.distribution.get_long_description()
         if long_desc:
@@ -69,12 +77,12 @@ class create_manpage(Command):
 
         return ''.join(ret)
 
-    def _write_seealso (self):
+    def _write_see_also(self):
         ret = []
-        if self._seealso is not None:
+        if self._see_also is not None:
             ret.append('.SH "SEE ALSO"\n')
 
-            for i in self._seealso:
+            for i in self._see_also:
                 name, sect = i.split(":")
 
                 if len(ret) > 1:
@@ -86,20 +94,20 @@ class create_manpage(Command):
 
     def _write_footer(self):
         ret = []
-        appname = self.distribution.get_name()
+        app_name = self.distribution.get_name()
         author = '%s <%s>' % (self.distribution.get_author(),
                               self.distribution.get_author_email())
         ret.append(('.SH AUTHORS\n.B %s\nwas written by %s.\n'
-                    % (self._markup(appname), self._markup(author))))
+                    % (self._markup(app_name), self._markup(author))))
 
         return ''.join(ret)
 
     def run(self):
-        manpage = []
+        manpage = list()
         manpage.append(self._write_header())
         manpage.append(self._write_options())
         manpage.append(self._write_footer())
-        manpage.append(self._write_seealso())
+        manpage.append(self._write_see_also())
         stream = open(self._output, 'w')
         stream.write(''.join(manpage))
         stream.close()
@@ -115,26 +123,12 @@ class ManPageFormatter(argparse.ArgumentDefaultsHelpFormatter):
         argparse.HelpFormatter.__init__(self, indent_increment,
                                         max_help_position, width, short_first)
 
-    def _markup(self, txt):
+    @staticmethod
+    def _markup(txt):
         return txt.replace('-', '\\-')
 
     def format_usage(self, usage):
-        return self._markup(usage)
-
-    def format_heading(self, heading):
-        if self.level == 0:
-            return ''
-        return '.TP\n%s\n' % self._markup(heading.upper())
-
-    def format_option(self, option):
-        result = []
-        opts = self.option_strings[option]
-        result.append('.TP\n.B %s\n' % self._markup(opts))
-        if option.help:
-            help_text = '%s\n' % self._markup(self.expand_default(option))
-            result.append(help_text)
-        return ''.join(result)
+        return ManPageFormatter._markup(usage)
 
 
 build.sub_commands.append(('create_manpage', None))
-

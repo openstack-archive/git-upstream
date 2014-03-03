@@ -1,25 +1,32 @@
 #
-# Copyright (c) 2013, 2014 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
-# Confidential computer software. Valid license from HP required for
-# possession, use or copying. Consistent with FAR 12.211 and 12.212,
-# Commercial Computer Software, Computer Software Documentation, and
-# Technical Data for Commercial Items are licensed to the U.S. Government
-# under vendor's standard commercial license.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
-from ghp.errors import HpgitError
-from ghp.log import LogDedentMixin
-from ghp.lib.utils import GitMixin
-from ghp import subcommand, log
+from git_upstream.errors import GitUpstreamError
+from git_upstream.log import LogDedentMixin
+from git_upstream.lib.utils import GitMixin
+from git_upstream import subcommand, log
 
-from git import BadObject, util
+from git import BadObject
 
 import inspect
 import re
 
 
-class DropError(HpgitError):
+class DropError(GitUpstreamError):
     """Exception thrown by L{Drop}"""
     pass
 
@@ -120,11 +127,11 @@ def do_drop(args):
     """
     Mark a commit as dropped.
     Marked commits will be skipped during the upstream rebasing process.
-    See also the "git hp import-upstream" command.
+    See also the "git upstream import" command.
     """
 
-    logger = log.getLogger('%s.%s' % (__name__,
-                                      inspect.stack()[0][0].f_code.co_name))
+    logger = log.get_logger('%s.%s' % (__name__,
+                                       inspect.stack()[0][0].f_code.co_name))
 
     drop = Drop(git_object=args.commit, author=args.author)
 

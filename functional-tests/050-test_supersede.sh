@@ -17,7 +17,7 @@ INVALID_CHID="I0123456789abcdef0123456789abcdef01234567"
 SUCCESS_SHA1="b8c16b3dd8883d02b4b65882ad5467c9f5e7beb9 ?-"
 
 function _common() {
-  prepare_for_hpgit $TEST_DIR $REPO_NAME $UPSTREAM_REPO $TEST_BASE_REF \
+  prepare_for_git_upstream $TEST_DIR $REPO_NAME $UPSTREAM_REPO $TEST_BASE_REF \
                     $TEST_NAME
 
   pushd $TEST_DIR/$REPO_NAME >/dev/null
@@ -66,10 +66,10 @@ function test_existing_changeid() {
 
   local commit_sha1=$(git log -1 --format='%H')
 
-  git-hp supersede $commit_sha1 $VALID_CHID -u import/$TEST_NAME-new \
+  git-upstream supersede $commit_sha1 $VALID_CHID -u import/$TEST_NAME-new \
                                                         >/dev/null || return 1
 
-  git-hp import-upstream import/$TEST_NAME-new >/dev/null || return 1
+  git-upstream import import/$TEST_NAME-new >/dev/null || return 1
 
   git show --numstat | grep '0\s\s*1\s\s*nothing' >/dev/null
   if [ "$?" -ne 0 ]; then
@@ -87,7 +87,7 @@ function test_non_existing_changeid() {
 
   local commit_sha1=$(git log -1 --format='%H')
 
-  git-hp supersede $commit_sha1 $INVALID_CHID -u import/$TEST_NAME-new 2>&1 | \
+  git-upstream supersede $commit_sha1 $INVALID_CHID -u import/$TEST_NAME-new 2>&1 | \
         grep "CRITICAL: Change-Id '$INVALID_CHID' not found in branch \
 'import/$TEST_NAME-new'" >/dev/null
   if [ "$?" -ne 0 ]; then
@@ -105,10 +105,10 @@ function test_non_existing_changeid_force() {
 
   local commit_sha1=$(git log -1 --format='%H')
 
-  git-hp supersede $commit_sha1 $INVALID_CHID -u import/$TEST_NAME-new -f \
+  git-upstream supersede $commit_sha1 $INVALID_CHID -u import/$TEST_NAME-new -f \
                                                           >/dev/null || return 1
 
-  git-hp -vv import-upstream import/$TEST_NAME-new | \
+  git-upstream -vv import import/$TEST_NAME-new | \
             grep -e "Including commit '[0-9a-f][0-9a-f]* Add nothing'" \
             >/dev/null
   if [ "$?" -ne 0 ]; then
@@ -126,10 +126,10 @@ function test_multiple_changeids() {
 
   local commit_sha1=$(git log -1 --format='%H')
 
-  git-hp supersede $commit_sha1 $VALID_CHID $VALID_CHID2 \
+  git-upstream supersede $commit_sha1 $VALID_CHID $VALID_CHID2 \
                                 -u import/$TEST_NAME-new >/dev/null || return 1
 
-  git-hp -vv import-upstream import/$TEST_NAME-new >/dev/null || return 1
+  git-upstream -vv import import/$TEST_NAME-new >/dev/null || return 1
 
   git show --numstat | grep '0\s\s*1\s\s*nothing' >/dev/null
   if [ "$?" -ne 0 ]; then
@@ -147,7 +147,7 @@ function test_one_non_exsisting_changeid() {
 
   local commit_sha1=$(git log -1 --format='%H')
 
-  git-hp supersede $commit_sha1 $VALID_CHID $INVALID_CHID \
+  git-upstream supersede $commit_sha1 $VALID_CHID $INVALID_CHID \
       -u import/$TEST_NAME-new 2>&1 | \
       grep "CRITICAL: Change-Id '$INVALID_CHID' not found in branch \
 'import/$TEST_NAME-new'" >/dev/null

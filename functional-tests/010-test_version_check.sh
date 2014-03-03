@@ -10,7 +10,7 @@ source $BASE_DIR/libs/utils.lib
 function test_version_output() {
   log DEBUG "Starting $TEST_NAME::$FUNCNAME"
 
-  git-hp --version >/dev/null 2>&1
+  git-upstream --version >/dev/null 2>&1
 
   return $?
 }

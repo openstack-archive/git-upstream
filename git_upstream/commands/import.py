@@ -1,19 +1,26 @@
 #
-# Copyright (c) 2012, 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
-# Confidential computer software. Valid license from HP required for
-# possession, use or copying. Consistent with FAR 12.211 and 12.212,
-# Commercial Computer Software, Computer Software Documentation, and
-# Technical Data for Commercial Items are licensed to the U.S. Government
-# under vendor's standard commercial license.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
-from ghp.errors import HpgitError
-from ghp.log import LogDedentMixin
-from ghp.lib.utils import GitMixin
-from ghp.lib.rebaseeditor import RebaseEditor
-from ghp import subcommand, log
-from ghp.lib.searchers import UpstreamMergeBaseSearcher
+from git_upstream.errors import GitUpstreamError
+from git_upstream.log import LogDedentMixin
+from git_upstream.lib.utils import GitMixin
+from git_upstream.lib.rebaseeditor import RebaseEditor
+from git_upstream import subcommand, log
+from git_upstream.lib.searchers import UpstreamMergeBaseSearcher
 
 from abc import ABCMeta, abstractmethod
 from collections import Sequence
@@ -22,7 +29,7 @@ from git import GitCommandError
 import inspect
 
 
-class ImportUpstreamError(HpgitError):
+class ImportUpstreamError(GitUpstreamError):
     """Exception thrown by L{ImportUpstream}"""
     pass
 
@@ -35,7 +42,8 @@ class ImportUpstream(LogDedentMixin, GitMixin):
     """
 
     def __init__(self, branch=None, upstream=None, import_branch=None,
-                 extra_branches=[], *args, **kwargs):
+                 extra_branches=None, *args, **kwargs):
+        if not extra_branches: extra_branches = []
         self._branch = branch
         self._upstream = upstream
         self._import_branch = import_branch
@@ -285,7 +293,8 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         # abort result for if the user needs to abort the rebase of this branch
         # onto the new point upstream that was requested to import from.
         try:
-            self._linearise(self.import_branch, strategy, strategy.searcher.commit)
+            self._linearise(self.import_branch, strategy,
+                            strategy.searcher.commit)
         except:
             # Could ask user if they want to try and use the non clean route
             # provided they don't mind that 'git rebase --abort' will result
@@ -412,24 +421,27 @@ class ImportStrategiesFactory(object):
     __strategies = None
 
     @classmethod
-    def createStrategy(cls, type, *args, **kwargs):
-        if type in cls.listStrategies():
+    def create_strategy(cls, type, *args, **kwargs):
+        if type in cls.list_strategies():
             return cls.__strategies[type](*args, **kwargs)
         else:
             raise RuntimeError("No class implements the requested strategy: "
                                "{0}".format(type))
 
     @classmethod
-    def listStrategies(cls):
-        cls.__strategies = {subclass._strategy: subclass
-                            for subclass in LocateChangesStrategy.__subclasses__()
-                            if subclass._strategy}
+    def list_strategies(cls):
+        cls.__strategies = {
+            subclass._strategy: subclass
+            for subclass in LocateChangesStrategy.__subclasses__()
+            if subclass._strategy}
         return cls.__strategies.keys()
 
 
-from ghp.lib.searchers import (NoMergeCommitFilter, ReverseCommitFilter,
-                               DiscardDuplicateGerritChangeId,
-                               SupersededCommitFilter, DroppedCommitFilter)
+from git_upstream.lib.searchers import (NoMergeCommitFilter,
+                                        ReverseCommitFilter,
+                                        DiscardDuplicateGerritChangeId,
+                                        SupersededCommitFilter,
+                                        DroppedCommitFilter)
 
 
 class LocateChangesStrategy(GitMixin, Sequence):
@@ -459,7 +471,7 @@ class LocateChangesStrategy(GitMixin, Sequence):
         return len(self.data)
 
     @classmethod
-    def getName(cls):
+    def get_strategy_name(cls):
         return cls._strategy
 
     def filtered_iter(self):
@@ -496,7 +508,7 @@ class LocateChangesWalk(LocateChangesStrategy):
 
     def filtered_iter(self):
         # may wish to make class used to remove duplicate objects configurable
-        # through hpgit specific 'git config' settings
+        # through git-upstream specific 'git config' settings
         if self.search_ref:
             self.filters.append(
                 DiscardDuplicateGerritChangeId(self.search_ref,
@@ -512,27 +524,31 @@ class LocateChangesWalk(LocateChangesStrategy):
 
 @subcommand.arg('-d', '--dry-run', dest='dry_run', action='store_true',
                 default=False,
-                help='Only print out the list of commits that would be applied.')
+                help='Only print out the list of commits that would be '
+                     'applied.')
 @subcommand.arg('-i', '--interactive', action='store_true', default=False,
                 help='Let the user edit the list of commits before applying.')
-@subcommand.arg('-f', '--force', dest='force', required=False, action='store_true',
-                default=False,
+@subcommand.arg('-f', '--force', dest='force', required=False,
+                action='store_true', default=False,
                 help='Force overwrite of existing import branch if it exists.')
 @subcommand.arg('--merge', dest='merge', required=False, action='store_true',
                 default=True,
                 help='Merge the resulting import branch into the target branch '
                      'once complete')
-@subcommand.arg('--no-merge', dest='merge', required=False, action='store_false',
+@subcommand.arg('--no-merge', dest='merge', required=False,
+                action='store_false',
                 help="Disable merge of the resulting import branch")
 @subcommand.arg('-s', '--strategy', metavar='<strategy>',
-                choices=ImportStrategiesFactory.listStrategies(),
-                default=LocateChangesWalk.getName(),
-                help='Use the given strategy to re-apply locally carried changes '
-                     'to the import branch. (default: %(default)s)')
+                choices=ImportStrategiesFactory.list_strategies(),
+                default=LocateChangesWalk.get_strategy_name(),
+                help='Use the given strategy to re-apply locally carried '
+                     'changes to the import branch. (default: %(default)s)')
 @subcommand.arg('--into', dest='branch', metavar='<branch>', default='HEAD',
-                help='Branch to take changes from, and replace with imported branch.')
+                help='Branch to take changes from, and replace with imported '
+                     'branch.')
 @subcommand.arg('--import-branch', metavar='<import-branch>',
-                help='Name of import branch to use', default='import/{describe}')
+                help='Name of import branch to use',
+                default='import/{describe}')
 @subcommand.arg('upstream_branch', metavar='<upstream-branch>', nargs='?',
                 default='upstream/master',
                 help='Upstream branch to import. Must be specified if '
@@ -540,7 +556,7 @@ class LocateChangesWalk(LocateChangesStrategy):
 @subcommand.arg('branches', metavar='<branches>', nargs='*',
                 help='Branches to additionally merge into the import branch '
                      'using default git merging behaviour')
-def do_import_upstream(args):
+def do_import(args):
     """
     Import code from specified upstream branch.
 
@@ -548,29 +564,30 @@ def do_import_upstream(args):
     merges additional branches given as arguments. Current branch, unless
     overridden by the --into option, is used as the target branch from which a
     list of changes to apply onto the new import is constructed based on the
-    the specificed strategy.
+    the specified strategy.
 
     Once complete it will merge and replace the contents of the target branch
     with those from the import branch, unless --no-merge is specified.
     """
 
-    logger = log.getLogger('%s.%s' % (__name__,
+    logger = log.get_logger('%s.%s' % (__name__,
                                       inspect.stack()[0][0].f_code.co_name))
 
-    importupstream = ImportUpstream(branch=args.branch,
-                                    upstream=args.upstream_branch,
-                                    import_branch=args.import_branch,
-                                    extra_branches=args.branches)
+    import_upstream = ImportUpstream(branch=args.branch,
+                                     upstream=args.upstream_branch,
+                                     import_branch=args.import_branch,
+                                     extra_branches=args.branches)
 
     logger.notice("Searching for previous import")
-    strategy = ImportStrategiesFactory.createStrategy(
+    strategy = ImportStrategiesFactory.create_strategy(
         args.strategy, branch=args.branch, search_ref=args.upstream_branch)
 
     if len(strategy) == 0:
         raise ImportUpstreamError("Cannot find previous import")
 
-    # if last commit in the strategy was a merge, then the additional branches that
-    # were merged in previously can be extracted based on the commits merged.
+    # if last commit in the strategy was a merge, then the additional branches
+    # that were merged in previously can be extracted based on the commits
+    # merged.
     prev_import_merge = strategy[-1]
     if len(prev_import_merge.parents) > 1:
         idx = next((idx for idx, commit in enumerate(prev_import_merge.parents)
@@ -589,17 +606,18 @@ def do_import_upstream(args):
                        (c.summary[60:] and "...")
                        for c in list(strategy.filtered_iter())]
         logger.notice("""\
-            Requested a dry-run: printing the list of commit that should be rebased
+            Requested a dry-run: printing the list of commit that should be
+            rebased
 
                 %s
             """, "\n    ".join(commit_list))
         return True
 
     logger.notice("Starting import of upstream")
-    importupstream.create_import(force=args.force)
+    import_upstream.create_import(force=args.force)
     logger.notice("Successfully created import branch")
 
-    if not importupstream.apply(strategy, args.interactive):
+    if not import_upstream.apply(strategy, args.interactive):
         logger.notice("Import cancelled")
         return False
 
@@ -611,14 +629,14 @@ def do_import_upstream(args):
         return True
 
     logger.notice("Merging import to requested branch '%s'", args.branch)
-    if importupstream.finish():
+    if import_upstream.finish():
         logger.notice(
             """\
             Successfully finished import:
                 target branch: '%s'
                 upstream branch: '%s'
                 import branch: '%s'""", args.branch, args.upstream_branch,
-            importupstream.import_branch)
+            import_upstream.import_branch)
         if args.branches:
             for branch in args.branches:
                 logger.notice("    extra branch: '%s'", branch, dedent=False)

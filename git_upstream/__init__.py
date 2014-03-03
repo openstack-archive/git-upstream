@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-#PYTHON_ARGCOMPLETE_OK
 #
-# Copyright (c) 2012 Hewlett-Packard
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,9 +13,4 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from ghp.main import main
-from sys import argv
-
-if __name__ == '__main__':
-    main(argv)
+#

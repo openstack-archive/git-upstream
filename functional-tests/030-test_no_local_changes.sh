@@ -17,7 +17,7 @@ TEST_REBASE_REF="fd3524e1b7353cda228b6fb73c3a2d34a4fee4de"
 function test_no_local_changes() {
   log DEBUG "Starting $TEST_NAME::$FUNCNAME"
 
-  prepare_for_hpgit $TEST_DIR $REPO_NAME $UPSTREAM_REPO $TEST_BASE_REF \
+  prepare_for_git_upstream $TEST_DIR $REPO_NAME $UPSTREAM_REPO $TEST_BASE_REF \
                     $TEST_NAME
 
   pushd $TEST_DIR/$REPO_NAME >/dev/null
@@ -35,7 +35,7 @@ function test_no_local_changes() {
   log DEBUG "Rebasing local patches onto upstream version $TEST_REBASE_REF"
   git branch import/$TEST_NAME-new $TEST_REBASE_REF --quiet || return 1
 
-  local result="$(git-hp import-upstream import/$TEST_NAME-new)"
+  local result="$(git-upstream import import/$TEST_NAME-new)"
 
   echo "$result" | grep "There are no local changes to be applied!" >/dev/null
 

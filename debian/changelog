@@ -1,5 +1,5 @@
-hpgit (0.0.1) UNRELEASED; urgency=low
+git-upstream (1.0.0) First public release; urgency=low
 
-  * UNRELEASED
+  * First public hp-upstream release
 
- -- Darragh Bailey <dbailey@hp.com>  Fri, 20 Jan 2012 10:02:30 +0000
+ -- Davide Guerri <davide.guerri@hp.com>  Fri, 3 Mar 2014 13:21:30 +0000

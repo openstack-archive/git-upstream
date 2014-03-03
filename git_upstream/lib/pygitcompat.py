@@ -1,30 +1,38 @@
 #
-# Copyright (c) 2012, 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
-# Confidential computer software. Valid license from HP required for
-# possession, use or copying. Consistent with FAR 12.211 and 12.212,
-# Commercial Computer Software, Computer Software Documentation, and
-# Technical Data for Commercial Items are licensed to the U.S. Government
-# under vendor's standard commercial license.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
 import git
 from git import Commit, Repo
 
 
-class HpgitCompatRepo(Repo):
+class GitUpstreamCompatRepo(Repo):
 
     @property
     def git_dir(self):
         return self.path
 
 if not hasattr(Repo, 'git_dir'):
-    Repo = HpgitCompatRepo
-    # Monkey patch old python-git library to use HpgitCompatRepo instead of Repo
-    git.Repo = HpgitCompatRepo
+    Repo = GitUpstreamCompatRepo
+    # Monkey patch old python-git library to use GitUpstreamCompatRepo instead
+    # of Repo
+    git.Repo = GitUpstreamCompatRepo
 
 
-class HpgitCompatCommit(Commit):
+class GitUpstreamCompatCommit(Commit):
 
     @classmethod
     def list_from_string(cls, repo, text):
@@ -61,7 +69,7 @@ class HpgitCompatCommit(Commit):
 
             message = '\n'.join(messages)
 
-            commits.append(HpgitCompatCommit(repo, id=id, parents=parents,
+            commits.append(GitUpstreamCompatCommit(repo, id=id, parents=parents,
                                              tree=tree, author=author,
                                              authored_date=authored_date,
                                              committer=committer,
@@ -95,6 +103,6 @@ class HpgitCompatCommit(Commit):
             raise RuntimeError("Unexpected type returned from 'find_all'")
 
 if not hasattr(Commit, 'iter_items'):
-    Commit = HpgitCompatCommit
+    Commit = GitUpstreamCompatCommit
     # monkey patch class so that Repo will use the patched class
-    git.commit.Commit = HpgitCompatCommit
+    git.commit.Commit = GitUpstreamCompatCommit

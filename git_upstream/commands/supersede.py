@@ -1,18 +1,25 @@
 #
-# Copyright (c) 2013, 2014 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
-# Confidential computer software. Valid license from HP required for
-# possession, use or copying. Consistent with FAR 12.211 and 12.212,
-# Commercial Computer Software, Computer Software Documentation, and
-# Technical Data for Commercial Items are licensed to the U.S. Government
-# under vendor's standard commercial license.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
-from ghp.errors import HpgitError
-from ghp.log import LogDedentMixin
-from ghp.lib.utils import GitMixin
-from ghp.lib.searchers import CommitMessageSearcher
-from ghp import subcommand, log
+from git_upstream.errors import GitUpstreamError
+from git_upstream.log import LogDedentMixin
+from git_upstream.lib.utils import GitMixin
+from git_upstream.lib.searchers import CommitMessageSearcher
+from git_upstream import subcommand, log
 
 from git import BadObject, Head
 
@@ -20,7 +27,7 @@ import inspect
 import re
 
 
-class SupersedeError(HpgitError):
+class SupersedeError(GitUpstreamError):
     """Exception thrown by L{Supersede}"""
     pass
 
@@ -98,10 +105,10 @@ class Supersede(LogDedentMixin, GitMixin):
                 self.log.debug("Change-id '%s' found in commit '%s'" %
                                (change_id, change_commit))
 
-            except RuntimeError as e:
+            except RuntimeError:
                 if force:
                     self.log.warn("Warning: change-id '%s' not found in '%s'" %
-                               (change_id, upstream_branch))
+                                  (change_id, upstream_branch))
                 else:
                     raise SupersedeError(
                         "Change-Id '%s' not found in branch '%s'" %
@@ -165,9 +172,9 @@ class Supersede(LogDedentMixin, GitMixin):
                 action='store_true', default=False,
                 help='Apply the commit mark even if one or more change ids '
                      'could not be found. Use this flag carefully as commits '
-                     'will not be dropped during import-upstream command '
-                     'execution as long as all associated change ids are '
-                     'present in the local copy of the upstream branch')
+                     'will not be dropped during import command execution as '
+                     'long as all associated change ids are present in the '
+                     'local copy of the upstream branch')
 @subcommand.arg('-u', '--upstream-branch', metavar='<upstream-branch>',
                 dest='upstream_branch', required=False,
                 default='upstream/master',
@@ -177,11 +184,11 @@ def do_supersede(args):
     """
     Mark a commit as superseded by a set of change-ids.
     Marked commits will be skipped during the upstream rebasing process.
-    See also the "git hp import-upstream" command.
+    See also the "git upstream import" command.
     """
 
-    logger = log.getLogger('%s.%s' % (__name__,
-                                      inspect.stack()[0][0].f_code.co_name))
+    logger = log.get_logger('%s.%s' % (__name__,
+                                       inspect.stack()[0][0].f_code.co_name))
 
     supersede = Supersede(git_object=args.commit, change_ids=args.change_ids,
                           upstream_branch=args.upstream_branch,

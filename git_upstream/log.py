@@ -1,12 +1,20 @@
 #
-# Copyright (c) 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
-# Confidential computer software. Valid license from HP required for
-# possession, use or copying. Consistent with FAR 12.211 and 12.212,
-# Commercial Computer Software, Computer Software Documentation, and
-# Technical Data for Commercial Items are licensed to the U.S. Government
-# under vendor's standard commercial license.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 
 """
 Custom logging for HP git tool
@@ -38,12 +46,12 @@ def notice(self, msg, *args, **kwargs):
 logging.Logger.notice = notice
 
 
-def getLogger(name=None):
+def get_logger(name=None):
     """
     Wrapper for standard logging.getLogger that ensures all loggers in this
-    application will have their name prefixed with 'hpgit'.
+    application will have their name prefixed with 'git-upstream'.
     """
-    name = ".".join([x for x in "hpgit", name if x])
+    name = ".".join([x for x in "git-upstream", name if x])
 
     logger = logging.getLogger(name)
     return logger
@@ -60,12 +68,13 @@ _levels = [
 ]
 
 
-def getIncrementLevel(count, default='warning'):
+def get_increment_level(count, default='warning'):
     """
     Given a default level to start from, and a count to increment the logging
     level by, return the associated level that is 'count' levels more verbose.
     """
-    idx = next((idx for idx, sublist in enumerate(_levels) if default in sublist), None)
+    idx = next((idx for idx, sublist in enumerate(_levels) if
+                default in sublist), None)
     return _levels[min(idx + count, len(_levels) - 1)][0].upper()
 
 
@@ -140,7 +149,7 @@ logging.setLoggerClass(DedentLogger)
 class LogDedentMixin(object):
 
     def __init__(self, *args, **kwargs):
-        self.__log = getLogger('%s.%s' % (__name__, self.__class__.__name__))
+        self.__log = get_logger('%s.%s' % (__name__, self.__class__.__name__))
 
         super(LogDedentMixin, self).__init__(*args, **kwargs)
 

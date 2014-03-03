@@ -1,1 +1,1 @@
-eval "$(register-python-argcomplete git-hp)"
+eval "$(register-python-argcomplete git-upstream)"

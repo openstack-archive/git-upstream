@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012, 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
 # Confidential computer software. Valid license from HP required for
 # possession, use or copying. Consistent with FAR 12.211 and 12.212,
@@ -10,7 +10,7 @@
 
 """Tests the drop module"""
 import testtools
-from ghp.commands import drop as d
+from git_upstream.commands import drop as d
 from git import repo as r
 from git import GitCommandError
 

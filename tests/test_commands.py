@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012, 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
 # Confidential computer software. Valid license from HP required for
 # possession, use or copying. Consistent with FAR 12.211 and 12.212,
@@ -13,12 +13,12 @@
 import testtools
 from argparse import ArgumentParser
 
-from ghp import commands as c
+from git_upstream import commands as c
 
 class TestGetSubcommands(testtools.TestCase):
     """Test case for get_subcommands function"""
 
-    _available_subcommands = ('import-upstream', 'supersede' ,'drop')
+    _available_subcommands = ('import', 'supersede' ,'drop')
 
     def test_available_subcommands(self):
         """Test available subcommands"""

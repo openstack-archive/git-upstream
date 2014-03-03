@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012, 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
 # Confidential computer software. Valid license from HP required for
 # possession, use or copying. Consistent with FAR 12.211 and 12.212,
@@ -11,7 +11,7 @@
 """Tests for then 'log' module"""
 
 import testtools
-from ghp import log as l
+from git_upstream import log as l
 
 
 class TestGetLogger(testtools.TestCase):
@@ -20,16 +20,16 @@ class TestGetLogger(testtools.TestCase):
     def test_logger_name(self):
         """Test the default logger name"""
 
-        logger = l.getLogger()
+        logger = l.get_logger()
         self.assertIsNotNone(logger)
-        self.assertEquals('hpgit', logger.name)
+        self.assertEquals('git-upstream', logger.name)
 
     def test_logger_name_param(self):
         """Test custom logger name"""
 
-        logger = l.getLogger('test')
+        logger = l.get_logger('test')
         self.assertIsNotNone(logger)
-        self.assertEquals('hpgit.test', logger.name)
+        self.assertEquals('git-upstream.test', logger.name)
 
 
 class TestGetIncrementLevel(testtools.TestCase):
@@ -49,7 +49,7 @@ class TestGetIncrementLevel(testtools.TestCase):
         levels = len(self._levels)
         for level_no in range(levels-increment):
             for level in self._levels[level_no]:
-                result = l.getIncrementLevel(1, level)
+                result = l.get_increment_level(1, level)
                 self.assertEquals(self._levels[min(level_no+1, levels-1)][0].upper(),
                                   result)
 

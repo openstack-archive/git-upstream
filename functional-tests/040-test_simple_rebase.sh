@@ -18,7 +18,7 @@ SUCCESS_SHA1="e1dfee279aa5b6b05296a97b4eba8dde0b6eea4b ?-"
 function test_simple_rebase() {
   log DEBUG "Starting $TEST_NAME::$FUNCNAME"
 
-  prepare_for_hpgit $TEST_DIR $REPO_NAME $UPSTREAM_REPO $TEST_BASE_REF \
+  prepare_for_git_upstream $TEST_DIR $REPO_NAME $UPSTREAM_REPO $TEST_BASE_REF \
                     $TEST_NAME
 
   pushd $TEST_DIR/$REPO_NAME >/dev/null
@@ -56,7 +56,7 @@ EOP
   log DEBUG "Rebasing local patches onto upstream version $TEST_REBASE_REF"
   git branch import/$TEST_NAME-new $TEST_REBASE_REF --quiet || return 1
 
-  git-hp import-upstream import/$TEST_NAME-new >/dev/null || return 1
+  git-upstream import import/$TEST_NAME-new >/dev/null || return 1
 
   local test_sha1="$(git show --numstat | tail -9 | shasum -p -)"
   if [ "$test_sha1" != "$SUCCESS_SHA1" ]

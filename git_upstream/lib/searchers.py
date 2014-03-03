@@ -1,22 +1,27 @@
 #
-# Copyright (c) 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
-# Confidential computer software. Valid license from HP required for
-# possession, use or copying. Consistent with FAR 12.211 and 12.212,
-# Commercial Computer Software, Computer Software Documentation, and
-# Technical Data for Commercial Items are licensed to the U.S. Government
-# under vendor's standard commercial license.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
-from ghp.lib.utils import GitMixin
-from ghp.log import LogDedentMixin
+from git_upstream.lib.utils import GitMixin
+from git_upstream.log import LogDedentMixin
 
 try:
     from git.objects.commit import Commit
 except ImportError:
-    from ghp.lib.pygitcompat import HpgitCompatCommit as Commit
-
-from git import Head
+    from git_upstream.lib.pygitcompat import GitUpstreamCompatCommit as Commit
 
 from abc import ABCMeta, abstractmethod
 import re
@@ -45,7 +50,7 @@ class Searcher(GitMixin):
         """
         return self._branch
 
-    def addFilter(self, filter):
+    def add_filter(self, filter):
         if filter not in self.filters:
             self.filters.append(filter)
 
@@ -123,9 +128,10 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
     base available.
     """
 
-    def __init__(self, pattern="upstream/*", search_tags=False,
-                 remotes=[], *args, **kwargs):
+    def __init__(self, pattern="upstream/*", search_tags=False, remotes=None,
+                 *args, **kwargs):
 
+        if not remotes: remotes = []
         self._pattern = pattern
         self._references = ["refs/heads/{0}".format(self.pattern)]
 
@@ -174,14 +180,13 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
         reachable from another so that the calls to merge-base are minimized.
         """
 
-        self.log.info("Searching for most recent merge base with upstream branches")
-
-        rev_list_args = []
+        self.log.info(
+            "Searching for most recent merge base with upstream branches")
 
         # process pattern given to get a list of refs to check
         rev_list_args = self.git.for_each_ref(*self._references,
                                               format="%(refname:short)"
-                                              ).splitlines()
+        ).splitlines()
         self.log.info(
             """\
             Upstream refs:
@@ -189,7 +194,8 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
             """, "\n    ".join(rev_list_args)
         )
 
-        # get the sha1 for the tip of each of the upstream refs we are going to search
+        # get the sha1 for the tip of each of the upstream refs we are going to
+        #  search
         self.log.info(
             """\
             Construct list of upstream revs to search:
@@ -248,7 +254,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
                 merge_bases.add(base)
 
         if len(merge_bases) == 0:
-            self.log.notice("Merge-base couldn't be found: it seems there "+
+            self.log.notice("Merge-base couldn't be found: it seems there " +
                             "is no common ancestor for the involved branches")
         else:
             self.log.info(
@@ -262,7 +268,8 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
                                      no_walk=True)
             # now that we have the sha1, make sure to save the commit object
             self.commit = self.repo.commit(sha1)
-            self.log.debug("Most recent merge-base commit is: '%s'", self.commit.hexsha)
+            self.log.debug("Most recent merge-base commit is: '%s'",
+                           self.commit.hexsha)
 
         if not self.commit:
             raise RuntimeError("Failed to locate suitable merge-base")
@@ -350,7 +357,8 @@ class CommitMessageSearcher(LogDedentMixin, Searcher):
         if not self.commit:
             raise RuntimeError("Failed to locate a pattern match")
 
-        self.log.debug("Commit matching search pattern is: '%s'", self.commit.hexsha)
+        self.log.debug("Commit matching search pattern is: '%s'",
+                       self.commit.hexsha)
 
         return self.commit.hexsha
 
@@ -488,13 +496,13 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
             # present in upstream
             if superseding_change_ids:
                 self.log.debug(
-                """\
+                    """\
                 Including commit '%s %s'
                     because the following superseding change-ids have not been
                     found:
                     %s
                 """, commit.hexsha[:7], commit.message.splitlines()[0],
-                   '\n    '.join(superseding_change_ids))
+                    '\n    '.join(superseding_change_ids))
                 yield commit
                 continue
 
@@ -505,7 +513,8 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
                     note:
                     %s
                 """, commit.hexsha[:7], commit.message.splitlines()[0],
-                   commit_note)
+                commit_note)
+
 
 class DroppedCommitFilter(LogDedentMixin, CommitFilter):
     """
@@ -532,6 +541,7 @@ class MergeCommitFilter(CommitFilter):
     """
     Includes only those commits that have more than one parent listed (merges)
     """
+
     def filter(self, commit_iter):
         for commit in commit_iter:
             if len(commit.parents) >= 2:
@@ -542,6 +552,7 @@ class NoMergeCommitFilter(CommitFilter):
     """
     Prunes all that have more than one parent listed (merges)
     """
+
     def filter(self, commit_iter):
         for commit in commit_iter:
             if len(commit.parents) < 2:
@@ -595,7 +606,8 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
 
         if limit:
             if not hasattr(limit, 'hexsha'):
-                raise ValueError("Invalid object: no hexsha attribute for 'limit'")
+                raise ValueError(
+                    "Invalid object: no hexsha attribute for 'limit'")
             if not self.is_valid_commit(limit.hexsha):
                 raise ValueError("'limit' object does not contain a valid SHA1")
         self.limit = limit
@@ -686,7 +698,8 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
                 Including unmatched change
                     %s
                     Commit: %s %s
-                """, change_id, commit.hexsha[:7], commit.message.splitlines()[0])
+                """, change_id, commit.hexsha[:7],
+                commit.message.splitlines()[0])
             yield commit
 
 

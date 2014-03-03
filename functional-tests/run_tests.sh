@@ -59,7 +59,7 @@ log DEBUG "Initializing testbed"
 
 check_app virtualenv
 
-log DEBUG "Creating virtualenv for hpgit"
+log DEBUG "Creating virtualenv for git-upstream"
 rm -rf $BASE_TEST_DIR/virtualenv >/dev/null 2>&1
 virtualenv $BASE_TEST_DIR/virtualenv >/dev/null 2>&1
 if [ $? -ne 0 ]; then
@@ -67,7 +67,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-log DEBUG "Activating virtualenv for hpgit"
+log DEBUG "Activating virtualenv for git-upstream"
 source $BASE_TEST_DIR/virtualenv/bin/activate
 
 if [ $? -ne 0 ]; then
@@ -75,7 +75,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-log DEBUG "Installing hpgit"
+log DEBUG "Installing git-upstream"
 easy_install -q $INSTALL_DIR >/dev/null 2>&1
 if [ $? -ne 0 ]; then
   log ERROR "hp git installation failed!"

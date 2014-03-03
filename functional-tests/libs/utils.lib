@@ -22,7 +22,7 @@ mkdir -p "$TEST_DIR"
 # Define an handler for clean_up
 trap "_clean_up; exit 0" EXIT
 
-function prepare_for_hpgit() {
+function prepare_for_git_upstream() {
   local TEST_DIR="$1"
   local REPO_NAME="$2"
   local UPSTREAM_REPO="$3"

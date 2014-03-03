@@ -1,16 +1,22 @@
 #
-# Copyright (c) 2012, 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
-# Confidential computer software. Valid license from HP required for
-# possession, use or copying. Consistent with FAR 12.211 and 12.212,
-# Commercial Computer Software, Computer Software Documentation, and
-# Technical Data for Commercial Items are licensed to the U.S. Government
-# under vendor's standard commercial license.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
-from ghp.lib.utils import GitMixin
-from ghp.log import LogDedentMixin
-import ghp
+from git_upstream.lib.utils import GitMixin
+from git_upstream.log import LogDedentMixin
 
 from subprocess import call
 import os
@@ -19,7 +25,7 @@ REBASE_EDITOR_SCRIPT = "rebase-editor.py"
 
 # insure name of file will match any naming filters used by editors to
 # enable syntax highlighting
-REBASE_EDITOR_TODO = "hpgit/git-rebase-todo"
+REBASE_EDITOR_TODO = "git-upstream/git-rebase-todo"
 
 TODO_EPILOGUE = """\
 
@@ -109,21 +115,22 @@ class RebaseEditor(GitMixin, LogDedentMixin):
         if self.git_sequence_editor:
             self._saveeditor = self.git_sequence_editor
             if self._interactive == 'debug':
-                os.environ['HPGIT_GIT_SEQUENCE_EDITOR'] = self._saveeditor
+                os.environ['GIT_UPSTREAM_GIT_SEQUENCE_EDITOR'] = \
+                    self._saveeditor
             os.environ['GIT_SEQUENCE_EDITOR'] = editor
         else:
             self._saveeditor = self.git_editor
             if self._interactive == 'debug':
-                os.environ['HPGIT_GIT_EDITOR'] = self._saveeditor
+                os.environ['GIT_UPSTREAM_GIT_EDITOR'] = self._saveeditor
             os.environ['GIT_EDITOR'] = editor
 
     def _unset_editor(self):
 
         for var in ['GIT_SEQUENCE_EDITOR', 'GIT_EDITOR']:
-            # HPGIT_* variations should only be set if script was in a debug
-            # mode.
-            if os.environ.get('HPGIT_' + var, None):
-                del os.environ['HPGIT_' + var]
+            # GIT_UPSTREAM_* variations should only be set if script was in a
+            # debug mode.
+            if os.environ.get('GIT_UPSTREAM_' + var, None):
+                del os.environ['GIT_UPSTREAM_' + var]
             # Restore previous editor only if the environment var is set. This
             # isn't perfect since we should probably unset the env var if it
             # wasn't previously set, but this shouldn't cause any problems.
@@ -133,7 +140,7 @@ class RebaseEditor(GitMixin, LogDedentMixin):
 
     def run(self, commits, *args, **kwargs):
         """
-        Reads the list of commits given, and constructions the instuctions
+        Reads the list of commits given, and constructions the instructions
         file to be used by rebase.
         Will spawn an editor if the constructor was told to be interactive.
         Additional arguments *args and **kwargs are to be passed to 'git
@@ -146,7 +153,7 @@ class RebaseEditor(GitMixin, LogDedentMixin):
             user_editor = self.git_sequence_editor or self.git_editor
             status = call("%s %s" % (user_editor, todo_file), shell=True)
             if status:
-                return (status, None, "Editor returned non-zero exit code")
+                return status, None, "Editor returned non-zero exit code"
 
         editor = "%s %s" % (self.editor, todo_file)
         self._set_editor(editor)
@@ -163,10 +170,11 @@ class RebaseEditor(GitMixin, LogDedentMixin):
                 cmd = ['git', 'rebase', '--interactive']
                 cmd.extend(self.git.transform_kwargs(**kwargs))
                 cmd.extend(args)
-                return (call(cmd), None, None)
+                return call(cmd), None, None
             else:
                 return self.git.rebase(interactive=True, with_exceptions=False,
-                                       with_extended_output=True, *args, **kwargs)
+                                       with_extended_output=True, *args,
+                                       **kwargs)
         finally:
             os.remove(todo_file)
             # make sure to remove the environment tweaks added so as not to
