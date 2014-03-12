@@ -44,7 +44,10 @@ setup(
                                           'git_upstream', 'scripts',
                                           'rebase-editor.py')],
     packages=find_packages(exclude=['test']),
-    install_requires=['GitPython'],
+    install_requires=['GitPython>=0.3.2.RC1'],
+    extras_require = {
+        'autocomplete':  ['argcomplete']
+    },
     long_description=read('README'),
     cmdclass={'create_manpage': CreateManpage},
     classifiers=[

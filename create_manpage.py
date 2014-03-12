@@ -130,5 +130,3 @@ class ManPageFormatter(argparse.ArgumentDefaultsHelpFormatter):
     def format_usage(self, usage):
         return ManPageFormatter._markup(usage)
 
-
-build.sub_commands.append(('create_manpage', None))
