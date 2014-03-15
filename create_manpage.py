@@ -19,13 +19,13 @@
 
 import datetime
 import argparse
-from distutils.command.build import build
 from distutils.core import Command
 
 
 class CreateManpage(Command):
 
     user_options = []
+    command_name = 'create_manpage'
 
     def initialize_options(self):
         from git_upstream import main
@@ -129,4 +129,3 @@ class ManPageFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
     def format_usage(self, usage):
         return ManPageFormatter._markup(usage)
-

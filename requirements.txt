@@ -1,0 +1,4 @@
+pbr>=0.5.21,<1.0
+
+argcomplete
+GitPython>=0.3.2.RC1

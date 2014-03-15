@@ -58,7 +58,8 @@ TEST_DIR            Testing directory. Objects pertaining a test should be
 TEST_NAME           The name of current test. Extracted from the test filename.
 
 prepare_for_git_upstream() Using the current git-upstream repo, create an
-                           initial onfiguration useful for testing hp-git.
+                           initial configuration useful for testing
+                           git-upstream.
                            After invoking it a  "$TEST_DIR/$REPO_NAME"
 
 ## Environment variable used by the test framework
