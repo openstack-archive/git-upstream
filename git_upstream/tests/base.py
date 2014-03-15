@@ -56,7 +56,7 @@ class BaseTestCase(testtools.TestCase):
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
-        
+
         repo_path = self.useFixture(GitRepo(git.Repo('.'))).path
         self.useFixture(DiveDir(repo_path))
         repo = git.Repo('.')
