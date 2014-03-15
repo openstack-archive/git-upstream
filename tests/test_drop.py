@@ -9,13 +9,14 @@
 #
 
 """Tests the drop module"""
-import testtools
+from tests import base
+
 from git_upstream.commands import drop as d
 from git import repo as r
 from git import GitCommandError
 
 
-class TestDrop(testtools.TestCase):
+class TestDrop(base.BaseTestCase):
     """Test case for Drop class"""
 
     first_commit = "bd6b9eefe961abe8c15cb5dc6905b92e14714a4e"

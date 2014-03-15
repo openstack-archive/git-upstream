@@ -10,13 +10,14 @@
 
 """Tests the supersede module"""
 
-import testtools
+from tests import base
+
 from git_upstream.commands import supersede as s
 from git import repo as r
 from git import GitCommandError
 
 
-class TestSupersede(testtools.TestCase):
+class TestSupersede(base.BaseTestCase):
     """Test case for Supersede class"""
 
     first_commit = "bd6b9eefe961abe8c15cb5dc6905b92e14714a4e"
@@ -26,6 +27,7 @@ class TestSupersede(testtools.TestCase):
     second_change_ids = ("Iebd1f5aa789dcd9574a00bb8837e4596bf55fa88",
                          "I4ab003213c40b0375283a15e2967d11e0351feb1")
     invalid_change_ids = ("this_is_an_invalid_change_id",)
+
     change_ids_branch = "master"
     invalid_change_ids_branch = "this_is_an_invalid_change_ids_branch"
     note_ref = 'refs/notes/upstream-merge'

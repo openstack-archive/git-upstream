@@ -17,6 +17,7 @@
 
 from git_upstream.errors import GitUpstreamError
 from git_upstream.log import LogDedentMixin
+from git_upstream.lib import note
 from git_upstream.lib.utils import GitMixin
 from git_upstream.lib.searchers import CommitMessageSearcher
 from git_upstream import subcommand, log
