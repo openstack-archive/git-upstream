@@ -104,8 +104,8 @@ class DedentLoggerMeta(type):
     """
 
     def __new__(cls, name, bases, dict):
-        # provide a more intelligent error instead of waiting for setattr/getattr
-        # adding of a wrapper function to fail
+        # provide a more intelligent error instead of waiting for
+        # setattr/getattr adding of a wrapper function to fail
         if logging.Logger not in bases:
             raise TypeError("%s not derived from logging.Logger" % name)
 

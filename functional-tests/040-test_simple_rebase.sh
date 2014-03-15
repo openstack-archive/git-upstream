@@ -26,19 +26,21 @@ function test_simple_rebase() {
   log DEBUG "Creating a local patch"
   cat <<EOP | patch -tsp1 || return 1
 diff --git a/setup.py b/setup.py
-index c0a24ea..ebe20bb 100644
+index 170ec46..251e1dd 100644
 --- a/setup.py
 +++ b/setup.py
-@@ -17,5 +17,6 @@
- import setuptools
-  
-  setuptools.setup(
-+    terrible_local_idea=True,
-     setup_requires=['pbr'],
-     pbr=True)
+@@ -28,6 +28,8 @@ setup(
+     version=version.version,
+     author="Darragh Bailey",
+     author_email="dbailey@hp.com",
++    maintainer="Davide Guerri",
++    maintainer_email="davide.guerri@hp.com",
+     description=("Tool supporting HPCloud git workflows."),
+     license="Proprietary",
+     keywords="git hpcloud workflow",
 EOP
 
-  git commit -a -m "Add terrible local patch" --quiet || return 1
+  git commit -a -m "Add maintainer info" --quiet || return 1
   git push -u origin master --quiet >/dev/null || return 1
 
   log DEBUG "Cherry picking upstream commits"

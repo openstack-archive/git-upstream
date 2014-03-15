@@ -18,6 +18,7 @@
 from git_upstream.errors import GitUpstreamError
 from git import base, GitCommandError
 
+
 class NoteAlreadyExistsError(GitUpstreamError):
     """Exception thrown by note related commands"""
     pass
@@ -44,12 +45,14 @@ def add_note(self, message, force=False, note_ref='refs/notes/commits'):
             else:
                 raise e
 
+
 def append_note(self, message, note_ref='refs/notes/commits'):
     """Add a note to an object
     :param message:     note message
     :param note_ref:    ref to use for notes. Defaults to refs/notes/commits
     """
     self.repo.git.notes('--ref', note_ref, 'append', '-m', message, str(self))
+
 
 def note_message(self, note_ref='refs/notes/commits'):
     """

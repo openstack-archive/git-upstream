@@ -15,6 +15,7 @@ from git_upstream.commands import supersede as s
 from git import repo as r
 from git import GitCommandError
 
+
 class TestSupersede(testtools.TestCase):
     """Test case for Supersede class"""
 
@@ -32,9 +33,9 @@ class TestSupersede(testtools.TestCase):
     def test_valid_parameters(self):
         """Test supersede initialization and read properties"""
 
-        t  = s.Supersede(git_object=TestSupersede.first_commit,
-                         change_ids=TestSupersede.first_change_ids,
-                         upstream_branch=TestSupersede.change_ids_branch)
+        t = s.Supersede(git_object=TestSupersede.first_commit,
+                        change_ids=TestSupersede.first_change_ids,
+                        upstream_branch=TestSupersede.change_ids_branch)
 
         self.assertEquals(str(t.commit), TestSupersede.first_commit)
         self.assertNotEqual(str(t.commit), TestSupersede.second_commit)
@@ -54,9 +55,9 @@ class TestSupersede(testtools.TestCase):
     def test_multiple_change_id(self):
         """Test supersede initialization with multiple change ids"""
 
-        t  = s.Supersede(git_object=TestSupersede.first_commit,
-                         change_ids=TestSupersede.second_change_ids,
-                         upstream_branch=TestSupersede.change_ids_branch)
+        t = s.Supersede(git_object=TestSupersede.first_commit,
+                        change_ids=TestSupersede.second_change_ids,
+                        upstream_branch=TestSupersede.change_ids_branch)
 
         self.assertEquals(str(t.commit), TestSupersede.first_commit)
         self.assertNotEqual(str(t.commit), TestSupersede.second_commit)
@@ -88,17 +89,17 @@ class TestSupersede(testtools.TestCase):
     def test_mark(self):
         """Test Supersede mark"""
 
-        t  = s.Supersede(git_object=TestSupersede.first_commit,
-                 change_ids=TestSupersede.first_change_ids,
-                 upstream_branch=TestSupersede.change_ids_branch)
+        t = s.Supersede(git_object=TestSupersede.first_commit,
+                        change_ids=TestSupersede.first_change_ids,
+                        upstream_branch=TestSupersede.change_ids_branch)
 
         repo = r.Repo('.')
         try:
-          # Older git versions don't support --ignore-missing
-          repo.git.notes('--ref', TestSupersede.note_ref, 'remove',
-                         TestSupersede.first_commit)
+            # Older git versions don't support --ignore-missing
+            repo.git.notes('--ref', TestSupersede.note_ref, 'remove',
+                           TestSupersede.first_commit)
         except GitCommandError:
-          pass
+            pass
 
         t.mark()
 

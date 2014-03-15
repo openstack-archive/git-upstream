@@ -15,10 +15,11 @@ from argparse import ArgumentParser
 
 from git_upstream import commands as c
 
+
 class TestGetSubcommands(testtools.TestCase):
     """Test case for get_subcommands function"""
 
-    _available_subcommands = ('import', 'supersede' ,'drop')
+    _available_subcommands = ('import', 'supersede', 'drop')
 
     def test_available_subcommands(self):
         """Test available subcommands"""

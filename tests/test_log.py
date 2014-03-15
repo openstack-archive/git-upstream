@@ -47,11 +47,12 @@ class TestGetIncrementLevel(testtools.TestCase):
     def _test_increment_by_x(self, increment=1):
         """Utility function that tests a given increment"""
         levels = len(self._levels)
-        for level_no in range(levels-increment):
+        for level_no in range(levels - increment):
             for level in self._levels[level_no]:
                 result = l.get_increment_level(1, level)
-                self.assertEquals(self._levels[min(level_no+1, levels-1)][0].upper(),
-                                  result)
+                self.assertEquals(
+                    self._levels[min(level_no + 1, levels - 1)][0].upper(),
+                    result)
 
     def test_increments(self):
         """Test all possible increments for all possible default level"""

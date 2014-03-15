@@ -28,7 +28,8 @@ class CommandException(Exception):
 
 # following function is taken from git-review
 def run_command(cmd, status=False, env=None):
-    if not env: env = {}
+    if not env:
+        env = {}
     if VERBOSE:
         print(datetime.datetime.now(), "Running:", cmd)
     new_env = os.environ

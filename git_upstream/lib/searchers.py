@@ -131,7 +131,8 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
     def __init__(self, pattern="upstream/*", search_tags=False, remotes=None,
                  *args, **kwargs):
 
-        if not remotes: remotes = []
+        if not remotes:
+            remotes = []
         self._pattern = pattern
         self._references = ["refs/heads/{0}".format(self.pattern)]
 
@@ -160,7 +161,8 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
         """
         Searches the git history including local and remote branches, and tags
         if tag searching is enabled. References are included in the list to be
-        checked if they match the pattern that was specified in the constructor.
+        checked if they match the pattern that was specified in the
+        constructor.
         While 'git rev-list' supports a glob option to check all references, it
         isn't possible to anchor the pattern, so 'upstream/*' would match all
         of the following:
@@ -184,9 +186,8 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
             "Searching for most recent merge base with upstream branches")
 
         # process pattern given to get a list of refs to check
-        rev_list_args = self.git.for_each_ref(*self._references,
-                                              format="%(refname:short)"
-        ).splitlines()
+        rev_list_args = self.git.for_each_ref(
+            *self._references, format="%(refname:short)").splitlines()
         self.log.info(
             """\
             Upstream refs:
@@ -237,9 +238,9 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
         revsions = self.git.rev_list(*rev_list_args).splitlines()
 
         # Running 'git merge-base' is relatively expensive to pruning the list
-        # of revs to search since it needs to construct and walk a large portion
-        # of the tree for each call. If the constructed graph was retained
-        # betweens we could likely remove much of the code above.
+        # of revs to search since it needs to construct and walk a large
+        # portion of the tree for each call. If the constructed graph was
+        # retained betweens we could likely remove much of the code above.
         self.log.info(
             """\
             Running merge-base against each found upstream revision and target
@@ -264,8 +265,8 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
                     git rev-list --topo-order --max-count=1 --no-walk \\
                         %s
                 """, (" \\\n" + " " * 8).join(merge_bases))
-            sha1 = self.git.rev_list(*merge_bases, topo_order=True, max_count=1,
-                                     no_walk=True)
+            sha1 = self.git.rev_list(
+                *merge_bases, topo_order=True, max_count=1, no_walk=True)
             # now that we have the sha1, make sure to save the commit object
             self.commit = self.repo.commit(sha1)
             self.log.debug("Most recent merge-base commit is: '%s'",
@@ -418,7 +419,8 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
                 raise ValueError(
                     "Invalid object: no hexsha attribute for 'limit'")
             if not self.is_valid_commit(limit.hexsha):
-                raise ValueError("'limit' object does not contain a valid SHA1")
+                raise ValueError(
+                    "'limit' object does not contain a valid SHA1")
         self.limit = limit
 
         self._regex = None
@@ -609,7 +611,8 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
                 raise ValueError(
                     "Invalid object: no hexsha attribute for 'limit'")
             if not self.is_valid_commit(limit.hexsha):
-                raise ValueError("'limit' object does not contain a valid SHA1")
+                raise ValueError(
+                    "'limit' object does not contain a valid SHA1")
         self.limit = limit
 
         self._regex = None
