@@ -20,6 +20,7 @@
 import datetime
 import argparse
 from distutils.core import Command
+import os
 
 
 class BuildManpage(Command):
@@ -99,6 +100,11 @@ class BuildManpage(Command):
                               self.distribution.get_author_email())
         ret.append(('.SH AUTHORS\n.B %s\nwas written by %s.\n'
                     % (self._markup(app_name), self._markup(author))))
+
+        if os.path.exists('ACKNOWLEDGEMENTS'):
+            acknowledgements = open('ACKNOWLEDGEMENTS', 'r').read()
+            if acknowledgements != "":
+                ret.append(('.SH ACKNOWLEDGEMENTS\n%s\n' % acknowledgements))
 
         return ''.join(ret)
 
