@@ -23,12 +23,12 @@ Main parser module, which after parsing the top level options will hand
 off to the collected subcommands parsers.
 """
 
+import git
+
 import git_upstream.commands as commands
 from git_upstream.errors import GitUpstreamError
 import git_upstream.log as log
 import git_upstream.version
-from git_upstream.lib import utils
-from git_upstream.lib import note
 
 import subcommand
 import argparse
@@ -149,7 +149,7 @@ def main():
         filehandler.setFormatter(logging.Formatter(_format))
         logger.addHandler(filehandler)
 
-    if not utils.check_git_version(1, 7, 5):
+    if git.Git().version_info < (1, 7, 5):
         logger.fatal("Git-Upstream requires git version 1.7.5 or later")
         sys.exit(1)
 
