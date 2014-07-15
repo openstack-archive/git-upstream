@@ -78,7 +78,7 @@ fi
 log DEBUG "Installing git-upstream"
 easy_install -q $INSTALL_DIR >/dev/null 2>&1
 if [ $? -ne 0 ]; then
-  log ERROR "hp git installation failed!"
+  log ERROR "git-upstream installation failed!"
   exit 1
 fi
 

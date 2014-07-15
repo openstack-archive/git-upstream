@@ -17,7 +17,7 @@
 
 
 """
-Custom logging for HP git tool
+Custom logging for git-upstream tool
 
 Adds new 'NOTICE' level to standard logging library and provides helper
 functions for verbose/quiet CLI args to retreive the appropriate level

@@ -39,7 +39,7 @@ This means jobs run by Jenkins can save a detailed log file separately as an art
 
   It’s always possible for local changes to be superseded by upstream changes, so when these are identified and marked as such, we should drop them.
 
-  This can also occur where a change was applied locally, modified when being upstreamed based on review feedback and the resulting differences were ported to the HP project as well. While the original change will be automatically dropped, also useful to drop the additional ported changes automatically if possible, rather than have it cause conflicts.
+  This can also occur where a change was applied locally, modified when being upstreamed based on review feedback and the resulting differences were ported to the internal as well. While the original change will be automatically dropped, also useful to drop the additional ported changes automatically if possible, rather than have it cause conflicts.
 
 # Using git-upstream
 
@@ -162,6 +162,6 @@ To *Davide Guerri*, for picking up a rough python tool and turning it into somet
 
 Also to *Jon Paul Sullivan* and *Monty Taylor* to listening and providing a sounding board for different approaches.
 
-And finally to *Coleman Corrigan* among numerous others who acted as willing guinea pigs for the original manual approach. 
+And finally to *Coleman Corrigan* among numerous others who acted as willing guinea pigs for the original manual approach.
 
 Hope this eventually helped save you time and some hair.

@@ -10,7 +10,7 @@ At the time of writing the only way to get git-upstream is to clone it from its
 git repository.
 
 ```bash
-git clone git@gitlabhq.hpcloud.net:git-upstream
+git clone https://github.com/dguerri/git-upstream.git
 cd git-upstream
 # Install git-upstream itself
 python setup.py install
@@ -19,7 +19,7 @@ python setup.py install
 Or
 
 ```bash
-git clone git@gitlabhq.hpcloud.net:git-upstream
+git clone https://github.com/dguerri/git-upstream.git
 cd git-upstream
 easy_install .
 ```
@@ -39,28 +39,13 @@ pip show git-upstream
 ---
 Name: git-upstream
 Version: unknown-version
-Location: /Users/davide/Developer/HP/ve-git-upstream/lib/python2.7/site-packages/git-upstream-unknown_version-py2.7.egg
+Location: ../ve-git-upstream/lib/python2.7/site-packages/git-upstream-unknown_version-py2.7.egg
 Requires: GitPython
 
 ~# git-upstream --help
 usage: git-upstream [--version] [-h] [-q | -v] <command> ...
-Command-line tool for the HP Cloud workflow Main parser module, which after
-parsing the top level options will hand off to the collected subcommands
-parsers.
-optional arguments:
-  --version      show program's version number and exit
-  -h, --help     show this help message and exit
-  -q, --quiet    Suppress additional output except for errors, conflicts with
-                 --verbose
-  -v, --verbose  Increase verbosity from commands, conflicts with --quiet. May
-                 be set more than once.
-commands:
-  <command>
-    help         Display help about this program or one of its commands.
-    drop         Mark a commit as dropped.
-    import       Import code from specified upstream branch.
-    supersede    Mark a commit as superseded by a set of change-ids.
-See "git-upstream help COMMAND" for help on a specific command.
+
+[...]
 ```
 
 ## Initial import of an upstream project
