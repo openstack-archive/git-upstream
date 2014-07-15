@@ -22,10 +22,10 @@ import argparse
 from distutils.core import Command
 
 
-class CreateManpage(Command):
+class BuildManpage(Command):
 
     user_options = []
-    command_name = 'create_manpage'
+    command_name = 'build_manpage'
 
     def initialize_options(self):
         from git_upstream import main
