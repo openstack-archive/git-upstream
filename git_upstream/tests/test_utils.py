@@ -93,7 +93,7 @@ class TestCheckGitVersion(testtools.TestCase):
         """
 
         _maj = TestCheckGitVersion.get_current_git_version()[0]
-        result = u.check_git_version(_maj, 0, 999)
+        result = u.check_git_version(_maj, 0, 0)
         self.assertEquals(True, result)
 
     def test_lesser_revision(self):
