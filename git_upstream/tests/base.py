@@ -14,10 +14,40 @@
 # under the License.
 
 import os
+import tempfile
 
-import git
 import fixtures
+import git
 import testtools
+
+
+LOREM_IPSUM = """\
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy
+nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi
+enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis
+nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in
+hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu
+feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui
+blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla
+facilisi.
+
+Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit
+lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure
+dolor in hendrerit in vulputate velit esse molestie consequat, vel illum
+dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio
+dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te
+feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing
+elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam
+erat volutpat.
+
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie
+consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et
+accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit
+augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet,
+consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut
+laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis
+nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea
+commodo consequat."""
 
 
 class DiveDir(fixtures.Fixture):
@@ -36,11 +66,12 @@ class DiveDir(fixtures.Fixture):
 
 
 class GitRepo(fixtures.Fixture):
-    """Create a copy git repo in which to operate."""
+    """Create an empty git repo in which to operate."""
 
-    def __init__(self, repo):
-        self.repo = repo
+    def __init__(self):
+        self.repo = None
         self.path = ''
+        self._file_list = set()
 
     def setUp(self):
         super(GitRepo, self).setUp()
@@ -48,7 +79,52 @@ class GitRepo(fixtures.Fixture):
         self.addCleanup(tempdir.cleanUp)
         tempdir.setUp()
         self.path = os.path.join(tempdir.path, 'git')
-        self.repo.clone(self.path)
+        os.mkdir(self.path)
+        g = git.Git(self.path)
+        g.init()
+        self.repo = git.Repo(self.path)
+        self.repo.git.config('user.email', 'user@example.com')
+        self.repo.git.config('user.name', 'Example User')
+        self._create_file_commit()
+
+    def _create_file(self, contents=None):
+        if not contents:
+            contents = LOREM_IPSUM
+
+        # always want to ensure the files added to the repo are unique no
+        # matter which branch they are added to, as otherwise there may
+        # be conflicts caused by replaying local changes and performing
+        # merges
+        while True:
+            tmpfile = tempfile.NamedTemporaryFile(dir=self.repo.working_dir,
+                                                  delete=False)
+            if tmpfile.name not in self._file_list:
+                self._file_list.add(tmpfile.name)
+                break
+            tmpfile.close()
+            os.remote(tmpfile.name)
+        tmpfile.write(contents)
+        tmpfile.close()
+        return tmpfile.name
+
+    def _create_file_commit(self, change_id=None):
+        filename = self._create_file()
+        self.repo.git.add(filename)
+        message = "Adding %s" % os.path.basename(filename)
+        if change_id:
+            message = message + "\n\nChange-Id: %s" % change_id
+        self.repo.git.commit(m=message)
+
+    def add_commits(self, num=1, ref="HEAD", change_ids=None):
+        """Create the given number of commits using generated files"""
+        if ref != "HEAD":
+            self.repo.git.checkout(ref)
+
+        num = max(num, len(change_ids))
+        ids = list(change_ids) + [None] * (num - len(change_ids))
+
+        for x in range(num):
+            self._create_file_commit(ids[x])
 
 
 class BaseTestCase(testtools.TestCase):
@@ -57,8 +133,7 @@ class BaseTestCase(testtools.TestCase):
     def setUp(self):
         super(BaseTestCase, self).setUp()
 
-        repo_path = self.useFixture(GitRepo(git.Repo('.'))).path
+        self.testrepo = self.useFixture(GitRepo())
+        repo_path = self.testrepo.path
         self.useFixture(DiveDir(repo_path))
-        repo = git.Repo('.')
-        repo.git.config('user.email', 'user@example.com')
-        repo.git.config('user.name', 'Example User')
+        self.repo = self.testrepo.repo

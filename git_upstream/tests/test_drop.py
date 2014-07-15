@@ -17,58 +17,57 @@
 
 from git_upstream.commands import drop as d
 from git_upstream.tests import base
-from git import repo as r
 from git import GitCommandError
 
 
 class TestDrop(base.BaseTestCase):
     """Test case for Drop class"""
 
-    first_commit = "bd6b9eefe961abe8c15cb5dc6905b92e14714a4e"
-    second_commit = "05fac847a5629e36050dcd69b9a782b2645d3cc7"
     invalid_commit = "this_is_an_invalid_commit"
     author = "Walter White <heisenberg@hp.com>"
     note_ref = 'refs/notes/upstream-merge'
 
+    def setUp(self):
+        super(TestDrop, self).setUp()
+        self.first_commit = self.repo.commit()
+
     def test_valid_parameters(self):
         """Test drop initialization and read properties"""
 
-        repo = r.Repo('.')
-        automatic_author = '%s <%s>' % (repo.git.config('user.name'),
-                                        repo.git.config('user.email'))
-        t = d.Drop(git_object=TestDrop.first_commit)
+        automatic_author = '%s <%s>' % (self.repo.git.config('user.name'),
+                                        self.repo.git.config('user.email'))
+        t = d.Drop(git_object=self.first_commit)
         self.assertEquals(t.author, automatic_author)
 
-        t = d.Drop(git_object=TestDrop.first_commit, author=TestDrop.author)
-        self.assertEquals(t.author, TestDrop.author)
+        t = d.Drop(git_object=self.first_commit, author=self.author)
+        self.assertEquals(t.author, self.author)
 
     def test_invalid_commit(self):
         """Test drop initialization with invalid commit"""
 
         self.assertRaises(d.DropError, d.Drop,
-                          git_object=TestDrop.invalid_commit)
+                          git_object=self.invalid_commit)
 
     def test_mark(self):
         """Test drop mark"""
 
-        t = d.Drop(git_object=TestDrop.first_commit, author=TestDrop.author)
+        t = d.Drop(git_object=self.first_commit, author=self.author)
 
-        repo = r.Repo('.')
         try:
             # Older git versions don't support --ignore-missing so we need to
             # catch GitCommandError exception
-            repo.git.notes('--ref', TestDrop.note_ref, 'remove',
-                           TestDrop.first_commit)
+            self.repo.git.notes('--ref', self.note_ref, 'remove',
+                                self.first_commit)
         except GitCommandError:
             pass
 
         t.mark()
 
         self.assertRegexpMatches(
-            '^Dropped: %s' % TestDrop.author,
-            repo.git.notes('--ref', TestDrop.note_ref, 'show',
-                           TestDrop.first_commit)
+            '^Dropped: %s' % self.author,
+            self.repo.git.notes('--ref', self.note_ref, 'show',
+                                self.first_commit)
         )
 
-        repo.git.notes('--ref', TestDrop.note_ref, 'remove',
-                       TestDrop.first_commit)
+        self.repo.git.notes('--ref', self.note_ref, 'remove',
+                            self.first_commit)

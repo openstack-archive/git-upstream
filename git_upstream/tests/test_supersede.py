@@ -17,7 +17,6 @@
 
 from git_upstream.commands import supersede as s
 from git_upstream.tests import base
-from git import repo as r
 from git import GitCommandError
 
 
@@ -36,84 +35,90 @@ class TestSupersede(base.BaseTestCase):
     invalid_change_ids_branch = "this_is_an_invalid_change_ids_branch"
     note_ref = 'refs/notes/upstream-merge'
 
+    def setUp(self):
+        super(TestSupersede, self).setUp()
+        self.first_commit = self.repo.commit()
+        self.testrepo.add_commits(change_ids=self.first_change_ids)
+        self.second_commit = self.repo.commit()
+        self.testrepo.add_commits(change_ids=self.second_change_ids)
+
     def test_valid_parameters(self):
         """Test supersede initialization and read properties"""
 
-        t = s.Supersede(git_object=TestSupersede.first_commit,
-                        change_ids=TestSupersede.first_change_ids,
-                        upstream_branch=TestSupersede.change_ids_branch)
+        t = s.Supersede(git_object=self.first_commit,
+                        change_ids=self.first_change_ids,
+                        upstream_branch=self.change_ids_branch)
 
-        self.assertEquals(str(t.commit), TestSupersede.first_commit)
-        self.assertNotEqual(str(t.commit), TestSupersede.second_commit)
+        self.assertEquals(t.commit, self.first_commit)
+        self.assertNotEqual(t.commit, self.second_commit)
         self.assertEqual(str(t.change_ids_branch),
-                         TestSupersede.change_ids_branch)
+                         self.change_ids_branch)
         self.assertNotEqual(str(t.change_ids_branch),
-                            TestSupersede.invalid_change_ids_branch)
+                            self.invalid_change_ids_branch)
 
     def test_invalid_commit(self):
         """Test supersede initialization with invalid commit"""
 
         self.assertRaises(s.SupersedeError, s.Supersede,
-                          git_object=TestSupersede.invalid_commit,
-                          change_ids=TestSupersede.first_change_ids,
-                          upstream_branch=TestSupersede.change_ids_branch)
+                          git_object=self.invalid_commit,
+                          change_ids=self.first_change_ids,
+                          upstream_branch=self.change_ids_branch)
 
     def test_multiple_change_id(self):
         """Test supersede initialization with multiple change ids"""
 
-        t = s.Supersede(git_object=TestSupersede.first_commit,
-                        change_ids=TestSupersede.second_change_ids,
-                        upstream_branch=TestSupersede.change_ids_branch)
+        t = s.Supersede(git_object=self.first_commit,
+                        change_ids=self.second_change_ids,
+                        upstream_branch=self.change_ids_branch)
 
-        self.assertEquals(str(t.commit), TestSupersede.first_commit)
-        self.assertNotEqual(str(t.commit), TestSupersede.second_commit)
+        self.assertEquals(t.commit, self.first_commit)
+        self.assertNotEqual(t.commit, self.second_commit)
 
     def test_invalid_cids(self):
         """Test supersede initialization with invalid cids"""
 
         self.assertRaises(s.SupersedeError, s.Supersede,
-                          git_object=TestSupersede.first_commit,
-                          change_ids=TestSupersede.invalid_change_ids,
-                          upstream_branch=TestSupersede.change_ids_branch)
+                          git_object=self.first_commit,
+                          change_ids=self.invalid_change_ids,
+                          upstream_branch=self.change_ids_branch)
 
     def test_default_upstream_branch(self):
         """Test supersede initialization with no branch name"""
 
         self.assertRaises(s.SupersedeError, s.Supersede,
-                          git_object=TestSupersede.first_commit,
-                          change_ids=TestSupersede.invalid_change_ids,
+                          git_object=self.first_commit,
+                          change_ids=self.invalid_change_ids,
                           upstream_branch=
-                          TestSupersede.invalid_change_ids_branch)
+                          self.invalid_change_ids_branch)
 
     def test_no_upstream_branch(self):
         """Test supersede initialization with invalid branch name"""
 
         self.assertRaises(s.SupersedeError, s.Supersede,
-                          git_object=TestSupersede.first_commit,
-                          change_ids=TestSupersede.invalid_change_ids)
+                          git_object=self.first_commit,
+                          change_ids=self.invalid_change_ids)
 
     def test_mark(self):
         """Test Supersede mark"""
 
-        t = s.Supersede(git_object=TestSupersede.first_commit,
-                        change_ids=TestSupersede.first_change_ids,
-                        upstream_branch=TestSupersede.change_ids_branch)
+        t = s.Supersede(git_object=self.first_commit,
+                        change_ids=self.first_change_ids,
+                        upstream_branch=self.change_ids_branch)
 
-        repo = r.Repo('.')
         try:
             # Older git versions don't support --ignore-missing
-            repo.git.notes('--ref', TestSupersede.note_ref, 'remove',
-                           TestSupersede.first_commit)
+            self.repo.git.notes('--ref', self.note_ref, 'remove',
+                                self.first_commit)
         except GitCommandError:
             pass
 
         t.mark()
 
         self.assertRegexpMatches(
-            '^Superseded-by: %s' % TestSupersede.first_change_ids,
-            repo.git.notes('--ref', TestSupersede.note_ref, 'show',
-                           TestSupersede.first_commit)
+            '^Superseded-by: %s' % self.first_change_ids,
+            self.repo.git.notes('--ref', self.note_ref, 'show',
+                                self.first_commit)
         )
 
-        repo.git.notes('--ref', TestSupersede.note_ref, 'remove',
-                       TestSupersede.first_commit)
+        self.repo.git.notes('--ref', self.note_ref, 'remove',
+                            self.first_commit)
