@@ -43,7 +43,8 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
     def __init__(self, branch=None, upstream=None, import_branch=None,
                  extra_branches=None, *args, **kwargs):
-        if not extra_branches: extra_branches = []
+        if not extra_branches:
+            extra_branches = []
         self._branch = branch
         self._upstream = upstream
         self._import_branch = import_branch
@@ -72,7 +73,8 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
         invalid_ref = False
         for branch in branches:
-            if not any(head for head in self.repo.heads if head.name == branch):
+            if not any(head for head in self.repo.heads
+                       if head.name == branch):
                 msg = "Specified ref does not exist: '%s'"
                 self.log.error(msg, branch)
                 invalid_ref = True
@@ -233,7 +235,8 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 if len(commit.parents) < 2:
                     ancestors.add(commit.hexsha)
                 elif any(p.hexsha not in ancestors for p in commit.parents):
-                    self.log.debug("Rebase upto commit SHA1: %s", commit.hexsha)
+                    self.log.debug("Rebase upto commit SHA1: %s",
+                                   commit.hexsha)
                     idx = idx + 1
                     break
                 else:
@@ -399,7 +402,8 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             # the tree object id's match
             if self.git.rev_parse("HEAD^{tree}") != \
                     self.git.rev_parse("%s^{tree}" % self.import_branch):
-                raise ImportUpstreamError("Resulting tree does not match import")
+                raise ImportUpstreamError(
+                    "Resulting tree does not match import")
         except (GitCommandError, ImportUpstreamError):
             self.log.error(
                 """\
@@ -517,7 +521,8 @@ class LocateChangesWalk(LocateChangesStrategy):
         self.filters.append(ReverseCommitFilter())
         self.filters.append(DroppedCommitFilter())
         self.filters.append(
-            SupersededCommitFilter(self.search_ref, limit=self.searcher.commit))
+            SupersededCommitFilter(self.search_ref,
+                                   limit=self.searcher.commit))
 
         return super(LocateChangesWalk, self).filtered_iter()
 
@@ -533,8 +538,8 @@ class LocateChangesWalk(LocateChangesStrategy):
                 help='Force overwrite of existing import branch if it exists.')
 @subcommand.arg('--merge', dest='merge', required=False, action='store_true',
                 default=True,
-                help='Merge the resulting import branch into the target branch '
-                     'once complete')
+                help='Merge the resulting import branch into the target branch'
+                     ' once complete')
 @subcommand.arg('--no-merge', dest='merge', required=False,
                 action='store_false',
                 help="Disable merge of the resulting import branch")
@@ -571,7 +576,7 @@ def do_import(args):
     """
 
     logger = log.get_logger('%s.%s' % (__name__,
-                                      inspect.stack()[0][0].f_code.co_name))
+                                       inspect.stack()[0][0].f_code.co_name))
 
     import_upstream = ImportUpstream(branch=args.branch,
                                      upstream=args.upstream_branch,

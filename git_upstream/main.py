@@ -17,7 +17,7 @@
 
 
 """
-Command-line tool for the HP Cloud workflow
+Command-line tool for tracking upstream revisions
 
 Main parser module, which after parsing the top level options will hand
 off to the collected subcommands parsers.
@@ -28,6 +28,7 @@ from git_upstream.errors import GitUpstreamError
 import git_upstream.log as log
 import git_upstream.version
 from git_upstream.lib import utils
+from git_upstream.lib import note
 
 import subcommand
 import argparse
@@ -97,11 +98,11 @@ def help(parser, args, commands=None):
         parser.print_help()
 
 
-def main(argv):
+def main():
     (cmds, parser) = get_parser()
 
-    if not argv:
-        help(parser, argv)
+    if not sys.argv:
+        help(parser, sys.argv)
         return 0
 
     if argparse_loaded:

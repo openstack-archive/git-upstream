@@ -69,12 +69,13 @@ class GitUpstreamCompatCommit(Commit):
 
             message = '\n'.join(messages)
 
-            commits.append(GitUpstreamCompatCommit(repo, id=id, parents=parents,
-                                             tree=tree, author=author,
-                                             authored_date=authored_date,
-                                             committer=committer,
-                                             committed_date=committed_date,
-                                             message=message))
+            commits.append(GitUpstreamCompatCommit(
+                repo, id=id, parents=parents,
+                tree=tree, author=author,
+                authored_date=authored_date,
+                committer=committer,
+                committed_date=committed_date,
+                message=message))
 
             while lines:
                 if not lines[0].strip():

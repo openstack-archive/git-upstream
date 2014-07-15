@@ -21,7 +21,7 @@ from git_upstream.log import LogDedentMixin
 from subprocess import call
 import os
 
-REBASE_EDITOR_SCRIPT = "rebase-editor.py"
+REBASE_EDITOR_SCRIPT = "rebase-editor"
 
 # insure name of file will match any naming filters used by editors to
 # enable syntax highlighting

@@ -19,13 +19,14 @@
 
 import datetime
 import argparse
-from distutils.command.build import build
 from distutils.core import Command
+import os
 
 
-class CreateManpage(Command):
+class BuildManpage(Command):
 
     user_options = []
+    command_name = 'build_manpage'
 
     def initialize_options(self):
         from git_upstream import main
@@ -100,6 +101,11 @@ class CreateManpage(Command):
         ret.append(('.SH AUTHORS\n.B %s\nwas written by %s.\n'
                     % (self._markup(app_name), self._markup(author))))
 
+        if os.path.exists('ACKNOWLEDGEMENTS'):
+            acknowledgements = open('ACKNOWLEDGEMENTS', 'r').read()
+            if acknowledgements != "":
+                ret.append(('.SH ACKNOWLEDGEMENTS\n%s\n' % acknowledgements))
+
         return ''.join(ret)
 
     def run(self):
@@ -129,4 +135,3 @@ class ManPageFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
     def format_usage(self, usage):
         return ManPageFormatter._markup(usage)
-

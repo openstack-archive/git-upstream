@@ -58,15 +58,15 @@ def rebase_replace_insn(path, istream):
             print stripped
 
 
-if __name__ == '__main__':
+def main():
     parser = ArgumentParser(
         description=__doc__.strip(),
     )
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help='Enable verbose mode')
     parser.add_argument('-i', '--interactive', action='store_true',
-                        help='Enable interactive mode, where the user can edit '
-                             'the list of commits before being applied')
+                        help='Enable interactive mode, where the user can edit'
+                             ' the list of commits before being applied')
     parser.add_argument('ifile', metavar='<new-list>',
                         help='File containing the new list of instructions to '
                              'be placed into the rebase instructions file.')
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     # calling code should only override one of the two editor variables,
     # starting with the one with the highest precedence
-    editor=None
+    editor = None
     env = os.environ
     for var in ['GIT_SEQUENCE_EDITOR', 'GIT_EDITOR']:
         editor = env.get('GIT_UPSTREAM_' + var, None)
@@ -121,3 +121,6 @@ if __name__ == '__main__':
                      "environment to call as requested by the "
                      "--interactive option.\n")
     sys.exit(2)
+
+if __name__ == '__main__':
+    return main()

@@ -61,7 +61,8 @@ class Drop(LogDedentMixin, GitMixin):
             # test commit "id" presence
             self._commit = self.repo.commit(git_object)
         except BadObject:
-            raise DropError("Commit '%s' not found (or ambiguous)" % git_object)
+            raise DropError(
+                "Commit '%s' not found (or ambiguous)" % git_object)
 
         if not author:
             self._author = '%s <%s>' % (self.repo.git.config('user.name'),
