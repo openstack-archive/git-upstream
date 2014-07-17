@@ -1,0 +1,10 @@
+What is git-upstream?
+
+git-upstream is an open source Python application that can be used to keep in
+sync with upstream open source projects, mainly OpenStack.
+
+git-upstream provides new git subcommands to support rebasing of local-carried
+patches on top of upstream repositories. It provides commands to ease the use of
+git for who needs to integrate big upstream projects in their environment (i.e.,
+feature branch creation/finishing, release starting/finishing).
+The operations are performed using Git commands.
