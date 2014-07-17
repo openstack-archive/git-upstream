@@ -17,7 +17,7 @@
 
 from git_upstream.errors import GitUpstreamError
 from git_upstream.log import LogDedentMixin
-from git_upstream.lib import note
+from git_upstream.lib import note  # noqa
 from git_upstream.lib.utils import GitMixin
 from git_upstream.lib.searchers import CommitMessageSearcher
 from git_upstream import subcommand, log
@@ -135,11 +135,11 @@ class Supersede(LogDedentMixin, GitMixin):
         Check if a supersede header is already present in the note containing
         one of change ids passed on the command line
         """
-        note = self.commit.note(note_ref=Supersede.NOTE_REF)
-        if note:
+        new_note = self.commit.note(note_ref=Supersede.NOTE_REF)
+        if new_note:
             pattern = '^%s\s?(%s)$' % (Supersede.SUPERSEDE_HEADER,
                                        '|'.join(self.change_ids))
-            m = re.search(pattern, note, re.MULTILINE | re.IGNORECASE)
+            m = re.search(pattern, new_note, re.MULTILINE | re.IGNORECASE)
             if m:
                 self.log.warning(
                     ("Change-Id '%s' already present in the note for commit" +
