@@ -23,7 +23,7 @@ import os
 
 REBASE_EDITOR_SCRIPT = "rebase-editor"
 
-# insure name of file will match any naming filters used by editors to
+# ensure name of file will match any naming filters used by editors to
 # enable syntax highlighting
 REBASE_EDITOR_TODO = "git-upstream/git-rebase-todo"
 
