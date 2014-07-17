@@ -18,9 +18,6 @@
 
 """
 Command-line tool for tracking upstream revisions
-
-Main parser module, which after parsing the top level options will hand
-off to the collected subcommands parsers.
 """
 
 import git
