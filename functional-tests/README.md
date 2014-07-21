@@ -1,4 +1,4 @@
-# How to run
+# How to run functional tests
 
 Just run
 
@@ -20,7 +20,7 @@ But that will need a git-upstream executable in your path.
 
 # Creating more tests
 
-Simply copy
+Copy the following file
 
     sample-test_name_here.sh
 

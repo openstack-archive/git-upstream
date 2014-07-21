@@ -66,7 +66,7 @@ git upstream import [-h] [-d] [-i] [-f] [--merge] [--no-merge]
 
 ```
 positional arguments:
-   <upstream-branch>     Upstream branch to import. Must be specified if you
+  <upstream-branch>     Upstream branch to import. Must be specified if you
                         wish to provide additional branches.
   <branches>            Branches to additionally merge into the import branch
                         using default git merging behaviour
@@ -94,7 +94,9 @@ optional arguments:
 
 ### Description
 
-Mark a commit as dropped. Marked commits will be skipped during the upstream rebasing process. See also the "git upstream import" command.
+Mark a commit as dropped. Marked commits will be skipped during the upstream rebasing process.
+
+See also the "git upstream import" command.
 
 ### Usage
 
@@ -114,13 +116,24 @@ optional arguments:
                         Git author for the mark
 ```
 
+### Note
+
+Commits will be marked with git notes in the namespace `refs/notes/upstream-merge`.
+To list of commit id marked with a note, run `git notes --ref refs/notes/upstream-merge`.
+To show a specific note run `git notes --ref refs/notes/upstream-merge show <marked commit sha1>`
+
+
+As `drop` uses git notes to mark commits that have to be skipped during import, notes should be present on the cloned copy of your repository. Thus, if you are going to create notes on a system and perform the actual import on a different system, **notes must be present on the latter**.
+You can push notes directly to git repository on the target system or push them in a different repository and then pull notes from your target system.
+
 ## supersede
 
 ### Description
 
-Mark a commit as superseded by a set of change-ids. Marked commits will be
-skipped during the upstream rebasing process. See also the "git upstream
-import" command.
+Mark a commit as superseded by a set of change-ids. Marked commits will be skipped during the upstream rebasing process **only if all the specified change-ids are present in `<upstream-branch>` during import**.
+If you want to unconditionally drop a commit, use the `drop` command instead.
+
+See also the "git upstream import" command.
 
 ### Usage
 
@@ -150,6 +163,19 @@ optional arguments:
                         Search change ids values in <upstream-branch> branch
                         (default: upstream/master)
 ```
+
+### Note
+
+*This command doesn't perform the actual drop*. Commits to be dropped during the next import, will be marked with git notes in the namespace `refs/notes/upstream-merge`.
+There is no need to retain notes after an import dropped the correspondent commits, of course it doesn't harm keeping them either.
+
+To list of commit id marked with a note, run `git notes --ref refs/notes/upstream-merge`.
+To show a specific note run `git notes --ref refs/notes/upstream-merge show <marked commit sha1>`.
+
+
+As `supersede` uses git notes to mark commits that have to be skipped during import, notes should be present on the cloned copy of your repository. Thus, if you are going to create notes on a system and perform the actual import on a different system, **notes must be present on the latter**.
+You can push notes directly to git repository on the target system or push them in a different repository and then pull notes from your target system.
+
 
 # Authors
 git-upstream was written by Darragh Bailey <dbailey@hp.com>.
