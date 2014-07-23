@@ -1,0 +1,8 @@
+Darragh Bailey <dbailey@hp.com>
+Davide Guerri <davide.guerri@hp.com>
+Jon-Paul Sullivan <jonpaul.sullivan@hp.com>
+Monty Taylor <mordred@inaugust.com>
+
+This list has been extracted with:
+
+git log --format='%aN <%aE>' | grep -v Jenkins | sort -u

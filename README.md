@@ -176,6 +176,9 @@ To show a specific note run `git notes --ref refs/notes/upstream-merge show <mar
 As `supersede` uses git notes to mark commits that have to be skipped during import, notes should be present on the cloned copy of your repository. Thus, if you are going to create notes on a system and perform the actual import on a different system, **notes must be present on the latter**.
 You can push notes directly to git repository on the target system or push them in a different repository and then pull notes from your target system.
 
+# Known issues
+
+Please see `KNOWN-ISSUES.md`.
 
 # Authors
 git-upstream was written by Darragh Bailey <dbailey@hp.com>.
