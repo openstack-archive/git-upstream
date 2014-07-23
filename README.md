@@ -4,7 +4,7 @@ git-upstream is an open source Python application that can be used to keep in sy
 
 git-upstream provides new git subcommands to support rebasing of local-carried patches on top of upstream repositories. It provides commands to ease the use of git for who needs to integrate big upstream projects in their environment. The operations are performed using Git commands.
 
-**Note**: currently git-upstream can be used only for projects that are maintained with Gerrit as it relies on the presence of Change-Id's.
+**Note**: currently git-upstream can be used only for projects that are maintained with Gerrit as it relies on the presence of Change-IDs.
 Nevertheless, the code is quite modular and can be extended to use any part of commit message (e.g., other headers).
 
 Specifically, current git-upstream version supports the following features
@@ -40,6 +40,26 @@ This means jobs run by Jenkins can save a detailed log file separately as an art
   It’s always possible for local changes to be superseded by upstream changes, so when these are identified and marked as such, we should drop them.
 
   This can also occur where a change was applied locally, modified when being upstreamed based on review feedback and the resulting differences were ported to the internal as well. While the original change will be automatically dropped, also useful to drop the additional ported changes automatically if possible, rather than have it cause conflicts.
+
+# git-upstream installation
+
+At the time of writing, there are two ways to install git-upstream: cloning its git repository or using pip.
+
+## Installing from git repository
+
+```bash
+git clone https://github.com/dguerri/git-upstream.git
+cd git-upstream
+# Install git-upstream itself
+python setup.py install
+```
+
+## Installing from PyPI
+
+```bash
+pip install git-upstream
+```
+See also https://pypi.python.org/pypi/git-upstream
 
 # Using git-upstream
 

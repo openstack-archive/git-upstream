@@ -6,8 +6,7 @@ It is also assumed you are tracking releases, which is only one of the possible 
 
 ## Install git-upstream on a development workstation
 
-At the time of writing the only way to get git-upstream is to clone it from its
-git repository.
+Clone git-upstream from its git repository.
 
 ```bash
 git clone https://github.com/dguerri/git-upstream.git
