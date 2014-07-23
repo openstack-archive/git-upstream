@@ -1,0 +1,99 @@
+CHANGES
+=======
+
+0.9.0
+-----
+
+* Add AUTHORS and ChangeLog files
+* Add KNOWN-ISSUES.md file
+* General documentation improvements
+* Update tests to create isolate git repo
+* Ensure GitPython is present for setup
+* pep8 and whitespace fixups
+* Fix "'return' outside function" error
+* Remove superfluous doc in the main module
+* Fix a typo in rebaseeditor comment
+* Fix README extension also adding a proper description file
+* Remove remaining HP references
+* Add git-upstream documentation
+* Use GitPython version_info
+* Fix test_lesser_minor unit test
+* Add acknowledges file
+* Rename generate man page command
+* Install bash completion calls
+* Move tests under module
+* Make unittests work with testr
+* Fixed pep8 errors
+* Prepared for upstream integration
+* Rename bash completion script
+* Fix dependencies and build-time commands
+* Update .gitreview
+* Rename hpgit to git-upstream, also changing its license
+* Fix filtering regex for superseded commits
+* Fix hpgit wrong assumption about upstream branches
+* Add drop and supersede commands
+* Allow running of a set of functional tests
+* Fix .gitignore
+* Fix simple_rebase functional test
+* Add functional test framework and some basic tests
+* Add generated hpgit.1 file to .gitignore
+* Avoid importing main during hpgit installation
+* Add setup.cfg
+* Add a check for git version
+* Add ‘dry-run’ command
+* Add commands and log unit tests based on python testtools
+* Improve .gitignore
+* Install rebase-editor.py as a script
+* Fixes crash if no merge-base commit is found
+* Fix crash when there are no local changes
+* Fix a crash if there is no commit to be processed
+* Fixes 'setup doesn't install rebase-editor.py'
+* Make the arcomplete package optional
+* Autogenerate man pages for hpgit subcommands
+* Add bash autocomplete code
+* Add missing dependency (GitPython)
+* Force string representation of active_branch property
+* Ensure editor can be a multi arg command
+* Line up logging output
+* Implement basic finish functionality
+* Include missing build dependency
+* Fixes for debian packaging
+* Add support for latest GitPython
+* Rename CommitSHA1Filter as a Transform
+* Process filter generators once
+* Add filter to discard duplicate changes based on Gerrit Change-Ids
+* Create version file dynamically based on tags
+* Linearise the the commit history before rebasing
+* Catch missing previous import and trying to extend list with NoneType
+* Apply changes using custom rebase editor
+* Include additional branches in import branch name
+* Move branch reset code to separate method
+* Minor correction to log message
+* Add fallback describe
+* Provide better error if tool run outside of a git directory
+* Add warning message if additional branches are being dropped
+* Remove incorrect reference to args no longer available
+* Create and add default strategy to list commits
+* Searchers and filters to locate and process commits
+* Check for 'detached' state and invalid branches passed
+* Correctly init classes in MRO
+* Fix message when branch cannot be found
+* Convert similar decorators into single decorate that accepts an argument
+* Support aliased logging levels
+* Move git related properties into a mixin
+* Ensure argument defined for use with log message
+* Remove unused methods or raise exceptions
+* Insert correct copyright and licenses
+* Create a logging mixin class that auto dedents log messages
+* Use logging for output to stdout, stderr and log files
+* Inherit from object class to enable property decorator to function
+* Reduce line lengths and standarize function descriptions
+* Add missing global and fix incorrect exception
+* Rewrite import-upstream subcommand opts/args
+* Add initial subcommand for creating import branches
+* Add framework code for subcommand support
+* Add ignores for python byte-compiled files and pkg files
+* Initial packaging
+* Initial hpgit python project
+* Add README file for project
+* Initialise project with .gitreview file
