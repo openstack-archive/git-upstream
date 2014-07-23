@@ -2,7 +2,7 @@
 
 git-upstream is an open source Python application that can be used to keep in sync with upstream open source projects, mainly OpenStack.
 
-git-upstream provides new git subcommands to support rebasing of local-carried patches on top of upstream repositories. It provides commands to ease the use of git for who needs to integrate big upstream projects in their environment (i.e., feature branch creation/finishing, release starting/finishing). The operations are performed using Git commands.
+git-upstream provides new git subcommands to support rebasing of local-carried patches on top of upstream repositories. It provides commands to ease the use of git for who needs to integrate big upstream projects in their environment. The operations are performed using Git commands.
 
 **Note**: currently git-upstream can be used only for projects that are maintained with Gerrit as it relies on the presence of Change-Id's.
 Nevertheless, the code is quite modular and can be extended to use any part of commit message (e.g., other headers).
