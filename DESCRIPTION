@@ -3,12 +3,31 @@
 git-upstream is an open source Python application that can be used to keep in
 sync with upstream open source projects, mainly OpenStack.
 
+The main usecase for this tool is for people who are doing active contributions
+to repositories that are mirrors of OpenStack repositories, with the intention
+that most of those contributions will be submitted to review.openstack.org at
+some point.
+If you are running a public cloud based on OpenStack, having local changes
+needed to use it in your environment, you can use git-upstream to stay up to
+date with the upstream master in a easier way (with respect to using raw git
+commands).
+
 git-upstream provides new git subcommands to support rebasing of local-carried
-patches on top of upstream repositories. It provides commands to ease the use of
-git for who needs to integrate big upstream projects in their environment.
+patches on top of upstream repositories. It provides commands to ease the use
+of git for who needs to integrate big upstream projects in their environment.
 The operations are performed using Git commands.
 
 See also README.md, USAGE.md and KNOWN-ISSUES.md files.
+
+- What git-upstream is not
+
+The name of this tool includes the "git-" prefix because of the Git naming
+convention that a Git subcommand must have. So, as git-review (usually invoked
+with "git review [...]"), this tool can be invoked using "git upstream [...]".
+That said, and even if git-upstream currently uses Change-Ids, it is not
+strictly related to git-review.
+In other words, git-review can (and most of the time will) be used without even
+knowing about git-upstream existence.
 
 - How can I contribute to git-upstream?
 
@@ -16,4 +35,5 @@ Git-upstream is currently (and temporarily) hosted on Github, here:
 
 https://github.com/dguerri/git-upstream
 
-As any other Github project, just fork it, implement your changes and submit a pull request.
+As any other Github project, just fork it, implement your changes and submit a
+pull request.
