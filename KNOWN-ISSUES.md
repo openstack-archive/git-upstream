@@ -40,5 +40,10 @@ This requires walking the list of initial found (2nd diagram) and examining each
 
 ## Workaround
 
-Waiting for a proper fix to be implemented, a workaround for this issue would be to perform the import only into a branch (usually master) which has no "pending" commit in other branches to be merged.
+Waiting for a proper fix to be implemented, a workaround for this issue would be to perform the import only into a branch (usually master) which has no "pending" commits in other branches to be merged that span across different imports.
+
 For gerrit this means not having pending reviews spanning across different git-upstream import command runs.
+
+This could be achieved in two different ways:
+ 1) merging all pending reviews before an import;
+ 2) rebasing all pending reviews after an import.
