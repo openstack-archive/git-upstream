@@ -58,7 +58,7 @@ At the time of writing, there are two ways to install git-upstream: cloning its 
 ## Installing from git repository
 
 ```bash
-git clone https://github.com/dguerri/git-upstream.git
+git clone https://github.com/stackforge/git-upstream.git
 cd git-upstream
 # Install git-upstream itself
 python setup.py install

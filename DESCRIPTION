@@ -31,9 +31,67 @@ knowing about git-upstream existence.
 
 - How can I contribute to git-upstream?
 
-Git-upstream is currently (and temporarily) hosted on Github, here:
+Git-upstream is currently in Stackforge:
 
-https://github.com/dguerri/git-upstream
+  https://github.com/stackforge/git-upstream
 
-As any other Github project, just fork it, implement your changes and submit a
-pull request.
+As for any other OpenStack project, contributions are submitted thru the Gerrit
+review system.
+
+To summarise:
+
+1) create a Gerrit account (that is, a launchpad identity)
+
+  click on the "Sign in" link in the upper right corner here:
+  https://review.openstack.org
+
+2) install git-review
+
+  pip install git-review
+
+3) clone the repo
+
+  git clone https://github.com/stackforge/git-upstream
+
+4) setup to work with Gerrit
+
+  cd git-upstream
+  git review -s
+
+  git-review will ask the username to use to submit changes to
+  review.openstack.org, just enter the name you have registered in 1)
+
+5) add cool features or fix nasty bugs
+
+6) create your commit as usual
+
+  git add/rm <...>
+  git commit
+
+7) submit the change for review
+
+  git review
+
+That's it. You can see your change signing in to your review.openstack.org
+account.
+
+Hold on tight, someone will come in shortly and will review your change!
+Meanwhile, you can join the OpenStack community on IRC. There is also a
+specific channel for git-upstream:
+
+  #git-upstream
+
+If you need help, please join us on IRC!
+
+Before writing new code, it is always a good idea to check if the required
+change is already in Gerrit:
+
+  https://review.openstack.org/#/q/project:stackforge/git-upstream,n,z
+
+More info about OpenStack and the Gerrit review process.
+
+https://wiki.openstack.org/wiki/IRC
+http://www.mediawiki.org/wiki/Gerrit/git-review
+https://wiki.openstack.org/wiki/How_To_Contribute
+https://wiki.openstack.org/wiki/GerritWorkflow
+https://review.openstack.org/#/q/status:open,n,z

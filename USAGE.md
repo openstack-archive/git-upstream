@@ -9,7 +9,7 @@ It is also assumed you are tracking releases, which is only one of the possible 
 Clone git-upstream from its git repository.
 
 ```bash
-git clone https://github.com/dguerri/git-upstream.git
+git clone https://github.com/stackforge/git-upstream.git
 cd git-upstream
 # Install git-upstream itself
 python setup.py install
@@ -18,7 +18,7 @@ python setup.py install
 Or
 
 ```bash
-git clone https://github.com/dguerri/git-upstream.git
+git clone https://github.com/stackforge/git-upstream.git
 cd git-upstream
 easy_install .
 ```
