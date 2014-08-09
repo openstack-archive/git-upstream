@@ -390,7 +390,7 @@ git push gerrit import/$TIMESTAMP:import/$TIMESTAMP
 Then, create a valid `Change-Id` for the merge commit
 
 ```bash
-commit --amend -C HEAD --no-edit
+git commit --amend -C HEAD --no-edit
 ```
 
 Locally, git-review will still complain about the presence of N+M commits which would be committed BUT on the remote side all those commits will be recognised as already present in one of the two branch involved in the merge.
