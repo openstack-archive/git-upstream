@@ -385,7 +385,7 @@ This would be possible by using the `--import-branch` option of import command a
 ```bash
 TIMESTAMP=$(date +"%Y%m%d%H%M%s")
 git upstream import --import-branch "import/import-$TIMESTAMP" upstream/master
-git push gerrit import/$TIMESTAMP:import/$TIMESTAMP
+git push gerrit import/import-$TIMESTAMP:import/import-$TIMESTAMP
 ```
 
 Then, create a valid `Change-Id` for the merge commit
