@@ -372,7 +372,8 @@ In this case we want to review every new commit (wrt the last import). In order 
 
 ```bash
 git checkout import-xxxxx
-git review
+git push gerrit import-xxxxx-base:import-xxxxx
+git review import-xxxxx
 ```
 
 If there is more than one new commit, git-review will ask to confirm the submission of multiple changes.
