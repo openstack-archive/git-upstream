@@ -115,7 +115,7 @@ class GitRepo(fixtures.Fixture):
             message = message + "\n\nChange-Id: %s" % change_id
         self.repo.git.commit(m=message)
 
-    def add_commits(self, num=1, ref="HEAD", change_ids=None):
+    def add_commits(self, num=1, ref="HEAD", change_ids=[]):
         """Create the given number of commits using generated files"""
         if ref != "HEAD":
             self.repo.git.checkout(ref)
@@ -137,3 +137,82 @@ class BaseTestCase(testtools.TestCase):
         repo_path = self.testrepo.path
         self.useFixture(DiveDir(repo_path))
         self.repo = self.testrepo.repo
+        self.git = self.repo.git
+
+    def _build_git_tree(self, graph_def, branches=[]):
+        """Helper function to build a git repository from a graph definition
+        of nodes and their parent nodes. A list of branches may be provided
+        where each element has two members corresponding to the name and the
+        target node it references.
+
+        Root commits can specified by an empty list as the second member:
+
+            ('NodeA', [])
+
+        Merge commits are specified by multiple nodes:
+
+            ('NodeMerge', ['Node1', 'Node2'])
+
+        Must defined each node first befor subsequently referencing it.
+
+        This works:
+
+            [('A', []), ('B', ['A']), ('C', ['B'])]
+
+        This does not:
+
+            [('A', []), ('C', ['B']), ('B', ['A'])]
+        """
+
+        self._graph = {}
+
+        # first commit is special, assume root commit and repo has 1 commit
+        node, parents = graph_def[0]
+        self._graph[node] = self.repo.commit()
+
+        for node, parents in graph_def[1:]:
+            # other root commits
+            if not parents:
+                self.git.symbolic_ref("HEAD", "refs/heads/%s" % node)
+                self.git.rm(".", r=True, cached=True)
+                self.git.clean(f=True, d=True, x=True)
+                self.testrepo.add_commits(1, ref="HEAD")
+                self._graph[node] = self.repo.commit()
+                # only explicitly listed branches should exist afterwards
+                self.git.checkout("master")
+                self.git.branch(node, D=True)
+                continue
+
+            # checkout the dependent node
+            self.git.checkout(self._graph[parents[0]])
+
+            if len(parents) > 1:
+                # merge commits
+                parent_nodes = [p.strip("=") for p in parents]
+                commits = [str(self._graph[p]) for p in parent_nodes[1:]]
+                if any(True for p in parents if p.startswith("=")):
+                    # special merge commit using ours
+                    self.git.merge(*commits, s="ours", no_commit=True)
+                    use = str(self._graph[next(p.strip("=") for p in parents
+                                               if p.startswith("="))])
+                    self.git.read_tree(use, u=True, reset=True)
+                    self.git.commit(m="Merging %s into %s" %
+                                    (",".join(parent_nodes), node))
+                else:
+                    # standard merge
+                    self.git.merge(*commits, no_edit=True)
+            else:
+                # standard commit
+                self.testrepo.add_commits(1, ref="HEAD")
+
+            self._graph[node] = self.repo.commit()
+
+        for name, node in branches:
+            self.git.branch(name, str(self._graph[node]), f=True)
+
+        # return to master
+        self.git.checkout("master")
+
+    def _commits_from_nodes(self, nodes=[]):
+
+        return [self._graph[n] for n in nodes]
