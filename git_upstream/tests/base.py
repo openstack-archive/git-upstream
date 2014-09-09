@@ -102,7 +102,7 @@ class GitRepo(fixtures.Fixture):
                 self._file_list.add(tmpfile.name)
                 break
             tmpfile.close()
-            os.remote(tmpfile.name)
+            os.remove(tmpfile.name)
         tmpfile.write(contents)
         tmpfile.close()
         return tmpfile.name
