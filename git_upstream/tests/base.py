@@ -66,6 +66,48 @@ def get_node_to_pick(node):
     return None
 
 
+def reverse_toposort(data):
+
+    # convert to dict for linear lookup times
+    data = dict(data)
+
+    # take list of keys as a starting point
+    visited = dict()
+
+    # DFS algorithm with customization to handle use of '=' notation for merge
+    # commits and also the additional dependency for cherry-picking
+    while data:
+        nodes_to_visit = [data.keys()[0]]
+        while nodes_to_visit:
+            node = nodes_to_visit.pop(0)
+            if node not in data:
+                # already processed, move on
+                continue
+            if node in visited:
+                # already visited so just return it with it's deps
+                yield (node, data.pop(node))
+                continue
+
+            visited[node] = True
+            nodes_to_visit.insert(0, node)
+            # special case for cherry-picking changes
+            c_node = get_node_to_pick(node)
+            if c_node and c_node not in visited:
+                nodes_to_visit.insert(0, c_node)
+
+            for d in data[node]:
+                r_d = d.strip('=')
+                if r_d not in visited:
+                    nodes_to_visit.insert(0, r_d)
+
+                # if a dependency has been visited and is still in the dict
+                # then we have a cycle, since with a DAG, DFS would visit all
+                # deps and remove them from the tracking dict before traversing
+                # additional nodes.
+                if r_d in visited and r_d in data:
+                    raise RuntimeError("Graph is not acyclic")
+
+
 class DiveDir(fixtures.Fixture):
     """Dive into given directory and return back on cleanup.
 
@@ -195,6 +237,9 @@ class BaseTestCase(testtools.TestCase):
         where each element has two members corresponding to the name and the
         target node it references.
 
+        Supports unordered graphs, only requirement is that there is a commit
+        defined with no parents, which will become the root commit.
+
         Root commits can specified by an empty list as the second member:
 
             ('NodeA', [])
@@ -217,28 +262,22 @@ class BaseTestCase(testtools.TestCase):
             ('C', ['=P1', 'P2'])
 
 
-        Current code requires that the graph defintion defines each node
-        before subsequently referencing it as a parent.
+        The tree building code can handle a graph definition being out of
+        order but will fail to find certain circular dependencies and may
+        result in an infinite loop.
 
-        This works:
+        Examples:
 
             [('A', []), ('B', ['A']), ('C', ['B'])]
-
-        This will not:
-
             [('A', []), ('C', ['B']), ('B', ['A'])]
         """
 
-        # first commit is special, assume root commit and repo has 1 commit
-        node, parents = graph_def[0]
-        if not parents:
-            assert("First commit in graph def must be a root commit")
-        self._graph[node] = self.repo.commit()
+        # require that graphs must have at least 1 node with no
+        # parents, which is a root commit in git
+        if not any([True for _, parents in graph_def if not parents]):
+            assert("No root commit defined in test graph")
 
-        # uses the fact that you can create commits in detached head mode
-        # and then create branches after the fact
-        for node, parents in graph_def[1:]:
-            # other root commits
+        for node, parents in reverse_toposort(graph_def):
             if not parents:
                 # root commit
                 self.git.symbolic_ref("HEAD", "refs/heads/%s" % node)
