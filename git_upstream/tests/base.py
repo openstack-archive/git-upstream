@@ -66,6 +66,57 @@ def get_node_to_pick(node):
     return None
 
 
+_NOT_VISITED = 0
+_VISITED = 1
+_FINISHED = 2
+
+
+def reverse_toposort(data):
+
+    # convert to dict for linear lookup times when returning
+    data = dict(data)
+
+    # keep track of nodes visited and processed
+    # by checking if a child has been visited before but not processed you
+    # can detect a back edge and abort since the graph is not acyclic
+    visited = dict()
+
+    # DFS algorithm with customization to handle use of '=' notation for merge
+    # commits and also the additional dependency for cherry-picking
+    nodes_to_visit = []
+    for i in data.keys():
+        if i not in visited:
+            nodes_to_visit.insert(0, i)
+
+        while nodes_to_visit:
+            node = nodes_to_visit.pop(0)
+            if visited.get(node) is _VISITED:
+                # already visited so just return it with it's deps
+                yield (node, data[node])
+                visited[node] = _FINISHED
+                continue
+
+            visited[node] = _VISITED
+            nodes_to_visit.insert(0, node)
+            # special case for cherry-picking changes
+            c_node = get_node_to_pick(node)
+            if c_node and c_node not in visited:
+                nodes_to_visit.insert(0, c_node)
+
+            for d in data[node]:
+                r_d = d.strip('=')
+                if r_d not in visited:
+                    nodes_to_visit.insert(0, r_d)
+                else:
+                    # if we've already visited a dep but not processed it,
+                    # then we have a back edge of some kind
+                    if visited[r_d] is _VISITED:
+                        message = ("Graph is not acyclic: %s is a dependency "
+                                   "of %s, but has been visited without being "
+                                   "processed before it." % (r_d, node))
+                        raise RuntimeError(message)
+
+
 class DiveDir(fixtures.Fixture):
     """Dive into given directory and return back on cleanup.
 
@@ -195,6 +246,9 @@ class BaseTestCase(testtools.TestCase):
         where each element has two members corresponding to the name and the
         target node it references.
 
+        Supports unordered graphs, only requirement is that there is a commit
+        defined with no parents, which will become the root commit.
+
         Root commits can specified by an empty list as the second member:
 
             ('NodeA', [])
@@ -217,28 +271,22 @@ class BaseTestCase(testtools.TestCase):
             ('C', ['=P1', 'P2'])
 
 
-        Current code requires that the graph defintion defines each node
-        before subsequently referencing it as a parent.
+        The tree building code can handle a graph definition being out of
+        order but will fail to find certain circular dependencies and may
+        result in an infinite loop.
 
-        This works:
+        Examples:
 
             [('A', []), ('B', ['A']), ('C', ['B'])]
-
-        This will not:
-
             [('A', []), ('C', ['B']), ('B', ['A'])]
         """
 
-        # first commit is special, assume root commit and repo has 1 commit
-        node, parents = graph_def[0]
-        if not parents:
-            assert("First commit in graph def must be a root commit")
-        self._graph[node] = self.repo.commit()
+        # require that graphs must have at least 1 node with no
+        # parents, which is a root commit in git
+        if not any([True for _, parents in graph_def if not parents]):
+            assert("No root commit defined in test graph")
 
-        # uses the fact that you can create commits in detached head mode
-        # and then create branches after the fact
-        for node, parents in graph_def[1:]:
-            # other root commits
+        for node, parents in reverse_toposort(graph_def):
             if not parents:
                 # root commit
                 self.git.symbolic_ref("HEAD", "refs/heads/%s" % node)
