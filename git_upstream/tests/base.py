@@ -138,12 +138,16 @@ class BaseTestCase(testtools.TestCase):
         self.useFixture(DiveDir(repo_path))
         self.repo = self.testrepo.repo
         self.git = self.repo.git
+        self._graph = {}
 
     def _build_git_tree(self, graph_def, branches=[]):
         """Helper function to build a git repository from a graph definition
         of nodes and their parent nodes. A list of branches may be provided
         where each element has two members corresponding to the name and the
         target node it references.
+
+        Supports unordered graphs, only requirement is that there is a commit
+        defined with no parents, which will become the root commit.
 
         Root commits can specified by an empty list as the second member:
 
@@ -165,48 +169,59 @@ class BaseTestCase(testtools.TestCase):
         Will result in a merge commit 'C' with the same tree as 'P1'.
 
 
-        Must define each node first before subsequently referencing it.
-
-        This works:
+        Examples:
 
             [('A', []), ('B', ['A']), ('C', ['B'])]
-
-        This does not:
-
             [('A', []), ('C', ['B']), ('B', ['A'])]
         """
 
-        self._graph = {}
+        # require that graphs must have at least 1 node with no
+        # parents, which is a root commit in git
+        if not any([True for _, parents in graph_def if not parents]):
+            assert("No root commit defined in test graph")
 
-        # first commit is special, assume root commit and repo has 1 commit
-        node, parents = graph_def[0]
-        if not parents:
-            assert("First commit in graph def must be a root commit")
-        self._graph[node] = self.repo.commit()
+        stack = list(graph_def)
 
-        # uses the fact that you can create commits in detached head mode
-        # and then create branches after the fact
-        for node, parents in graph_def[1:]:
-            # other root commits
+        while stack != []:
+            node, parents = stack.pop(0)
             if not parents:
-                self.git.symbolic_ref("HEAD", "refs/heads/%s" % node)
-                self.git.rm(".", r=True, cached=True)
-                self.git.clean(f=True, d=True, x=True)
-                self.testrepo.add_commits(1, ref="HEAD")
-                # only explicitly listed branches should exist afterwards
-                self.git.checkout(self.repo.commit())
-                self.git.branch(node, D=True)
+                # first commit already exists, so skip this section if
+                # there is nothing stored in the graph initially
+                if self._graph:
+                    self.git.symbolic_ref("HEAD", "refs/heads/%s" % node)
+                    self.git.rm(".", r=True, cached=True)
+                    self.git.clean(f=True, d=True, x=True)
+                    self.testrepo.add_commits(1, ref="HEAD")
+                    # only explicitly listed branches should exist afterwards
+                    self.git.checkout(self.repo.commit())
+                    self.git.branch(node, D=True)
 
+            elif any([True for p in parents if p.lstrip('=') not in
+                      self._graph]):
+                # create later when dependencies are present
+                # detect circular references
+                if any([True for p in parents if node == p.lstrip('=')]):
+                    assert("Cirular reference detected. Node '{0}' has parents "
+                           "'{1}'".format(node, ",".join(parents)))
+                # or nodes who have an invalid parent
+                if not all([True for p in parents
+                            if (p.lstrip('=') not in self._graph
+                                and any((True for n, _ in stack
+                                         if p.lstrip('=') == n)))]):
+                    assert("Node '{0}' has parents '{1}', one or more cannot "
+                           "be defined".format(node, ",".join(parents)))
+                # This won't find complex circular dependencies
+                stack.append((node, parents))
+                continue
             else:
                 # checkout the dependent node
                 self.git.checkout(self._graph[parents[0]])
-
                 if len(parents) > 1:
                     # merge commits
                     parent_nodes = [p.strip("=") for p in parents]
                     commits = [str(self._graph[p]) for p in parent_nodes[1:]]
                     if any([True for p in parents if p.startswith("=")]):
-                        # special merge commit using ours
+                        # special merge commit using inverse of 'ours'
                         self.git.merge(*commits, s="ours", no_commit=True)
                         use = str(self._graph[next(p.strip("=") for p in parents
                                                    if p.startswith("="))])
@@ -219,7 +234,6 @@ class BaseTestCase(testtools.TestCase):
                 else:
                     # standard commit
                     self.testrepo.add_commits(1, ref="HEAD")
-
             self._graph[node] = self.repo.commit()
 
         for name, node in branches:
