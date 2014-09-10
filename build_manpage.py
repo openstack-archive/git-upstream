@@ -29,16 +29,15 @@ class BuildManpage(Command):
     command_name = 'build_manpage'
 
     def initialize_options(self):
-        from git_upstream import main
-
         self._output = self.distribution.get_name() + '.1'
         self._see_also = ["git:1"]
         self._today = datetime.date.today()
-        self._commands, self._parser = main.get_parser()
-        self._parser.formatter = ManPageFormatter()
+        self._commands = self._parser = None
 
     def finalize_options(self):
-        pass
+        from git_upstream import main
+        self._commands, self._parser = main.get_parser()
+        self._parser.formatter = ManPageFormatter()
 
     def _markup(self, txt):
         return txt.replace('-', '\\-')
