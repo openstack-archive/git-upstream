@@ -40,7 +40,8 @@ index 170ec46..251e1dd 100644
      keywords="git hpcloud workflow",
 EOP
 
-  git commit -a -m "Add maintainer info" --quiet || return 1
+  # use smart quotes to test unicode characters in commit messages
+  git commit -a -m "Add “Davide Guerri” as maintainer" --quiet || return 1
   git push -u origin master --quiet >/dev/null || return 1
 
   log DEBUG "Cherry picking upstream commits"
