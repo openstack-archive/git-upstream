@@ -20,6 +20,7 @@ from git_upstream.log import LogDedentMixin
 
 from subprocess import call
 import os
+import codecs
 
 REBASE_EDITOR_SCRIPT = "rebase-editor"
 
@@ -78,7 +79,7 @@ class RebaseEditor(GitMixin, LogDedentMixin):
                 break
 
         root = None
-        with open(todo_file, "w") as todo:
+        with codecs.open(todo_file, "w", "utf-8") as todo:
             for commit in commits:
                 if not root:
                     root = commit.parents[0].hexsha
