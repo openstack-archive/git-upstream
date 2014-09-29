@@ -83,7 +83,7 @@ class RebaseEditor(GitMixin, LogDedentMixin):
                 if not root:
                     root = commit.parents[0].hexsha
                 subject = commit.message.splitlines()[0]
-                todo.write("pick %s %s\n" % (commit.hexsha[:7], subject))
+                todo.write("pick %s %s\n" % (commit.hexsha[:7], subject.encode('ascii', 'ignore')))
 
             # if root isn't set at this point, then there were no commits
             if not root:
