@@ -178,9 +178,7 @@ class TestUpstreamMergeBaseSearcher(BaseTestCase):
         }
 
         expected_changes = ["H", "D1", "E1", "I", "J", "K", "O", "P", "Q"]
-        self.expectFailure(
-            "Should fail to find change 'O'",
-            self._verify_expected, tree, branches, expected_changes)
+        self._verify_expected(tree, branches, expected_changes)
 
     def test_search_multi_changes_upload_prior_to_import(self):
         """Construct a repo layout where using a complex layout involving
@@ -232,6 +230,4 @@ class TestUpstreamMergeBaseSearcher(BaseTestCase):
         }
 
         expected_changes = ["H", "D1", "E1", "I", "J", "K", "L", "M", "O", "P"]
-        self.expectFailure(
-            "Should fail to find changes 'J' and 'L'",
-            self._verify_expected, tree, branches, expected_changes)
+        self._verify_expected(tree, branches, expected_changes)
