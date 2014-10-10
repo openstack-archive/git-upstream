@@ -25,7 +25,7 @@ import git
 import git_upstream.commands as commands
 from git_upstream.errors import GitUpstreamError
 import git_upstream.log as log
-import git_upstream.version
+from git_upstream import __version__
 
 import subcommand
 import argparse
@@ -45,7 +45,7 @@ def get_parser():
         epilog='See "%(prog)s help COMMAND" for help on a specific command.',
         add_help=False)
     parser.add_argument('--version', action='version',
-                        version='%(prog)s ' + git_upstream.version.version)
+                        version='%(prog)s ' + __version__)
     parser.add_argument('-h', '--help', action='help',
                         help='show this help message and exit')
     group = parser.add_mutually_exclusive_group()
