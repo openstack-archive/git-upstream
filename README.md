@@ -268,10 +268,6 @@ different system, **notes must be present on the latter**. You can push notes
 directly to git repository on the target system or push them in a different
 repository and then pull notes from your target system.
 
-# Known issues
-
-Please see `KNOWN-ISSUES.md`.
-
 # Authors
 git-upstream was written by Darragh Bailey <dbailey@hp.com>.
 

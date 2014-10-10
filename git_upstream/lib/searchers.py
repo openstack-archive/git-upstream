@@ -80,8 +80,8 @@ class Searcher(GitMixin):
         # commits to the caller
         self.log.info(
             """\
-            Walking the ancestry path between found commit and target
-                git rev-list --parents --ancestry-path %s..%s
+            Walking the changes between found commit and target
+                git rev-list --parents --simplify-merges %s..%s
             """, self.commit.hexsha, self.branch)
 
         # depending on how many commits are returned, may need to examine use
@@ -90,7 +90,7 @@ class Searcher(GitMixin):
         commit_list = Commit.iter_items(self.repo,
                                         "{0}..{1}".format(self.commit.hexsha,
                                                           self.branch),
-                                        topo_order=True, ancestry_path=True)
+                                        topo_order=True, simplify_merges=True)
 
         # chain the filters as generators so that we don't need to allocate new
         # lists for each step in the filter chain.
@@ -280,7 +280,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
     def list(self, include_all=False):
         """
         If a particular commit has been merged in mulitple times, walking the
-        ancestry path and returning all results will return all commits from
+        history and returning all results will return all commits from
         each merge point, not just the last set which are usually what is
         desired.
 
