@@ -90,7 +90,7 @@ class Searcher(GitMixin):
         commit_list = Commit.iter_items(self.repo,
                                         "{0}..{1}".format(self.commit.hexsha,
                                                           self.branch),
-                                        topo_order=True, ancestry_path=True)
+                                        topo_order=True, simplify_merges=True)
 
         # chain the filters as generators so that we don't need to allocate new
         # lists for each step in the filter chain.

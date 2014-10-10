@@ -182,6 +182,4 @@ class TestStrategies(BaseTestCase):
         }
 
         expected_changes = ["D1", "E1", "J", "K", "O", "Q"]
-        self.expectFailure(
-            "Should fail to find change 'O'",
-            self._verify_expected, tree, branches, expected_changes)
+        self._verify_expected(tree, branches, expected_changes)
