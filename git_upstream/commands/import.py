@@ -383,21 +383,15 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self.log.info(
                 """\
                 Replacing tree contents with those from the import branch:
-                    git read-tree %s
+                    git read-tree -u --reset %s
                 """, self.import_branch)
-            self.git.read_tree(self.import_branch)
+            self.git.read_tree(self.import_branch, u=True, reset=True)
             self.log.info(
                 """\
                 Committing merge commit:
                     git commit --no-edit
                 """)
             self.git.commit(no_edit=True)
-            self.log.info(
-                """\
-                Checking out updated index:
-                    git checkout -- .
-                """)
-            self.git.checkout("--", ".")
             # finally test that everything worked correctly by comparing if
             # the tree object id's match
             if self.git.rev_parse("HEAD^{tree}") != \
