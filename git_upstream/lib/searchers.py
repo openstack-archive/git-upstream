@@ -15,16 +15,12 @@
 # limitations under the License.
 #
 
-from git_upstream.lib.utils import GitMixin
-from git_upstream.log import LogDedentMixin
-
-try:
-    from git.objects.commit import Commit
-except ImportError:
-    from git_upstream.lib.pygitcompat import GitUpstreamCompatCommit as Commit
-
 from abc import ABCMeta, abstractmethod
 import re
+
+from git_upstream.lib.utils import GitMixin
+from git_upstream.lib.pygitcompat import Commit
+from git_upstream.log import LogDedentMixin
 
 
 class Searcher(GitMixin):

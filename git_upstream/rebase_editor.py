@@ -28,7 +28,7 @@ Avoid use of stdin for passing such information as many editors have problems
 if exec'ed and stdin is a pipe.
 """
 
-from argparse import ArgumentParser
+import argparse
 import fileinput
 import os
 import sys
@@ -59,7 +59,7 @@ def rebase_replace_insn(path, istream):
 
 
 def main():
-    parser = ArgumentParser(
+    parser = argparse.ArgumentParser(
         description=__doc__.strip(),
     )
     parser.add_argument('-v', '--verbose', action='store_true', default=False,

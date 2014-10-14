@@ -15,8 +15,9 @@
 # limitations under the License.
 #
 
-from git_upstream.errors import GitUpstreamError
 from git import base, GitCommandError
+
+from git_upstream.errors import GitUpstreamError
 
 
 class NoteAlreadyExistsError(GitUpstreamError):

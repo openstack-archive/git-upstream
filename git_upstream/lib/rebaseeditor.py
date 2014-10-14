@@ -15,12 +15,12 @@
 # limitations under the License.
 #
 
+import codecs
+import subprocess
+import os
+
 from git_upstream.lib.utils import GitMixin
 from git_upstream.log import LogDedentMixin
-
-from subprocess import call
-import os
-import codecs
 
 REBASE_EDITOR_SCRIPT = "rebase-editor"
 
@@ -152,7 +152,8 @@ class RebaseEditor(GitMixin, LogDedentMixin):
         if self._interactive:
             # spawn the editor
             user_editor = self.git_sequence_editor or self.git_editor
-            status = call("%s %s" % (user_editor, todo_file), shell=True)
+            status = subprocess.call("%s %s" % (user_editor, todo_file),
+                                     shell=True)
             if status:
                 return status, None, "Editor returned non-zero exit code"
 
@@ -171,7 +172,7 @@ class RebaseEditor(GitMixin, LogDedentMixin):
                 cmd = ['git', 'rebase', '--interactive']
                 cmd.extend(self.git.transform_kwargs(**kwargs))
                 cmd.extend(args)
-                return call(cmd), None, None
+                return subprocess.call(cmd), None, None
             else:
                 return self.git.rebase(interactive=True, with_exceptions=False,
                                        with_extended_output=True, *args,

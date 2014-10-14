@@ -16,7 +16,12 @@
 #
 
 import git
-from git import Commit, Repo
+
+try:
+    from git.objects.commit import Commit
+    from git.repo import Repo
+except ImportError:
+    from git import Commit, Repo
 
 
 class GitUpstreamCompatRepo(Repo):
