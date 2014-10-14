@@ -95,36 +95,26 @@ def help(parser, args, commands=None):
         parser.print_help()
 
 
-def main():
-    (cmds, parser) = get_parser()
+def setup_console_logging(options):
 
-    if not sys.argv:
-        help(parser, sys.argv)
-        return 0
-
-    if argparse_loaded:
-        argcomplete.autocomplete(parser)
-    args = parser.parse_args()
-    if args.func == help:
-        help(parser, args, cmds)
-        return 0
-
-    args.log_level = getattr(logging, args.log_level.upper(), logging.NOTSET)
-    console_log_level = getattr(logging, log.get_increment_level(args.verbose),
+    options.log_level = getattr(logging, options.log_level.upper(),
                                 logging.NOTSET)
-    if args.quiet:
+    console_log_level = getattr(logging,
+                                log.get_increment_level(options.verbose),
+                                logging.NOTSET)
+    if options.quiet:
         console_log_level = logging.NOTSET
 
     # determine maximum logging requested for file and console provided they
     # are not disabled, and including stderr which is fixed at ERROR
     main_log_level = min([value
-                          for value in args.log_level, console_log_level
+                          for value in options.log_level, console_log_level
                           if value != logging.NOTSET
                           ] + [logging.ERROR])
     logger = log.get_logger()
     logger.setLevel(main_log_level)
 
-    if not args.quiet:
+    if not options.quiet:
         # configure logging to console for verbose/quiet messages
         console = logging.StreamHandler(sys.stdout)
         console.setLevel(console_log_level)
@@ -139,12 +129,38 @@ def main():
     err_con.setFormatter(logging.Formatter("%(levelname)-8s: %(message)s"))
     logger.addHandler(err_con)
 
-    if args.log_file:
-        filehandler = logging.FileHandler(args.log_file)
-        filehandler.setLevel(args.log_level)
+    if options.log_file:
+        filehandler = logging.FileHandler(options.log_file)
+        filehandler.setLevel(options.log_level)
         _format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
         filehandler.setFormatter(logging.Formatter(_format))
         logger.addHandler(filehandler)
+
+    return logger
+
+
+def main(argv=None):
+
+    # We default argv to None and assign to sys.argv[1:] below because having
+    # an argument default value be a mutable type in Python is a gotcha. See
+    # http://bit.ly/1o18Vff
+    if not argv:
+        argv = sys.argv[1:]
+
+    (cmds, parser) = get_parser()
+
+    if not sys.argv:
+        help(parser, argv)
+        return 0
+
+    if argparse_loaded:
+        argcomplete.autocomplete(parser)
+    args = parser.parse_args(argv)
+    if args.func == help:
+        help(parser, args, cmds)
+        return 0
+
+    logger = setup_console_logging(args)
 
     if git.Git().version_info < (1, 7, 5):
         logger.fatal("Git-Upstream requires git version 1.7.5 or later")
