@@ -639,6 +639,9 @@ def do_import(args):
         if args.branches:
             for branch in args.branches:
                 logger.notice("    extra branch: '%s'", branch, dedent=False)
+        return True
+    else:
+        return False
 
 
 # vim:sw=4:sts=4:ts=4:et:
