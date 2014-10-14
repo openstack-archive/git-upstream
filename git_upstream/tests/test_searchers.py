@@ -20,11 +20,11 @@ from git_upstream.lib.searchers import UpstreamMergeBaseSearcher
 
 class TestUpstreamMergeBaseSearcher(BaseTestCase):
 
-    def _verify_expected(self, tree, branches, expected_nodes):
+    def _verify_expected(self, tree, branches, expected_nodes, pattern=None):
         self._build_git_tree(tree, branches.values())
 
-        searcher = UpstreamMergeBaseSearcher(pattern=branches['upstream'][0],
-                                             repo=self.repo)
+        searcher = UpstreamMergeBaseSearcher(
+            pattern=pattern or branches['upstream'][0], repo=self.repo)
 
         self.assertEquals(self._commits_from_nodes(reversed(expected_nodes)),
                           searcher.list())
@@ -230,4 +230,86 @@ class TestUpstreamMergeBaseSearcher(BaseTestCase):
         }
 
         expected_changes = ["H", "D1", "E1", "I", "J", "K", "L", "M", "O", "P"]
+        self._verify_expected(tree, branches, expected_changes)
+
+    def test_search_switch_tracked_branches(self):
+        """Search a repository layout where previously was tracking a
+        difference branch to the one that the user now wishes to import
+
+        Repository layout being tested
+
+              B-----------J         master
+             /           /
+            /           B1
+           /           /
+          /       E---I             upstream/stable
+         /       /
+        A---C---D---F---G---H       upstream/master
+
+        """
+
+        tree = [
+            ('A', []),
+            ('B', ['A']),
+            ('C', ['A']),
+            ('D', ['C']),
+            ('E', ['D']),
+            ('F', ['D']),
+            ('G', ['F']),
+            ('H', ['G']),
+            ('I', ['E']),
+            ('B1', ['I']),
+            ('J', ['B', '=B1'])
+        ]
+
+        branches = {
+            'head': ('master', 'J'),
+            'stable': ('upstream/stable', 'I'),
+            'upstream': ('upstream/master', 'H')
+        }
+
+        expected_changes = ['B1', 'J']
+        self._verify_expected(tree, branches, expected_changes,
+                              pattern="upstream/*")
+
+    def test_search_switch_tracked_branches_incorrect(self):
+        """Search a repository layout where previously was tracking a
+        difference branch to the one that the user now wishes to import based
+        on using the new branch as the basis to search on.
+
+        This shows the additional changes that are picked up by mistake
+
+        Repository layout being tested
+
+              B-----------J         master
+             /           /
+            /           B1
+           /           /
+          /       E---I             upstream/stable
+         /       /
+        A---C---D---F---G---H       upstream/master
+
+        """
+
+        tree = [
+            ('A', []),
+            ('B', ['A']),
+            ('C', ['A']),
+            ('D', ['C']),
+            ('E', ['D']),
+            ('F', ['D']),
+            ('G', ['F']),
+            ('H', ['G']),
+            ('I', ['E']),
+            ('B1', ['I']),
+            ('J', ['B', '=B1'])
+        ]
+
+        branches = {
+            'head': ('master', 'J'),
+            'stable': ('upstream/stable', 'I'),
+            'upstream': ('upstream/master', 'H')
+        }
+
+        expected_changes = ['E', 'I', 'B1', 'J']
         self._verify_expected(tree, branches, expected_changes)
