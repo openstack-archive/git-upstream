@@ -20,27 +20,27 @@
 Command-line tool for tracking upstream revisions
 """
 
+import logging
+import sys
+import argparse
+
 import git
 
-import git_upstream.commands as commands
-from git_upstream.errors import GitUpstreamError
-import git_upstream.log as log
+from git_upstream import commands
+from git_upstream import log
+from git_upstream import subcommand
 from git_upstream import __version__
+from git_upstream.errors import GitUpstreamError
 
-import subcommand
-import argparse
-from argparse import ArgumentParser
 try:
     import argcomplete
     argparse_loaded = True
 except ImportError:
     argparse_loaded = False
-import logging
-import sys
 
 
 def get_parser():
-    parser = ArgumentParser(
+    parser = argparse.ArgumentParser(
         description=__doc__.strip(),
         epilog='See "%(prog)s help COMMAND" for help on a specific command.',
         add_help=False)

@@ -15,11 +15,11 @@
 # limitations under the License.
 #
 
-from git_upstream.errors import GitUpstreamError
-from git_upstream.lib.pygitcompat import Repo
-
 import os
 import sys
+
+from git_upstream.errors import GitUpstreamError
+from git_upstream.lib.pygitcompat import Repo
 
 try:
     from git.exc import InvalidGitRepositoryError
