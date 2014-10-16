@@ -589,12 +589,12 @@ def do_import(args):
     # merged.
     prev_import_merge = strategy[-1]
     if len(prev_import_merge.parents) > 1:
-        idx = next((idx for idx, commit in enumerate(prev_import_merge.parents)
-                    if commit.hexsha == strategy.searcher.commit.hexsha), None)
+        idxs = [idx for idx, commit in enumerate(prev_import_merge.parents)
+                if commit.hexsha != strategy.searcher.commit.hexsha]
 
-        if idx:
-            additional_commits = prev_import_merge.parents[idx + 1:]
-            if additional_commits and not args.branches:
+        if idxs:
+            additional_commits = [prev_import_merge.parents[i] for i in idxs]
+            if additional_commits and len(args.branches) == 0:
                 logger.warning("""\
                     **************** WARNING ****************
                     Previous import merged additional branches but non have
