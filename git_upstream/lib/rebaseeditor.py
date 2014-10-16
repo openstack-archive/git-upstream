@@ -193,4 +193,6 @@ class RebaseEditor(GitMixin, LogDedentMixin):
     @property
     def git_editor(self):
 
-        return os.environ.get("GIT_EDITOR", self.git.var("GIT_EDITOR"))
+        return os.environ.get("GIT_EDITOR",
+                              self.git.var("GIT_EDITOR",
+                                           with_exceptions=False))
