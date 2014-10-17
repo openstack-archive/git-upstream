@@ -124,13 +124,14 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
     base available.
     """
 
-    def __init__(self, pattern="upstream/*", search_tags=False, remotes=None,
-                 *args, **kwargs):
+    def __init__(self, branch, pattern="upstream/*", search_tags=False,
+                 remotes=None, *args, **kwargs):
 
         if not remotes:
             remotes = []
         self._pattern = pattern
-        self._references = ["refs/heads/{0}".format(self.pattern)]
+        self._references = ["refs/heads/{0}".format(branch),
+                            "refs/heads/{0}".format(self.pattern)]
 
         super(UpstreamMergeBaseSearcher, self).__init__(*args, **kwargs)
 
