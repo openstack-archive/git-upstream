@@ -28,7 +28,7 @@ class TestStrategies(BaseTestCase):
         self._build_git_tree(tree, branches.values())
 
         strategy = LocateChangesWalk(branch=branches['head'][0],
-                                     search_ref=branches['upstream'][0])
+                                     search_refs=[branches['upstream'][0]])
 
         self.assertEquals(self._commits_from_nodes(expected_nodes),
                           [c for c in strategy.filtered_iter()])

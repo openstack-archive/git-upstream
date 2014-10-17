@@ -21,6 +21,7 @@ import mock
 from testtools.matchers import Equals
 
 from git_upstream import main
+from git_upstream.lib.pygitcompat import Commit
 from git_upstream.tests.base import BaseTestCase
 
 from string import lower
@@ -158,3 +159,204 @@ class TestImportCommand(BaseTestCase):
         mock_logger.warning.assert_called_with(
             SubstringMatcher(
                 containing="Previous import merged additional"))
+
+    def test_import_switch_branches_search(self):
+        """Test that the import sub-command can correctly switch branches when
+        importing from upstream when given a usable search-ref.
+
+        Repository layout being checked (assumed already replayed)
+
+                    E---F         local/master
+                   /
+              C---D               upstream/stable
+             /
+        A---B---G---H             upstream/master
+
+        New branch to be tracked will be upstream/master, so the resulting
+        commits found should just be E & F.
+
+        Test that result is as follows
+
+                      E---F---I   local/master
+                     /       /
+                C---D       /     upstream/stable
+               /           /
+              /       E1--F1
+             /       /
+        A---B---G---H             upstream/master
+
+        """
+
+        tree = [
+            ('A', []),
+            ('B', ['A']),
+            ('C', ['B']),
+            ('D', ['C']),
+            ('E', ['D']),
+            ('F', ['E']),
+            ('G', ['B']),
+            ('H', ['G'])
+        ]
+
+        branches = {
+            'head': ('master', 'F'),
+            'upstream': ('upstream/master', 'H'),
+            'stable': ('upstream/stable', 'D')
+        }
+
+        self._build_git_tree(tree, branches.values())
+        self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
+        args = self.parser.parse_args(['-q', 'import'])
+        self.assertThat(args.func(args), Equals(True),
+                        "import command failed to complete succesfully")
+        changes = list(Commit.iter_items(
+            self.repo, 'upstream/master..master^2'))
+        self.assertThat(len(changes), Equals(2),
+                        "should only have seen two changes, got: %s" %
+                        ", ".join(["%s:%s" % (commit.hexsha,
+                                              commit.message.splitlines()[0])
+                                   for commit in changes]))
+        for commit, node in zip(changes, ['F', 'E']):
+            subject = commit.message.splitlines()[0]
+            node_subject = self._graph[node].message.splitlines()[0]
+            self.assertThat(subject, Equals(node_subject),
+                            "subject '%s' of commit '%s' does not match "
+                            "subject '%s' of node '%s'" % (
+                                subject, commit.hexsha, node_subject, node))
+
+    def test_import_switch_branches_fails_without_search_ref(self):
+        """Test that the import sub-command finds additional changes when
+        not given a search-ref to look under.
+
+        Repository layout being checked (assumed already replayed)
+
+                    E---F         local/master
+                   /
+              C---D               upstream/stable
+             /
+        A---B---G---H             upstream/master
+
+        New branch to be tracked will be upstream/master, so the resulting
+        commits found will be C, D, E & F because of not telling the searcher
+        to look under all of the namespace.
+
+        Test that result is as follows
+
+                      E---F-------------I   local/master
+                     /                 /
+                C---D                 /     upstream/stable
+               /                     /
+              /       C1---D1---E1--F1
+             /       /
+        A---B---G---H                       upstream/master
+
+        """
+
+        tree = [
+            ('A', []),
+            ('B', ['A']),
+            ('C', ['B']),
+            ('D', ['C']),
+            ('E', ['D']),
+            ('F', ['E']),
+            ('G', ['B']),
+            ('H', ['G'])
+        ]
+
+        # use 'custom/*' to ensure defaults are overriden correctly
+        branches = {
+            'head': ('master', 'F'),
+            'upstream': ('custom/master', 'H'),
+            'stable': ('custom/stable', 'D')
+        }
+
+        self._build_git_tree(tree, branches.values())
+
+        self.git.tag(inspect.currentframe().f_code.co_name, 'custom/master')
+        args = self.parser.parse_args(['-q', 'import',
+                                       '--into=master', 'custom/master'])
+        self.assertThat(args.func(args), Equals(True),
+                        "import command failed to complete succesfully")
+        changes = list(Commit.iter_items(
+            self.repo, 'custom/master..master^2'))
+        local_rebased = ['F', 'E', 'D', 'C']
+        self.assertThat(len(changes), Equals(len(local_rebased)),
+                        "should only have seen two changes, got: %s" %
+                        ", ".join(["%s:%s" % (commit.hexsha,
+                                              commit.message.splitlines()[0])
+                                   for commit in changes]))
+        for commit, node in zip(changes, local_rebased):
+            subject = commit.message.splitlines()[0]
+            node_subject = self._graph[node].message.splitlines()[0]
+            self.assertThat(subject, Equals(node_subject),
+                            "subject '%s' of commit '%s' does not match "
+                            "subject '%s' of node '%s'" % (
+                                subject, commit.hexsha, node_subject, node))
+
+    def test_import_switch_branches_search_ref_custom_namespace(self):
+        """Test that the import sub-command can correctly switch branches when
+        importing from upstream when given a usable search-ref.
+
+        Repository layout being checked (assumed already replayed)
+
+                    E---F         local/master
+                   /
+              C---D               upstream/stable
+             /
+        A---B---G---H             upstream/master
+
+        New branch to be tracked will be upstream/master, so the resulting
+        commits found should just be E & F.
+
+        Test that result is as follows
+
+                      E---F---I   local/master
+                     /       /
+                C---D       /     upstream/stable
+               /           /
+              /       E1--F1
+             /       /
+        A---B---G---H             upstream/master
+
+        """
+
+        tree = [
+            ('A', []),
+            ('B', ['A']),
+            ('C', ['B']),
+            ('D', ['C']),
+            ('E', ['D']),
+            ('F', ['E']),
+            ('G', ['B']),
+            ('H', ['G'])
+        ]
+
+        # use 'custom/*' to ensure defaults are overriden correctly
+        branches = {
+            'head': ('master', 'F'),
+            'upstream': ('custom/master', 'H'),
+            'stable': ('custom/stable', 'D')
+        }
+
+        self._build_git_tree(tree, branches.values())
+        self.git.tag(inspect.currentframe().f_code.co_name, 'custom/master')
+        args = self.parser.parse_args(['-q', 'import',
+                                       '--search-ref=custom/*',
+                                       '--search-ref=custom-d/*',
+                                       '--into=master', 'custom/master'])
+        self.assertThat(args.func(args), Equals(True),
+                        "import command failed to complete succesfully")
+        changes = list(Commit.iter_items(
+            self.repo, 'custom/master..master^2'))
+        self.assertThat(len(changes), Equals(2),
+                        "should only have seen two changes, got: %s" %
+                        ", ".join(["%s:%s" % (commit.hexsha,
+                                              commit.message.splitlines()[0])
+                                   for commit in changes]))
+        for commit, node in zip(changes, ['F', 'E']):
+            subject = commit.message.splitlines()[0]
+            node_subject = self._graph[node].message.splitlines()[0]
+            self.assertThat(subject, Equals(node_subject),
+                            "subject '%s' of commit '%s' does not match "
+                            "subject '%s' of node '%s'" % (
+                                subject, commit.hexsha, node_subject, node))
