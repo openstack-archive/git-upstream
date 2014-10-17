@@ -16,8 +16,26 @@
 # limitations under the License.
 #
 
+import argparse
 import os
 import sys
+
+
+class AppendReplaceAction(argparse._AppendAction):
+    """Allows setting of a default value which is overriden by the first use
+    of the option, while subsequent calls will then append.
+    """
+    def __init__(self, *args, **kwargs):
+        super(AppendReplaceAction, self).__init__(*args, **kwargs)
+        self._reset_default = False
+        self.default = list(self.default)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if not self._reset_default:
+            setattr(namespace, self.dest, [])
+            self._reset_default = True
+        super(AppendReplaceAction, self).__call__(parser, namespace, values,
+                                                  option_string)
 
 
 def get_subcommands(subparsers):
@@ -45,6 +63,7 @@ def _find_actions(subparsers, module_path):
                 command,
                 help=help,
                 description=desc)
+            subparser.register('action', 'append_replace', AppendReplaceAction)
 
             for (args, kwargs) in args:
                 subparser.add_argument(*args, **kwargs)
