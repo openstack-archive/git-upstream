@@ -23,8 +23,8 @@ class TestUpstreamMergeBaseSearcher(BaseTestCase):
     def _verify_expected(self, tree, branches, expected_nodes, pattern=None):
         self._build_git_tree(tree, branches.values())
 
-        searcher = UpstreamMergeBaseSearcher(
-            pattern=pattern or branches['upstream'][0], repo=self.repo)
+        searcher = UpstreamMergeBaseSearcher(branches['upstream'][0],
+                                             pattern=pattern, repo=self.repo)
 
         self.assertEquals(self._commits_from_nodes(reversed(expected_nodes)),
                           searcher.list())
