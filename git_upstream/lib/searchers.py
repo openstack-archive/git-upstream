@@ -124,34 +124,39 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
     base available.
     """
 
-    def __init__(self, pattern="upstream/*", search_tags=False, remotes=None,
+    def __init__(self, branch, patterns=None, search_tags=False, remotes=None,
                  *args, **kwargs):
+
+        super(UpstreamMergeBaseSearcher, self).__init__(branch, *args, **kwargs)
+
+        if not patterns:
+            patterns = ["upstream/*"]
+        self._patterns = patterns
+        self._references = ["refs/heads/{0}".format(ref)
+                            for ref in self.patterns]
 
         if not remotes:
             remotes = []
-        self._pattern = pattern
-        self._references = ["refs/heads/{0}".format(self.pattern)]
-
-        super(UpstreamMergeBaseSearcher, self).__init__(*args, **kwargs)
 
         if remotes:
             self._references.extend(
-                ["refs/remotes/{0}/{1}".format(s, self.pattern)
-                 for s in remotes])
+                ["refs/remotes/{0}/{1}".format(s, ref)
+                 for s in remotes for ref in self.patterns])
         else:
-            self._references.append(
-                "refs/remotes/*/{0}".format(self.pattern))
+            self._references.extend(
+                ["refs/remotes/*/{0}".format(ref) for ref in self.patterns])
 
         if search_tags:
-            self._references.append("refs/tags/{0}".format(self.pattern))
+            self._references.append(
+                ["refs/tags/{0}".format(ref) for ref in self.patterns])
 
     @property
-    def pattern(self):
+    def patterns(self):
         """
         Pattern to limit which references are searched when looking for a
         merge base commit.
         """
-        return self._pattern
+        return self._patterns
 
     def find(self):
         """

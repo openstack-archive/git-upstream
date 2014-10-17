@@ -498,24 +498,29 @@ class LocateChangesWalk(LocateChangesStrategy):
 
     _strategy = "drop"
 
-    def __init__(self, branch="HEAD", search_ref=None, *args, **kwargs):
+    def __init__(self, branch="HEAD", upstream="upstream/master",
+                 search_refs=None, *args, **kwargs):
+
+        if not search_refs:
+            search_refs = []
+        search_refs.insert(0, upstream)
+
         self.searcher = UpstreamMergeBaseSearcher(branch=branch,
-                                                  pattern=search_ref)
-        self.search_ref = search_ref
+                                                  patterns=search_refs)
+        self.upstream = upstream
         super(LocateChangesWalk, self).__init__(*args, **kwargs)
 
     def filtered_iter(self):
         # may wish to make class used to remove duplicate objects configurable
         # through git-upstream specific 'git config' settings
-        if self.search_ref:
-            self.filters.append(
-                DiscardDuplicateGerritChangeId(self.search_ref,
-                                               limit=self.searcher.commit))
+        self.filters.append(
+            DiscardDuplicateGerritChangeId(self.upstream,
+                                           limit=self.searcher.commit))
         self.filters.append(NoMergeCommitFilter())
         self.filters.append(ReverseCommitFilter())
         self.filters.append(DroppedCommitFilter())
         self.filters.append(
-            SupersededCommitFilter(self.search_ref,
+            SupersededCommitFilter(self.upstream,
                                    limit=self.searcher.commit))
 
         return super(LocateChangesWalk, self).filtered_iter()
@@ -542,6 +547,10 @@ class LocateChangesWalk(LocateChangesStrategy):
                 default=LocateChangesWalk.get_strategy_name(),
                 help='Use the given strategy to re-apply locally carried '
                      'changes to the import branch. (default: %(default)s)')
+@subcommand.arg('--search-ref', action='append_replace', metavar='<pattern>',
+                default=['upstream/*'], dest='search_refs',
+                help='Ref to search for previous import commit. May be '
+                     'specified multiple times.')
 @subcommand.arg('--into', dest='branch', metavar='<branch>', default='HEAD',
                 help='Branch to take changes from, and replace with imported '
                      'branch.')
@@ -579,7 +588,8 @@ def do_import(args):
 
     logger.notice("Searching for previous import")
     strategy = ImportStrategiesFactory.create_strategy(
-        args.strategy, branch=args.branch, search_ref=args.upstream_branch)
+        args.strategy, branch=args.branch, upstream=args.upstream_branch,
+        search_refs=args.search_refs)
 
     if len(strategy) == 0:
         raise ImportUpstreamError("Cannot find previous import")

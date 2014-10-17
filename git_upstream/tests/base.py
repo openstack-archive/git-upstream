@@ -13,6 +13,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
 import os
 import tempfile
 
@@ -129,6 +130,8 @@ class GitRepo(fixtures.Fixture):
 
 class BaseTestCase(testtools.TestCase):
     """Base Test Case for all tests."""
+
+    logging.basicConfig()
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
