@@ -17,7 +17,7 @@ patches on top of upstream repositories. It provides commands to ease the use
 of git for who needs to integrate big upstream projects in their environment.
 The operations are performed using Git commands.
 
-See also README.md, USAGE.md and KNOWN-ISSUES.md files.
+See also README.md, and USAGE.md files.
 
 - What git-upstream is not
 
