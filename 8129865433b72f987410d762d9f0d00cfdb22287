@@ -1,0 +1,10 @@
+Verified+2: Jenkins
+Code-Review+2: Darragh Bailey <daragh.bailey@gmail.com>
+Code-Review+2: Davide Guerri <davide.guerri@gmail.com>
+Workflow+1: Davide Guerri <davide.guerri@gmail.com>
+Code-Review+1: Nicholas Randon <nicholas.randon@hp.com>
+Submitted-by: Jenkins
+Submitted-at: Tue, 21 Oct 2014 11:04:15 +0000
+Reviewed-on: https://review.openstack.org/127565
+Project: stackforge/git-upstream
+Branch: refs/heads/master
