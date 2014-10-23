@@ -262,7 +262,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
                         %s
                 """, (" \\\n" + " " * 8).join(merge_bases))
             sha1 = self.git.rev_list(
-                *merge_bases, topo_order=True, max_count=1, no_walk=True)
+                *merge_bases, topo_order=True, max_count=1)
             # now that we have the sha1, make sure to save the commit object
             self.commit = self.repo.commit(sha1)
             self.log.debug("Most recent merge-base commit is: '%s'",
