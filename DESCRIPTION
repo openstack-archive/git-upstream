@@ -92,6 +92,6 @@ More info about OpenStack and the Gerrit review process.
 
 https://wiki.openstack.org/wiki/IRC
 http://www.mediawiki.org/wiki/Gerrit/git-review
-https://wiki.openstack.org/wiki/How_To_Contribute
-https://wiki.openstack.org/wiki/GerritWorkflow
+http://docs.openstack.org/infra/manual/developers.html
+http://docs.openstack.org/infra/manual/developers.html#development-workflow
 https://review.openstack.org/#/q/status:open,n,z
