@@ -14,6 +14,7 @@
 # under the License.
 
 import logging
+import re
 import os
 import tempfile
 
@@ -224,8 +225,18 @@ class BaseTestCase(testtools.TestCase):
                         # standard merge
                         self.git.merge(*commits, no_edit=True)
                 else:
-                    # standard commit
-                    self.testrepo.add_commits(1, ref="HEAD")
+                    m = re.search(r'(.*)(\d+)$', node)
+                    if m:
+                        # cherry-pick of a another change
+                        node_number = int(m.group(2)) - 1
+                        node_name = m.group(1)
+                        if node_number > 0:
+                            node_name += str(node_number)
+                        to_pick = self._graph[node_name]
+                        self.git.cherry_pick(to_pick)
+                    else:
+                        # standard commit
+                        self.testrepo.add_commits(1, ref="HEAD")
 
             self._graph[node] = self.repo.commit()
 
