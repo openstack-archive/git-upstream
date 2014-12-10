@@ -316,3 +316,56 @@ class TestUpstreamMergeBaseSearcher(BaseTestCase):
         expected_changes = ['E', 'I', 'B1', 'J']
         self._verify_expected(tree, branches, expected_changes,
                               pattern='upstream/master')
+
+    def test_search_changes_approved_after_import_merge(self):
+        """Construct a repo layout where using a complex layout involving
+        additional branches having been included, and a previous import from
+        upstream having been completed, test that if a change was created on
+        another branch before the previous import was created, and merged to
+        the target branch before the previous import was merged, can we find
+        it correctly.
+        i.e. will the searcher also include commit 'O' in the diagram below.
+
+        Repository layout being tested
+
+                    O----
+                   /     \
+              B---C---D---H---I---J---K     master
+             /         \     /
+            /           ----G
+           /               /
+          /       B1--C1--D1                import/next
+         /       /
+        A---E---F---L---M                   upstream/master
+
+        """
+
+        tree = [
+            ('A', []),
+            ('B', ['A']),
+            ('C', ['B']),
+            ('D', ['C']),
+            ('E', ['A']),
+            ('F', ['E']),
+            ('B1', ['F']),
+            ('C1', ['B1']),
+            ('D1', ['C1']),
+            ('G', ['D', '=D1']),
+            ('O', ['C']),
+            ('H', ['D', 'O']),
+            ('I', ['H', 'G']),
+            ('J', ['I']),
+            ('K', ['J']),
+            ('L', ['F']),
+            ('M', ['L'])
+        ]
+
+        branches = {
+            'head': ('master', 'K'),
+            'upstream': ('upstream/master', 'M'),
+        }
+
+        expected_changes = ["B1", "C1", "D1", "G", "O", "H", "I", "J", "K"]
+        self.expectFailure(
+            "Should fail to find change 'O'",
+            self._verify_expected, tree, branches, expected_changes)
