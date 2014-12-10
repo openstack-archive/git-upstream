@@ -607,7 +607,7 @@ def do_import(args):
             if additional_commits and len(args.branches) == 0:
                 logger.warning("""\
                     **************** WARNING ****************
-                    Previous import merged additional branches but non have
+                    Previous import merged additional branches but none have
                     been specified on the command line for this import.\n""")
 
     if args.dry_run:
