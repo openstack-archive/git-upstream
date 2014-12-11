@@ -232,7 +232,5 @@ class TestStrategies(BaseTestCase):
             'upstream': ('upstream/master', 'M'),
         }
 
-        expected_changes = ["B1", "C1", "D1", "O", "J", "K"]
-        self.expectFailure(
-            "Should fail to find change 'O'",
-            self._verify_expected, tree, branches, expected_changes)
+        expected_changes = ["O", "B1", "C1", "D1", "J", "K"]
+        self._verify_expected(tree, branches, expected_changes)
