@@ -71,22 +71,50 @@ class Searcher(GitMixin):
         if not self.commit:
             self.find()
 
+        revision_spec = "{0}..{1}".format(self.commit.hexsha, self.branch)
+
+        # search for previous import commit first, if found, wish to include
+        # the discarded parents as part of the set of changes to ignore in the
+        # final list.
+        self.log.debug(
+            """\
+            Searching for previous merges that exclude one side of the history
+            since the last import.
+                git rev-list --ancestry-path --merges %s
+            """, revision_spec)
+
+        merge_list = list(Commit.iter_items(self.repo, revision_spec,
+                                            topo_order=True,
+                                            ancestry_path=True, merges=True))
+        ignore_args = []
+        for c in merge_list:
+            for p in c.parents:
+                # previous merge using 'ours' strategy to ignore commits
+                if (self.git.rev_parse("%s^{tree}" % p.hexsha) ==
+                        self.git.rev_parse("%s^{tree}" % c.hexsha)):
+                    ignore_args.extend(["^%s" % ip
+                                        for ip in c.parents if ip != p])
+                    break
+
+        if merge_list:
+            for p in merge_list[-1].parents:
+                if p.hexsha == self.commit.hexsha:
+                    ignore_args.extend(["^%s" % ip for ip in c.parents if ip != p])
+
         # walk the tree and find all commits that lie in the path between the
         # commit found by find() and head of the branch to provide a list of
         # commits to the caller
         self.log.info(
             """\
-            Walking the changes between found commit and target
-                git rev-list --parents --simplify-merges %s..%s
-            """, self.commit.hexsha, self.branch)
+            Walking the changes between found commit and target, excluding
+            those behind the previous import or merged as an additional branch
+            during the previous import
+                git rev-list --topo-order %s %s
+            """, revision_spec, " ".join(ignore_args))
 
-        # depending on how many commits are returned, may need to examine use
-        # of a generator rather than storing the entire list. Such a generator
-        # would require a custom git object or direct use of popen
-        commit_list = Commit.iter_items(self.repo,
-                                        "{0}..{1}".format(self.commit.hexsha,
-                                                          self.branch),
-                                        topo_order=True, simplify_merges=True)
+        commit_list = Commit._iter_from_process_or_stream(
+            self.repo, self.git.rev_list(revision_spec, *ignore_args,
+                                         as_process=True, topo_order=True))
 
         # chain the filters as generators so that we don't need to allocate new
         # lists for each step in the filter chain.
@@ -278,54 +306,6 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
             raise RuntimeError("Failed to locate suitable merge-base")
 
         return self.commit.hexsha
-
-    def list(self, include_all=False):
-        """
-        If a particular commit has been merged in mulitple times, walking the
-        history and returning all results will return all commits from
-        each merge point, not just the last set which are usually what is
-        desired.
-
-        X --- Y --- Z              - other branch
-         \           \
-          B --- C --- D --- C'     - HEAD
-         /           /
-        A --------------- E        - upstream
-
-
-        When importing "E" from the upstream branch, the previous import commit
-        is detected as "A". The commits that we are actually interested in are:
-
-                      D --- C'     - HEAD
-                     /
-        A -----------              - upstream
-
-        However due to the DAG nature of git, when walking the direct ancestry
-        path, it cannot for certain determine which parent of merge commits
-        was the original mainline. Thus it will return the following graph.
-
-          B --- C --- D --- C'     - HEAD
-         /           /
-        A -----------              - upstream
-
-        With the following topological order ABCADC'
-
-        The BeforeFirstParentCommitFilter can be given the "A" commit to use
-        when walking the list of commits from the most recent "C'" to the
-        earliest and will stop at the first occurance of "A", ignoring all
-        other earlier commits.
-
-        Setting the parameter 'include_all' to True, will return the entire
-        list.
-
-        if include_all == False -> return ADC'
-        if include_all == True -> return ABCADC'
-        """
-
-        if not include_all:
-            self.filters.insert(0, BeforeFirstParentCommitFilter(self.find()))
-
-        return super(UpstreamMergeBaseSearcher, self).list()
 
 
 class CommitMessageSearcher(LogDedentMixin, Searcher):
@@ -561,28 +541,6 @@ class NoMergeCommitFilter(CommitFilter):
         for commit in commit_iter:
             if len(commit.parents) < 2:
                 yield commit
-
-
-class BeforeFirstParentCommitFilter(LogDedentMixin, CommitFilter):
-    """
-    Generator that iterates over commit objects until it encounters a one that
-    has a parent commit SHA1 that matches the 'stopcommit' SHA1.
-    """
-
-    def __init__(self, stopcommit, *args, **kwargs):
-        self.stop = stopcommit
-        super(BeforeFirstParentCommitFilter, self).__init__(*args, **kwargs)
-
-    def filter(self, commit_iter):
-        for commit in commit_iter:
-            # return the commit object first before checking if the parent
-            # matches the stop commit otherwise we'll also trim the commit
-            # before the one we wanted to match as well.
-            yield commit
-            if any(parent.hexsha == self.stop for parent in commit.parents):
-                self.log.debug("Discarding all commits before '%s'",
-                               commit.hexsha)
-                break
 
 
 class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
