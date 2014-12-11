@@ -215,19 +215,21 @@ class BaseTestCase(testtools.TestCase):
                     if any([True for p in parents if p.startswith("=")]):
                         # special merge commit using inverse of 'ours'
                         self.git.merge(*commits, s="ours", no_commit=True)
-                        use = str(self._graph[
-                            next(p.strip("=") for p in parents
-                                 if p.startswith("="))])
-                        self.git.read_tree(use, u=True, reset=True)
+                        use = [str(self._graph[p.strip("=")])
+                               for p in parents if p.startswith("=")]
+                        self.git.read_tree(empty=True)
+                        self.git.read_tree(*use, u=True, reset=True)
                         self.git.commit(m="Merging %s into %s" %
-                                        (",".join(parent_nodes), node))
+                                        (",".join(parent_nodes[1:]),
+                                         parent_nodes[0]))
+                        self.git.clean(f=True, d=True, x=True)
                     else:
                         # standard merge
                         self.git.merge(*commits, no_edit=True)
                 else:
                     m = re.search(r'(.*)(\d+)$', node)
                     if m:
-                        # cherry-pick of a another change
+                        # rebase of a another change
                         node_number = int(m.group(2)) - 1
                         node_name = m.group(1)
                         if node_number > 0:
