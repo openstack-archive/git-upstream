@@ -19,7 +19,9 @@ import tempfile
 
 import fixtures
 import git
+from pprint import pformat
 import testtools
+from testtools.content import text_content
 
 
 LOREM_IPSUM = """\
@@ -142,6 +144,8 @@ class BaseTestCase(testtools.TestCase):
         self.repo = self.testrepo.repo
         self.git = self.repo.git
 
+        self.addOnException(self.attach_graph_info)
+
     def _build_git_tree(self, graph_def, branches=[]):
         """Helper function to build a git repository from a graph definition
         of nodes and their parent nodes. A list of branches may be provided
@@ -238,3 +242,11 @@ class BaseTestCase(testtools.TestCase):
     def _commits_from_nodes(self, nodes=[]):
 
         return [self._graph[n] for n in nodes]
+
+    def attach_graph_info(self, exc_info):
+        if not self._graph:
+            return
+        self.addDetail('graph-dict', text_content(pformat(self._graph)))
+        self.addDetail('git-log-with-graph',
+                       text_content(self.git.log(graph=True, oneline=True,
+                                                 decorate=True, all=True)))
