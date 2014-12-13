@@ -20,7 +20,9 @@ import tempfile
 
 import fixtures
 import git
+from pprint import pformat
 import testtools
+from testtools.content import text_content
 
 
 LOREM_IPSUM = """\
@@ -179,6 +181,8 @@ class BaseTestCase(testtools.TestCase):
         self.git = self.repo.git
         self._graph = {}
 
+        self.addOnException(self.attach_graph_info)
+
     def _commit(self, node):
         p_node = get_node_to_pick(node)
         if p_node:
@@ -284,3 +288,11 @@ class BaseTestCase(testtools.TestCase):
     def _commits_from_nodes(self, nodes=[]):
 
         return [self._graph[n] for n in nodes]
+
+    def attach_graph_info(self, exc_info):
+        if not self._graph:
+            return
+        self.addDetail('graph-dict', text_content(pformat(self._graph)))
+        self.addDetail('git-log-with-graph',
+                       text_content(self.git.log(graph=True, oneline=True,
+                                                 decorate=True, all=True)))
