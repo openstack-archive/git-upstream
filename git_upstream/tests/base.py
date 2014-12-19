@@ -54,6 +54,18 @@ nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea
 commodo consequat."""
 
 
+def get_node_to_pick(node):
+    m = re.search(r'(.*)(\d+)$', node)
+    if m:
+        # get copy of a another change
+        node_number = int(m.group(2)) - 1
+        node_name = m.group(1)
+        if node_number > 0:
+            node_name += str(node_number)
+        return node_name
+    return None
+
+
 class DiveDir(fixtures.Fixture):
     """Dive into given directory and return back on cleanup.
 
@@ -144,8 +156,38 @@ class BaseTestCase(testtools.TestCase):
         self.useFixture(DiveDir(repo_path))
         self.repo = self.testrepo.repo
         self.git = self.repo.git
+        self._graph = {}
 
         self.addOnException(self.attach_graph_info)
+
+    def _commit(self, node):
+        p_node = get_node_to_pick(node)
+        if p_node:
+            self.git.cherry_pick(self._graph[p_node])
+        else:
+            # standard commit
+            self.testrepo.add_commits(1, ref="HEAD")
+
+    def _merge_commit(self, node, parents):
+        # merge commits
+        parent_nodes = [p.lstrip("=") for p in parents]
+        commits = [str(self._graph[p]) for p in parent_nodes[1:]]
+        if any([True for p in parents if p.startswith("=")]):
+            # special merge commit using inverse of 'ours' by
+            # emptying the current index and then reading in any
+            # trees of the nodes prefixed with '='
+            self.git.merge(*commits, s="ours", no_commit=True)
+            use = [str(self._graph[p.lstrip("=")])
+                   for p in parents if p.startswith("=")]
+            self.git.read_tree(empty=True)
+            self.git.read_tree(*use, u=True, reset=True)
+            self.git.commit(m="Merging %s into %s" %
+                            (",".join(parent_nodes[1:]),
+                                parent_nodes[0]))
+            self.git.clean(f=True, d=True, x=True)
+        else:
+            # standard merge
+            self.git.merge(*commits, no_edit=True)
 
     def _build_git_tree(self, graph_def, branches=[]):
         """Helper function to build a git repository from a graph definition
@@ -187,8 +229,6 @@ class BaseTestCase(testtools.TestCase):
             [('A', []), ('C', ['B']), ('B', ['A'])]
         """
 
-        self._graph = {}
-
         # first commit is special, assume root commit and repo has 1 commit
         node, parents = graph_def[0]
         if not parents:
@@ -200,6 +240,7 @@ class BaseTestCase(testtools.TestCase):
         for node, parents in graph_def[1:]:
             # other root commits
             if not parents:
+                # root commit
                 self.git.symbolic_ref("HEAD", "refs/heads/%s" % node)
                 self.git.rm(".", r=True, cached=True)
                 self.git.clean(f=True, d=True, x=True)
@@ -210,38 +251,12 @@ class BaseTestCase(testtools.TestCase):
 
             else:
                 # checkout the dependent node
-                self.git.checkout(self._graph[parents[0]])
-
+                self.git.checkout(self._graph[parents[0].lstrip('=')])
                 if len(parents) > 1:
                     # merge commits
-                    parent_nodes = [p.strip("=") for p in parents]
-                    commits = [str(self._graph[p]) for p in parent_nodes[1:]]
-                    if any([True for p in parents if p.startswith("=")]):
-                        # special merge commit using inverse of 'ours'
-                        self.git.merge(*commits, s="ours", no_commit=True)
-                        use = str(self._graph[
-                            next(p.strip("=") for p in parents
-                                 if p.startswith("="))])
-                        self.git.read_tree(use, u=True, reset=True)
-                        self.git.commit(m="Merging %s into %s" %
-                                        (",".join(parent_nodes), node))
-                    else:
-                        # standard merge
-                        self.git.merge(*commits, no_edit=True)
+                    self._merge_commit(node, parents)
                 else:
-                    m = re.search(r'(.*)(\d+)$', node)
-                    if m:
-                        # cherry-pick of a another change
-                        node_number = int(m.group(2)) - 1
-                        node_name = m.group(1)
-                        if node_number > 0:
-                            node_name += str(node_number)
-                        to_pick = self._graph[node_name]
-                        self.git.cherry_pick(to_pick)
-                    else:
-                        # standard commit
-                        self.testrepo.add_commits(1, ref="HEAD")
-
+                    self._commit(node)
             self._graph[node] = self.repo.commit()
 
         for name, node in branches:
