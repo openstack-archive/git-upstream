@@ -1,0 +1,10 @@
+Verified+2: Jenkins
+Workflow+1: Davide Guerri <davide.guerri@gmail.com>
+Code-Review+2: Tom Cammann <tom.cammann@hp.com>
+Workflow+1: Tom Cammann <tom.cammann@hp.com>
+Code-Review+1: Brian Hunter <bhunter@tesora.com>
+Submitted-by: Jenkins
+Submitted-at: Fri, 19 Dec 2014 15:26:04 +0000
+Reviewed-on: https://review.openstack.org/140787
+Project: stackforge/git-upstream
+Branch: refs/heads/master
