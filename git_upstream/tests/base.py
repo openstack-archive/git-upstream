@@ -54,7 +54,7 @@ nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea
 commodo consequat."""
 
 
-def get_node_to_pick(node):
+def _get_node_to_pick(node):
     m = re.search(r'(.*)(\d+)$', node)
     if m:
         # get copy of a another change
@@ -161,7 +161,7 @@ class BaseTestCase(testtools.TestCase):
         self.addOnException(self.attach_graph_info)
 
     def _commit(self, node):
-        p_node = get_node_to_pick(node)
+        p_node = _get_node_to_pick(node)
         if p_node:
             self.git.cherry_pick(self._graph[p_node])
         else:
@@ -172,7 +172,7 @@ class BaseTestCase(testtools.TestCase):
         # merge commits
         parent_nodes = [p.lstrip("=") for p in parents]
         commits = [str(self._graph[p]) for p in parent_nodes[1:]]
-        if any([True for p in parents if p.startswith("=")]):
+        if any([p.startswith("=") for p in parents]):
             # special merge commit using inverse of 'ours' by
             # emptying the current index and then reading in any
             # trees of the nodes prefixed with '='
