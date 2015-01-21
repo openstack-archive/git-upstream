@@ -27,6 +27,11 @@ from git import BadObject, Head
 import inspect
 import re
 
+try:
+    from git import BadName
+except ImportError:
+    BadName = None
+
 
 class SupersedeError(GitUpstreamError):
     """Exception thrown by L{Supersede}"""
@@ -78,7 +83,7 @@ class Supersede(LogDedentMixin, GitMixin):
         try:
             # test commit "id" presence
             self._commit = self.repo.commit(git_object)
-        except BadObject:
+        except (BadName, BadObject):
             raise SupersedeError("Commit '%s' not found (or ambiguous)" %
                                  git_object)
 

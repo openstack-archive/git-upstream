@@ -25,6 +25,11 @@ from git import BadObject
 import inspect
 import re
 
+try:
+    from git import BadName
+except ImportError:
+    BadName = None
+
 
 class DropError(GitUpstreamError):
     """Exception thrown by L{Drop}"""
@@ -60,7 +65,7 @@ class Drop(LogDedentMixin, GitMixin):
         try:
             # test commit "id" presence
             self._commit = self.repo.commit(git_object)
-        except BadObject:
+        except (BadName, BadObject):
             raise DropError(
                 "Commit '%s' not found (or ambiguous)" % git_object)
 
