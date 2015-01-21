@@ -20,7 +20,7 @@ from git_upstream.log import LogDedentMixin
 from git_upstream.lib.utils import GitMixin
 from git_upstream import subcommand, log
 
-from git import BadObject
+from git import BadName
 
 import inspect
 import re
@@ -60,7 +60,7 @@ class Drop(LogDedentMixin, GitMixin):
         try:
             # test commit "id" presence
             self._commit = self.repo.commit(git_object)
-        except BadObject:
+        except BadName:
             raise DropError(
                 "Commit '%s' not found (or ambiguous)" % git_object)
 

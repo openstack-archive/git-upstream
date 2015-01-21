@@ -22,7 +22,7 @@ from git_upstream.lib.utils import GitMixin
 from git_upstream.lib.searchers import CommitMessageSearcher
 from git_upstream import subcommand, log
 
-from git import BadObject, Head
+from git import BadName, Head
 
 import inspect
 import re
@@ -78,7 +78,7 @@ class Supersede(LogDedentMixin, GitMixin):
         try:
             # test commit "id" presence
             self._commit = self.repo.commit(git_object)
-        except BadObject:
+        except BadName:
             raise SupersedeError("Commit '%s' not found (or ambiguous)" %
                                  git_object)
 
