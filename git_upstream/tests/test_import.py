@@ -60,9 +60,9 @@ class TestImport(BaseTestCase):
         self._build_git_tree(tree, branches.values())
         iu = ImportUpstream("master", "upstream/master", "import")
         iu.finish()
-        self.assertEquals("", self.git.status(porcelain=True),
-                          "ImportUpstream.finish() failed to result in a "
-                          "clean working tree and index")
+        self.assertEqual("", self.git.status(porcelain=True),
+                         "ImportUpstream.finish() failed to result in a "
+                         "clean working tree and index")
 
     def test_import_finish_merge_extra_files(self):
         """Test that after finishing the import merge when the users working
@@ -99,6 +99,6 @@ class TestImport(BaseTestCase):
         # create a dummy file
         open('dummy-file', 'a').close()
         iu.finish()
-        self.assertEquals("?? dummy-file", self.git.status(porcelain=True),
-                          "ImportUpstream.finish() failed to leave user "
-                          "files not managed untouched.")
+        self.assertEqual("?? dummy-file", self.git.status(porcelain=True),
+                         "ImportUpstream.finish() failed to leave user "
+                         "files not managed untouched.")

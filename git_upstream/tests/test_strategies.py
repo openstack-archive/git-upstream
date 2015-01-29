@@ -30,8 +30,8 @@ class TestStrategies(BaseTestCase):
         strategy = LocateChangesWalk(branch=branches['head'][0],
                                      search_refs=[branches['upstream'][0]])
 
-        self.assertEquals(self._commits_from_nodes(expected_nodes),
-                          [c for c in strategy.filtered_iter()])
+        self.assertEqual(self._commits_from_nodes(expected_nodes),
+                         [c for c in strategy.filtered_iter()])
 
     def test_locate_changes_walk_basic(self):
         """Construct a basic repo layout and validate that locate changes

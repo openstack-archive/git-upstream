@@ -15,15 +15,16 @@
 # limitations under the License.
 #
 
-from git_upstream.errors import GitUpstreamError
-from git_upstream.log import LogDedentMixin
-from git_upstream.lib.utils import GitMixin
-from git_upstream import subcommand, log
+import inspect
+import re
 
 from git import BadObject
 
-import inspect
-import re
+from git_upstream.errors import GitUpstreamError
+from git_upstream.lib.utils import GitMixin
+from git_upstream import log
+from git_upstream.log import LogDedentMixin
+from git_upstream import subcommand
 
 try:
     from git import BadName

@@ -14,13 +14,13 @@
 # under the License.
 
 import logging
-import re
 import os
+from pprint import pformat
+import re
 import tempfile
 
 import fixtures
 import git
-from pprint import pformat
 import testtools
 from testtools.content import text_content
 

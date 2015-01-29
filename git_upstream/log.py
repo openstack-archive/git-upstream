@@ -24,8 +24,8 @@ functions for verbose/quiet CLI args to retreive the appropriate level
 for logging output to the console.
 """
 
-import logging
 from functools import wraps
+import logging
 import textwrap
 
 

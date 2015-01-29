@@ -16,6 +16,7 @@
 """Tests for then 'log' module"""
 
 import testtools
+
 from git_upstream import log as l
 
 
@@ -27,14 +28,14 @@ class TestGetLogger(testtools.TestCase):
 
         logger = l.get_logger()
         self.assertIsNotNone(logger)
-        self.assertEquals('git-upstream', logger.name)
+        self.assertEqual('git-upstream', logger.name)
 
     def test_logger_name_param(self):
         """Test custom logger name"""
 
         logger = l.get_logger('test')
         self.assertIsNotNone(logger)
-        self.assertEquals('git-upstream.test', logger.name)
+        self.assertEqual('git-upstream.test', logger.name)
 
 
 class TestGetIncrementLevel(testtools.TestCase):
@@ -55,7 +56,7 @@ class TestGetIncrementLevel(testtools.TestCase):
         for level_no in range(levels - increment):
             for level in self._levels[level_no]:
                 result = l.get_increment_level(1, level)
-                self.assertEquals(
+                self.assertEqual(
                     self._levels[min(level_no + 1, levels - 1)][0].upper(),
                     result)
 

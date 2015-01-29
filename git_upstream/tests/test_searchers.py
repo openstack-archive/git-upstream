@@ -14,8 +14,9 @@
 # limitations under the License.
 #
 
-from base import BaseTestCase
 from git_upstream.lib.searchers import UpstreamMergeBaseSearcher
+
+from base import BaseTestCase
 
 
 class TestUpstreamMergeBaseSearcher(BaseTestCase):
@@ -28,8 +29,8 @@ class TestUpstreamMergeBaseSearcher(BaseTestCase):
         searcher = UpstreamMergeBaseSearcher(branch=branches['head'][0],
                                              patterns=pattern, repo=self.repo)
 
-        self.assertEquals(self._commits_from_nodes(reversed(expected_nodes)),
-                          searcher.list())
+        self.assertEqual(self._commits_from_nodes(reversed(expected_nodes)),
+                         searcher.list())
 
     def test_search_basic(self):
         """Construct a basic repo layout and validate that locate changes

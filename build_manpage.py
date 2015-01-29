@@ -17,8 +17,8 @@
 
 """ Automatically generate the man page from argparse"""
 
-import datetime
 import argparse
+import datetime
 from distutils.core import Command
 import os
 

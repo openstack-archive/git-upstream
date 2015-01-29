@@ -20,17 +20,17 @@
 Command-line tool for tracking upstream revisions
 """
 
+import argparse
 import logging
 import sys
-import argparse
 
 import git
 
+from git_upstream import __version__
 from git_upstream import commands
+from git_upstream.errors import GitUpstreamError
 from git_upstream import log
 from git_upstream import subcommand
-from git_upstream import __version__
-from git_upstream.errors import GitUpstreamError
 
 try:
     import argcomplete
@@ -168,7 +168,7 @@ def main(argv=None):
 
     try:
         args.func(args)
-    except GitUpstreamError, e:
+    except GitUpstreamError as e:
         logger.fatal("%s", e[0])
         logger.debug("Git-Upstream: %s", e[0], exc_info=e)
         sys.exit(1)

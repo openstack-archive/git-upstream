@@ -15,9 +15,10 @@
 
 """Tests the supersede module"""
 
+from git import GitCommandError
+
 from git_upstream.commands import supersede as s
 from git_upstream.tests import base
-from git import GitCommandError
 
 
 class TestSupersede(base.BaseTestCase):
@@ -49,7 +50,7 @@ class TestSupersede(base.BaseTestCase):
                         change_ids=self.first_change_ids,
                         upstream_branch=self.change_ids_branch)
 
-        self.assertEquals(t.commit, self.first_commit)
+        self.assertEqual(t.commit, self.first_commit)
         self.assertNotEqual(t.commit, self.second_commit)
         self.assertEqual(str(t.change_ids_branch),
                          self.change_ids_branch)
@@ -71,7 +72,7 @@ class TestSupersede(base.BaseTestCase):
                         change_ids=self.second_change_ids,
                         upstream_branch=self.change_ids_branch)
 
-        self.assertEquals(t.commit, self.first_commit)
+        self.assertEqual(t.commit, self.first_commit)
         self.assertNotEqual(t.commit, self.second_commit)
 
     def test_invalid_cids(self):
@@ -88,8 +89,7 @@ class TestSupersede(base.BaseTestCase):
         self.assertRaises(s.SupersedeError, s.Supersede,
                           git_object=self.first_commit,
                           change_ids=self.invalid_change_ids,
-                          upstream_branch=
-                          self.invalid_change_ids_branch)
+                          upstream_branch=self.invalid_change_ids_branch)
 
     def test_no_upstream_branch(self):
         """Test supersede initialization with invalid branch name"""

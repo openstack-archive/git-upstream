@@ -50,12 +50,12 @@ def rebase_replace_insn(path, istream):
                     if not replacement:
                         break
                     if not replacement.startswith("#"):
-                        print replacement
-                print ""
+                        print(replacement)
+                print("")
                 echo_out = True
             continue
         if echo_out:
-            print stripped
+            print(stripped)
 
 
 def main():
@@ -84,14 +84,14 @@ def main():
     # process through 'git-rebase' and this script, as many editors will
     # have problems if stdin is a pipe.
     if VERBOSE:
-        print "rebase-editor: Replacing contents of rebase instructions file"
+        print("rebase-editor: Replacing contents of rebase instructions file")
     rebase_replace_insn(args.ofile, open(args.ifile, 'r'))
 
     # if interactive mode, attempt to exec the editor defined by the user
     # for use with git
     if not args.interactive:
         if VERBOSE:
-            print "rebase-editor: Interactive mode not enabled"
+            print("rebase-editor: Interactive mode not enabled")
         sys.exit(0)
 
     # calling code should only override one of the two editor variables,
@@ -112,9 +112,6 @@ def main():
         sys.stdin.flush()
         sys.stdout.flush()
         sys.stderr.flush()
-        #os.dup2(sys.stdin.fileno(), 0)
-        #os.dup2(sys.stdout.fileno(), 1)
-        #os.dup2(sys.stderr.fileno(), 2)
         os.execvpe(editor, editor_args, env=env)
 
     sys.stderr.write("rebase-editor: No git EDITOR variables defined in "
