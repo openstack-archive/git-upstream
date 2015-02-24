@@ -1,0 +1,5 @@
+- defaults:
+    name: global
+    team: ops
+    gerrit-url: ssh://jenkins@review.example.com:29418
+    gerrit-credentials: 279e38f3-d4dd-49a3-be01-cf3261ba14d6

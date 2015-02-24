@@ -1,0 +1,57 @@
+- job-template:
+    name: 'mirror-{name}'
+    project-type: freestyle
+    disabled: false
+    description: |
+      Mirror {name} project to the upstream/* namespace
+      in the local gerrit instance.<br />
+    logrotate:
+      daysToKeep: -1
+      numToKeep: 30
+      artifactDaysToKeep: -1
+      artifactNumToKeep: -1
+    concurrent: false
+    wrappers:
+      - timeout:
+          timeout: 20
+          fail: true
+      - ssh-agent-credentials:
+          user: '{gerrit-credentials}'
+    parameters:
+      - bool:
+          name: DRY_RUN
+          default: true
+          description: "Whether to push repository to specified mirror or not"
+      - bool:
+          name: FORCE_PUSH_ALL
+          default: false
+          description: "Force push all refs (usually not needed)"
+    properties:
+      - inject:
+          keep-build-variables: true
+          keep-system-variables: true
+          properties-content: |
+            LOCAL_TEAM={team}
+            LOCAL_REPO={name}
+            GERRIT_URL={gerrit-url}
+    scm:
+      - '{scm_macro}':
+          project_pattern: '{project_pattern}'
+    triggers:
+      - poll-weekly
+    builders:
+        - shell: !include-raw-escape scripts/mirror-upstream.bash
+    publishers:
+      - send-email-notification
+
+- job-group:
+    name: mirror-openstack
+    jobs:
+      - 'mirror-{name}':
+          scm_macro: 'github-mirror-scm'
+
+- job-group:
+    name: mirror-git-url
+    jobs:
+      - 'mirror-{name}':
+          scm_macro: 'url-mirror-scm'

@@ -1,0 +1,74 @@
+- publisher:
+    name: send-email-notification
+    publishers:
+      - email:
+          recipients: team-email@example.com
+
+- trigger:
+    name: poll-weekly
+    triggers:
+      - pollscm: "@weekly"
+
+- trigger:
+    name: gerrit-ref-update
+    triggers:
+      - gerrit:
+         trigger-on-patchset-upload-event: false
+         trigger-on-change-merge-event: false
+         trigger-on-ref-update-event: true
+         trigger-on-comment-added-event: false
+         override-votes: false
+         silent: true
+         projects:
+           - project-compare-type: 'PLAIN'
+             project-pattern: '{project_pattern}'
+             branches:
+               - branch-compare-type: 'ANT'
+                 branch-pattern: '**'
+
+- trigger:
+    name: gerrit-ref-update-plain
+    triggers:
+      - gerrit:
+         trigger-on-patchset-uploaded-event: false
+         trigger-on-change-merged-event: false
+         trigger-on-ref-updated-event: true
+         trigger-on-comment-added-event: false
+         override-votes: false
+         silent: true
+         projects:
+           - project-compare-type: 'PLAIN'
+             project-pattern: '{project_pattern}'
+             branches:
+               - branch-compare-type: 'PLAIN'
+                 branch-pattern: '{project_branch}'
+
+- scm:
+    name: github-mirror-scm
+    scm:
+      - git:
+         url: https://github.com/{project_pattern}.git
+         branches:
+           - origin/**
+         refspec: +refs/heads/*:refs/remotes/origin/*
+         name: origin
+         prune: true
+         clean:
+           after: true
+         wipe-workspace: false
+         skip-tag: true
+
+- scm:
+    name: url-mirror-scm
+    scm:
+      - git:
+         url: '{project_pattern}'
+         branches:
+           - origin/**
+         refspec: +refs/heads/*:refs/remotes/origin/*
+         name: origin
+         prune: true
+         clean:
+           after: true
+         wipe-workspace: false
+         skip-tag: true
