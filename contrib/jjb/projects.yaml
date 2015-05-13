@@ -1,0 +1,11 @@
+- project:
+    name: gerrit
+    jobs:
+      - 'mirror-git-url':
+          project_pattern: https://gerrit-review.googlesource.com/p/gerrit.git
+
+- project:
+    name: git-upstream
+    jobs:
+      - 'mirror-openstack':
+          project_pattern: stackforge/git-upstream
