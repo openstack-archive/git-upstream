@@ -16,8 +16,8 @@
 #
 
 import codecs
-import subprocess
 import os
+import subprocess
 
 from git_upstream.lib.utils import GitMixin
 from git_upstream.log import LogDedentMixin

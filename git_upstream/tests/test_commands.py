@@ -15,8 +15,8 @@
 
 """Tests for the 'commands' module"""
 
-import testtools
 from argparse import ArgumentParser
+import testtools
 
 from git_upstream import commands as c
 

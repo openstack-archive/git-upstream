@@ -16,18 +16,17 @@
 """Tests for the 'import' command"""
 
 import inspect
+from string import lower
 
 import mock
 from testtools.matchers import Equals
 
-from git_upstream import main
 from git_upstream.lib.pygitcompat import Commit
+from git_upstream import main
 from git_upstream.tests.base import BaseTestCase
 
-from string import lower
 
-
-class SubstringMatcher():
+class SubstringMatcher(object):
     def __init__(self, containing):
         self.containing = lower(containing)
 

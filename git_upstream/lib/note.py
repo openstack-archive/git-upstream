@@ -15,7 +15,8 @@
 # limitations under the License.
 #
 
-from git import base, GitCommandError
+from git import base
+from git import GitCommandError
 
 from git_upstream.errors import GitUpstreamError
 

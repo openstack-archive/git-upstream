@@ -15,18 +15,25 @@
 # limitations under the License.
 #
 
-from git_upstream.errors import GitUpstreamError
-from git_upstream.log import LogDedentMixin
-from git_upstream.lib.utils import GitMixin
-from git_upstream.lib.rebaseeditor import RebaseEditor
-from git_upstream import subcommand, log
-from git_upstream.lib.searchers import UpstreamMergeBaseSearcher
-
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 from collections import Sequence
+import inspect
+
 from git import GitCommandError
 
-import inspect
+from git_upstream.errors import GitUpstreamError
+from git_upstream.lib.rebaseeditor import RebaseEditor
+from git_upstream.lib.searchers import DiscardDuplicateGerritChangeId
+from git_upstream.lib.searchers import DroppedCommitFilter
+from git_upstream.lib.searchers import NoMergeCommitFilter
+from git_upstream.lib.searchers import ReverseCommitFilter
+from git_upstream.lib.searchers import SupersededCommitFilter
+from git_upstream.lib.searchers import UpstreamMergeBaseSearcher
+from git_upstream.lib.utils import GitMixin
+from git_upstream import log
+from git_upstream.log import LogDedentMixin
+from git_upstream import subcommand
 
 
 class ImportUpstreamError(GitUpstreamError):
@@ -35,8 +42,7 @@ class ImportUpstreamError(GitUpstreamError):
 
 
 class ImportUpstream(LogDedentMixin, GitMixin):
-    """
-    Import code from an upstream project and merge in additional branches
+    """Import code from an upstream project and merge in additional branches
     to create a new branch unto which changes that are not upstream but are
     on the local branch are applied.
     """
@@ -94,16 +100,14 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
     @property
     def import_branch(self):
-        """
-        Pattern to use to generate the name, or user specified branch name
+        """Pattern to use to generate the name, or user specified branch name
         to use for import.
         """
         return self._import_branch
 
     @property
     def extra_branches(self):
-        """
-        Branch containing the additional branches to be merged with the
+        """Branch containing the additional branches to be merged with the
         upstream when importing.
         """
         return self._extra_branches
@@ -139,8 +143,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
     def create_import(self, commit=None, import_branch=None, checkout=False,
                       force=False):
-        """
-        Create the import branch from the specified commit.
+        """Create the import branch from the specified commit.
 
         If the branch already exists abort if force is false
             If current branch, reset the head to the specified commit
@@ -258,7 +261,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                             %s %s
                     """, previous, root, branch)
                 self.git.rebase(root, branch, onto=previous, p=True)
-            except:
+            except Exception:
                 self.git.rebase(abort=True, with_exceptions=False)
                 raise
             counter = idx - 1
@@ -298,7 +301,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         try:
             self._linearise(self.import_branch, strategy,
                             strategy.searcher.commit)
-        except:
+        except Exception:
             # Could ask user if they want to try and use the non clean route
             # provided they don't mind that 'git rebase --abort' will result
             # in a virtually useless local import branch
@@ -360,9 +363,10 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         raise NotImplementedError
 
     def finish(self):
-        """
-        Finish merge according to the selected strategy while performing
-        suitable verification checks.
+        """Finish import
+
+        Finish the import by merging the import branch to the target while
+        performing suitable verification checks.
         """
         self.log.info("No verification checks enabled")
         self.git.checkout(self.branch)
@@ -408,7 +412,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 """, self.import_branch, self.branch)
             self._set_branch(self.branch, current_sha, force=True)
             return False
-        except:
+        except Exception:
             self.log.exception("Unknown exception during finish")
             self._set_branch(self.branch, current_sha, force=True)
             raise
@@ -435,25 +439,18 @@ class ImportStrategiesFactory(object):
         return cls.__strategies.keys()
 
 
-from git_upstream.lib.searchers import (NoMergeCommitFilter,
-                                        ReverseCommitFilter,
-                                        DiscardDuplicateGerritChangeId,
-                                        SupersededCommitFilter,
-                                        DroppedCommitFilter)
-
-
 class LocateChangesStrategy(GitMixin, Sequence):
+    """Base locate changes strategy class
+
+    Needs to be extended with the specific strategy on how to handle changes
+    that are not yet upstream.
     """
-    Base class that needs to be extended with the specific strategy on how to
-    handle changes locally that are not yet upstream.
-    """
+
     __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, git=None, *args, **kwargs):
-        """
-        Initialize an empty filters list
-        """
+        """Initialize an empty filters list"""
         self.data = None
         self.filters = []
         super(LocateChangesStrategy, self).__init__(*args, **kwargs)
@@ -486,15 +483,11 @@ class LocateChangesStrategy(GitMixin, Sequence):
         return list(self.filtered_iter())
 
     def _popdata(self):
-        """
-        Should return the list of commits from the searcher object
-        """
+        """Should return the list of commits from the searcher object"""
         return self.searcher.list()
 
 
 class LocateChangesWalk(LocateChangesStrategy):
-    """
-    """
 
     _strategy = "drop"
 
@@ -565,8 +558,7 @@ class LocateChangesWalk(LocateChangesStrategy):
                 help='Branches to additionally merge into the import branch '
                      'using default git merging behaviour')
 def do_import(args):
-    """
-    Import code from specified upstream branch.
+    """Import code from specified upstream branch.
 
     Creates an import branch from the specified upstream branch, and optionally
     merges additional branches given as arguments. Current branch, unless

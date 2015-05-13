@@ -15,11 +15,12 @@
 # limitations under the License.
 #
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 import re
 
-from git_upstream.lib.utils import GitMixin
 from git_upstream.lib.pygitcompat import Commit
+from git_upstream.lib.utils import GitMixin
 from git_upstream.log import LogDedentMixin
 
 

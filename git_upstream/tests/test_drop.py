@@ -15,9 +15,10 @@
 
 """Tests the drop module"""
 
+from git import GitCommandError
+
 from git_upstream.commands import drop as d
 from git_upstream.tests import base
-from git import GitCommandError
 
 
 class TestDrop(base.BaseTestCase):
@@ -37,10 +38,10 @@ class TestDrop(base.BaseTestCase):
         automatic_author = '%s <%s>' % (self.repo.git.config('user.name'),
                                         self.repo.git.config('user.email'))
         t = d.Drop(git_object=self.first_commit)
-        self.assertEquals(t.author, automatic_author)
+        self.assertEqual(t.author, automatic_author)
 
         t = d.Drop(git_object=self.first_commit, author=self.author)
-        self.assertEquals(t.author, self.author)
+        self.assertEqual(t.author, self.author)
 
     def test_invalid_commit(self):
         """Test drop initialization with invalid commit"""
