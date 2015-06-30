@@ -86,10 +86,10 @@ def reverse_toposort(data):
     nodes_to_visit = []
     for i in data.keys():
         if i not in visited:
-            nodes_to_visit.insert(0, i)
+            nodes_to_visit.append(i)
 
         while nodes_to_visit:
-            node = nodes_to_visit.pop(0)
+            node = nodes_to_visit.pop()
             if visited.get(node) is _VISITED:
                 # already visited so just return it with it's deps
                 yield (node, data[node])
@@ -97,16 +97,16 @@ def reverse_toposort(data):
                 continue
 
             visited[node] = _VISITED
-            nodes_to_visit.insert(0, node)
+            nodes_to_visit.append(node)
             # special case for cherry-picking changes
             c_node = _get_node_to_pick(node)
             if c_node and c_node not in visited:
-                nodes_to_visit.insert(0, c_node)
+                nodes_to_visit.append(c_node)
 
             for d in data[node]:
                 r_d = d.strip('=')
                 if r_d not in visited:
-                    nodes_to_visit.insert(0, r_d)
+                    nodes_to_visit.append(r_d)
                 else:
                     # if we've already visited a dep but not processed it,
                     # then we have a back edge of some kind
