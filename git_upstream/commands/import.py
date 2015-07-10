@@ -18,10 +18,10 @@
 from abc import ABCMeta
 from abc import abstractmethod
 from collections import Sequence
-import inspect
 
 from git import GitCommandError
 
+from git_upstream.commands import GitUpstreamCommand
 from git_upstream.errors import GitUpstreamError
 from git_upstream.lib.rebaseeditor import RebaseEditor
 from git_upstream.lib.searchers import DiscardDuplicateGerritChangeId
@@ -31,9 +31,7 @@ from git_upstream.lib.searchers import ReverseCommitFilter
 from git_upstream.lib.searchers import SupersededCommitFilter
 from git_upstream.lib.searchers import UpstreamMergeBaseSearcher
 from git_upstream.lib.utils import GitMixin
-from git_upstream import log
 from git_upstream.log import LogDedentMixin
-from git_upstream import subcommand
 
 
 class ImportUpstreamError(GitUpstreamError):
@@ -519,45 +517,7 @@ class LocateChangesWalk(LocateChangesStrategy):
         return super(LocateChangesWalk, self).filtered_iter()
 
 
-@subcommand.arg('-d', '--dry-run', dest='dry_run', action='store_true',
-                default=False,
-                help='Only print out the list of commits that would be '
-                     'applied.')
-@subcommand.arg('-i', '--interactive', action='store_true', default=False,
-                help='Let the user edit the list of commits before applying.')
-@subcommand.arg('-f', '--force', dest='force', required=False,
-                action='store_true', default=False,
-                help='Force overwrite of existing import branch if it exists.')
-@subcommand.arg('--merge', dest='merge', required=False, action='store_true',
-                default=True,
-                help='Merge the resulting import branch into the target branch'
-                     ' once complete')
-@subcommand.arg('--no-merge', dest='merge', required=False,
-                action='store_false',
-                help="Disable merge of the resulting import branch")
-@subcommand.arg('-s', '--strategy', metavar='<strategy>',
-                choices=ImportStrategiesFactory.list_strategies(),
-                default=LocateChangesWalk.get_strategy_name(),
-                help='Use the given strategy to re-apply locally carried '
-                     'changes to the import branch. (default: %(default)s)')
-@subcommand.arg('--search-refs', action='append_replace', metavar='<pattern>',
-                default=['upstream/*'], dest='search_refs',
-                help='Refs to search for previous import commit. May be '
-                     'specified multiple times.')
-@subcommand.arg('--into', dest='branch', metavar='<branch>', default='HEAD',
-                help='Branch to take changes from, and replace with imported '
-                     'branch.')
-@subcommand.arg('--import-branch', metavar='<import-branch>',
-                help='Name of import branch to use',
-                default='import/{describe}')
-@subcommand.arg('upstream_branch', metavar='<upstream-branch>', nargs='?',
-                default='upstream/master',
-                help='Upstream branch to import. Must be specified if '
-                     'you wish to provide additional branches.')
-@subcommand.arg('branches', metavar='<branches>', nargs='*',
-                help='Branches to additionally merge into the import branch '
-                     'using default git merging behaviour')
-def do_import(args):
+class ImportCommand(LogDedentMixin, GitUpstreamCommand):
     """Import code from specified upstream branch.
 
     Creates an import branch from the specified upstream branch, and optionally
@@ -569,81 +529,136 @@ def do_import(args):
     Once complete it will merge and replace the contents of the target branch
     with those from the import branch, unless --no-merge is specified.
     """
+    name = "import"
 
-    logger = log.get_logger('%s.%s' % (__name__,
-                                       inspect.stack()[0][0].f_code.co_name))
+    def __init__(self, *args, **kwargs):
+        super(ImportCommand, self).__init__(*args, **kwargs)
 
-    import_upstream = ImportUpstream(branch=args.branch,
-                                     upstream=args.upstream_branch,
-                                     import_branch=args.import_branch,
-                                     extra_branches=args.branches)
+        self.parser.add_argument(
+            '-i', '--interactive', action='store_true', default=False,
+            help='Let the user edit the list of commits before applying.')
+        self.parser.add_argument(
+            '-d', '--dry-run', dest='dry_run', action='store_true',
+            default=False,
+            help='Only print out the list of commits that would be applied.')
+        self.parser.add_argument(
+            '-f', '--force', dest='force', required=False,
+            action='store_true', default=False,
+            help='Force overwrite of existing import branch if it exists.')
+        self.parser.add_argument(
+            '--merge', dest='merge', required=False, action='store_true',
+            default=True,
+            help='Merge the resulting import branch into the target branch '
+                 'once complete')
+        self.parser.add_argument(
+            '--no-merge', dest='merge', required=False, action='store_false',
+            help='Disable merge of the resulting import branch')
+        self.parser.add_argument(
+            '--search-refs', action='append_replace', metavar='<pattern>',
+            default=['upstream/*'], dest='search_refs',
+            help='Refs to search for previous import commit. May be '
+                 'specified multiple times.')
+        self.parser.add_argument(
+            '-s', '--strategy', metavar='<strategy>',
+            choices=ImportStrategiesFactory.list_strategies(),
+            default=LocateChangesWalk.get_strategy_name(),
+            help='Use the given strategy to re-apply locally carried '
+                 'changes to the import branch. (default: %(default)s)')
+        self.parser.add_argument(
+            '--into', dest='branch', metavar='<branch>', default='HEAD',
+            help='Branch to take changes from, and replace with imported '
+                 'branch.')
+        self.parser.add_argument(
+            '--import-branch', metavar='<import-branch>',
+            default='import/{describe}', help='Name of import branch to use')
+        self.parser.add_argument(
+            'upstream_branch', metavar='<upstream-branch>', nargs='?',
+            default='upstream/master',
+            help='Upstream branch to import. Must be specified if you wish to '
+                 'provide additional branches.')
+        self.parser.add_argument(
+            'branches', metavar='<branches>', nargs='*',
+            help='Branches to additionally merge into the import branch using '
+                 'default git merging behaviour')
 
-    logger.notice("Searching for previous import")
-    strategy = ImportStrategiesFactory.create_strategy(
-        args.strategy, branch=args.branch, upstream=args.upstream_branch,
-        search_refs=args.search_refs)
+    def run(self, args):
 
-    if len(strategy) == 0:
-        raise ImportUpstreamError("Cannot find previous import")
+        import_upstream = ImportUpstream(
+            branch=args.branch,
+            upstream=args.upstream_branch,
+            import_branch=args.import_branch,
+            extra_branches=args.branches)
 
-    # if last commit in the strategy was a merge, then the additional branches
-    # that were merged in previously can be extracted based on the commits
-    # merged.
-    prev_import_merge = strategy[-1]
-    if len(prev_import_merge.parents) > 1:
-        idxs = [idx for idx, commit in enumerate(prev_import_merge.parents)
-                if commit.hexsha != strategy.searcher.commit.hexsha]
+        self.log.notice("Searching for previous import")
+        strategy = ImportStrategiesFactory.create_strategy(
+            args.strategy, branch=args.branch, upstream=args.upstream_branch,
+            search_refs=args.search_refs)
 
-        if idxs:
-            additional_commits = [prev_import_merge.parents[i] for i in idxs]
-            if additional_commits and len(args.branches) == 0:
-                logger.warning("""\
-                    **************** WARNING ****************
-                    Previous import merged additional branches but none have
-                    been specified on the command line for this import.\n""")
+        if len(strategy) == 0:
+            raise ImportUpstreamError("Cannot find previous import")
 
-    if args.dry_run:
-        commit_list = [c.hexsha[:6] + " - " + c.summary[:60] +
-                       (c.summary[60:] and "...")
-                       for c in list(strategy.filtered_iter())]
-        logger.notice("""\
-            Requested a dry-run: printing the list of commit that should be
-            rebased
+        # if last commit in the strategy was a merge, then the additional
+        # branches that were merged in previously can be extracted based on
+        # the commits merged.
+        prev_import_merge = strategy[-1]
+        if len(prev_import_merge.parents) > 1:
+            idxs = [idx for idx, commit in enumerate(prev_import_merge.parents)
+                    if commit.hexsha != strategy.searcher.commit.hexsha]
 
-                %s
-            """, "\n    ".join(commit_list))
-        return True
+            if idxs:
+                additional_commits = [prev_import_merge.parents[i]
+                                      for i in idxs]
+                if additional_commits and len(args.branches) == 0:
+                    self.log.warning("""\
+                        **************** WARNING ****************
+                        Previous import merged additional branches but none
+                        have been specified on the command line for this
+                        import.\n""")
 
-    logger.notice("Starting import of upstream")
-    import_upstream.create_import(force=args.force)
-    logger.notice("Successfully created import branch")
+        if args.dry_run:
+            commit_list = [c.hexsha[:6] + " - " + c.summary[:60] +
+                           (c.summary[60:] and "...")
+                           for c in list(strategy.filtered_iter())]
+            self.log.notice("""\
+                Requested a dry-run: printing the list of commit that should be
+                rebased
 
-    if not import_upstream.apply(strategy, args.interactive):
-        logger.notice("Import cancelled")
-        return False
+                    %s
+                """, "\n    ".join(commit_list))
+            return True
 
-    if not args.merge:
-        logger.notice(
-            """\
-            Import complete, not merging to target branch '%s' as requested.
-            """, args.branch)
-        return True
+        self.log.notice("Starting import of upstream")
+        import_upstream.create_import(force=args.force)
+        self.log.notice("Successfully created import branch")
 
-    logger.notice("Merging import to requested branch '%s'", args.branch)
-    if import_upstream.finish():
-        logger.notice(
-            """\
-            Successfully finished import:
-                target branch: '%s'
-                upstream branch: '%s'
-                import branch: '%s'""", args.branch, args.upstream_branch,
-            import_upstream.import_branch)
-        if args.branches:
-            for branch in args.branches:
-                logger.notice("    extra branch: '%s'", branch, dedent=False)
-        return True
-    else:
-        return False
+        if not import_upstream.apply(strategy, args.interactive):
+            self.log.notice("Import cancelled")
+            return False
+
+        if not args.merge:
+            self.log.notice(
+                """\
+                Import complete, not merging to target branch '%s' as
+                requested.
+                """, args.branch)
+            return True
+
+        self.log.notice("Merging import to requested branch '%s'", args.branch)
+        if import_upstream.finish():
+            self.log.notice(
+                """\
+                Successfully finished import:
+                    target branch: '%s'
+                    upstream branch: '%s'
+                    import branch: '%s'""", args.branch, args.upstream_branch,
+                import_upstream.import_branch)
+            if args.branches:
+                for branch in args.branches:
+                    self.log.notice("    extra branch: '%s'", branch,
+                                    dedent=False)
+            return True
+        else:
+            return False
 
 
 # vim:sw=4:sts=4:ts=4:et:

@@ -16,9 +16,9 @@
 # limitations under the License.
 #
 
+import abc
 import argparse
 import os
-import sys
 
 
 class AppendReplaceAction(argparse._AppendAction):
@@ -38,9 +38,36 @@ class AppendReplaceAction(argparse._AppendAction):
                                                   option_string)
 
 
-def get_subcommands(subparsers):
+class GitUpstreamCommand(object):
+    """Base command class
+
+    To create commands simply subclass and implement the necessary abstract
+    methods.
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, parser):
+        self.parser = parser
+
+    def validate(self, args):
+        """Verify the arguments passed for this command"""
+        return
+
+    @abc.abstractmethod
+    def run(self, args):
+        """Execute this command"""
+        return
+
+
+def get_subcommands(parser):
+
+    subparsers = parser.add_subparsers(title="commands", metavar='<command>',
+                                       dest='subcommand')
 
     subcommands = _find_actions(subparsers, os.path.dirname(__file__))
+
+    parser.set_defaults(subcommands=subcommands)
 
     return subcommands
 
@@ -51,23 +78,18 @@ def _find_actions(subparsers, module_path):
     for mod in (p[:-len('.py')] for p in os.listdir(module_path) if
                 p.endswith('.py')):
         __import__(__name__ + '.' + mod)
-        module = sys.modules[__name__ + '.' + mod]
-        for attr in (a for a in dir(module) if a.startswith('do_')):
-            command = attr[3:].replace('_', '-')
-            func = getattr(module, attr)
-            desc = func.__doc__ or ''
-            help = desc.strip().split('\n')[0]
-            args = getattr(func, 'arguments', [])
 
-            subparser = subparsers.add_parser(
-                command,
-                help=help,
-                description=desc)
-            subparser.register('action', 'append_replace', AppendReplaceAction)
+    for cmd_class in GitUpstreamCommand.__subclasses__():
+        command = cmd_class.name
+        desc = cmd_class.__doc__ or None
+        help = desc.strip().split('\n')[0]
 
-            for (args, kwargs) in args:
-                subparser.add_argument(*args, **kwargs)
-            subparser.set_defaults(func=func)
-            subcommands[command] = subparser
+        subparser = subparsers.add_parser(
+            command,
+            help=help,
+            description=desc)
+        subparser.register('action', 'append_replace', AppendReplaceAction)
+        subparser.set_defaults(cmd=cmd_class(subparser))
+        subcommands[command] = subparser
 
     return subcommands
