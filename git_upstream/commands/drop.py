@@ -15,16 +15,14 @@
 # limitations under the License.
 #
 
-import inspect
 import re
 
 from git import BadObject
 
+from git_upstream.commands import GitUpstreamCommandTest
 from git_upstream.errors import GitUpstreamError
 from git_upstream.lib.utils import GitMixin
-from git_upstream import log
 from git_upstream.log import LogDedentMixin
-from git_upstream import subcommand
 
 try:
     from git import BadName
@@ -37,7 +35,7 @@ class DropError(GitUpstreamError):
     pass
 
 
-class Drop(LogDedentMixin, GitMixin):
+class Drop(LogDedentMixin, GitMixin, GitUpstreamCommandTest):
     """Mark a commit to be dropped on next import.
 
     Mark a commit as to be dropped.
@@ -50,14 +48,43 @@ class Drop(LogDedentMixin, GitMixin):
     Dropped: Walter White <heisenberg@hp.com>
 
     """
+    __cmd__ = "drop"
+
     DROP_HEADER = 'Dropped:'
     NOTE_REF = 'refs/notes/upstream-merge'
 
-    def __init__(self, git_object=None, author=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
 
         # make sure to correctly initialize inherited objects before performing
         # any computation
         super(Drop, self).__init__(*args, **kwargs)
+
+        self.parser.add_argument(
+            'commit', metavar='<commit>', nargs=None,
+            help='Commit to be marked as dropped')
+        self.parser.add_argument(
+            '-a', '--author', metavar='<author>', dest='author', default=None,
+            help='Git author for the mark')
+
+    @property
+    def commit(self):
+        """Commit to be marked as dropped."""
+        return self._commit
+
+    @property
+    def author(self):
+        """Commit to be marked as dropped."""
+        return self._author
+
+    def run(self, args):
+        """
+        Mark a commit as dropped.
+        Marked commits will be skipped during the upstream rebasing process.
+        See also the "git upstream import" command.
+        """
+
+        git_object = args.commit
+        author = args.author
 
         # test parameters
         if not git_object:
@@ -84,15 +111,8 @@ class Drop(LogDedentMixin, GitMixin):
         if self.repo.bare:
             raise DropError("Cannot add notes in bare repositories")
 
-    @property
-    def commit(self):
-        """Commit to be marked as dropped."""
-        return self._commit
-
-    @property
-    def author(self):
-        """Commit to be marked as dropped."""
-        return self._author
+        if self.mark():
+            self.log.notice("Drop mark created successfully")
 
     def check_duplicates(self):
         """Check if a dropped header is already present"""
@@ -122,27 +142,5 @@ class Drop(LogDedentMixin, GitMixin):
             self.log.warning(
                 "Drop note has not been added as '%s' already has one" %
                 self.commit)
-
-
-@subcommand.arg('commit', metavar='<commit>', nargs=None,
-                help='Commit to be marked as dropped')
-@subcommand.arg('-a', '--author', metavar='<author>',
-                dest='author',
-                default=None,
-                help='Git author for the mark')
-def do_drop(args):
-    """
-    Mark a commit as dropped.
-    Marked commits will be skipped during the upstream rebasing process.
-    See also the "git upstream import" command.
-    """
-
-    logger = log.get_logger('%s.%s' % (__name__,
-                                       inspect.stack()[0][0].f_code.co_name))
-
-    drop = Drop(git_object=args.commit, author=args.author)
-
-    if drop.mark():
-        logger.notice("Drop mark created successfully")
 
 # vim:sw=4:sts=4:ts=4:et:

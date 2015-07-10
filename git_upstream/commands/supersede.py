@@ -15,19 +15,17 @@
 # limitations under the License.
 #
 
-import inspect
 import re
 
 from git import BadObject
 from git import Head
 
+from git_upstream.commands import GitUpstreamCommandTest
 from git_upstream.errors import GitUpstreamError
 from git_upstream.lib import note  # noqa
 from git_upstream.lib.searchers import CommitMessageSearcher
 from git_upstream.lib.utils import GitMixin
-from git_upstream import log
 from git_upstream.log import LogDedentMixin
-from git_upstream import subcommand
 
 try:
     from git import BadName
@@ -40,7 +38,7 @@ class SupersedeError(GitUpstreamError):
     pass
 
 
-class Supersede(LogDedentMixin, GitMixin):
+class Supersede(LogDedentMixin, GitMixin, GitUpstreamCommandTest):
     """
     Mark a commit as superseded.
 
@@ -52,6 +50,7 @@ class Supersede(LogDedentMixin, GitMixin):
     Superseded-by: I82ef79c3621dacf619a02404f16464877a06f158
 
     """
+    __cmd__ = "supersede"
 
     SUPERSEDE_HEADER = 'Superseded-by:'
     NOTE_REF = 'refs/notes/upstream-merge'
@@ -60,12 +59,61 @@ class Supersede(LogDedentMixin, GitMixin):
     CHANGE_ID_HEADER_REGEX_FMT = '^Change-Id:\s*%s'
     CHANGE_ID_HEADER_REGEX = '^Change-Id:\s*(I[0-9a-f]{6,40})$'
 
-    def __init__(self, git_object=None, change_ids=list(),
-                 upstream_branch=None, force=False, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
 
         # make sure to correctly initialize inherited objects before performing
         # any computation
         super(Supersede, self).__init__(*args, **kwargs)
+
+        self.parser.add_argument(
+            'commit', metavar='<commit>', nargs=None,
+            help='Commit to be marked as superseded')
+        self.parser.add_argument(
+            'change_ids', metavar='<change id>', nargs='+',
+            help='Change id which makes <commit> obsolete. The change id must '
+                 'be present in <upstream-branch> to drop <commit>. If more '
+                 'than one change id is specified, all must be present in '
+                 '<upstream-branch> to drop <commit>')
+        self.parser.add_argument(
+            '-f', '--force', dest='force', required=False, action='store_true',
+            default=False,
+            help='Apply the commit mark even if one or more change ids could '
+                 'not be found. Use this flag carefully as commits will not be '
+                 'dropped during import command execution as long as all '
+                 'associated change ids are present in the local copy of the '
+                 'upstream branch')
+        self.parser.add_argument(
+            '-u', '--upstream-branch', metavar='<upstream-branch>',
+            dest='upstream_branch', required=False, default='upstream/master',
+            help='Search change ids values in <upstream-branch> branch '
+                 '(default: %(default)s)')
+
+    @property
+    def commit(self):
+        """Commit to be marked as superseded."""
+        return self._commit
+
+    @property
+    def change_ids(self):
+        """Change ids that make a commit obsolete."""
+        return self._change_ids
+
+    @property
+    def change_ids_branch(self):
+        """Branch to search for change ids"""
+        return self._upstream_branch
+
+    def run(self, args):
+        """
+        Mark a commit as superseded by a set of change-ids.
+        Marked commits will be skipped during the upstream rebasing process.
+        See also the "git upstream import" command.
+        """
+
+        git_object = args.commit
+        change_ids = args.change_ids,
+        upstream_branch = args.upstream_branch
+        force = args.force
 
         # test commit parameter
         if not git_object:
@@ -122,20 +170,8 @@ class Supersede(LogDedentMixin, GitMixin):
                         "Change-Id '%s' not found in branch '%s'" %
                         (change_id, upstream_branch))
 
-    @property
-    def commit(self):
-        """Commit to be marked as superseded."""
-        return self._commit
-
-    @property
-    def change_ids(self):
-        """Change ids that make a commit obsolete."""
-        return self._change_ids
-
-    @property
-    def change_ids_branch(self):
-        """Branch to search for change ids"""
-        return self._upstream_branch
+        if self.mark():
+            self.log.notice("Supersede mark created successfully")
 
     def check_duplicates(self):
         """
@@ -167,42 +203,5 @@ class Supersede(LogDedentMixin, GitMixin):
             self.commit.append_note(git_note, note_ref=Supersede.NOTE_REF)
         else:
             self.log.warning('Note has not been added')
-
-
-@subcommand.arg('commit', metavar='<commit>', nargs=None,
-                help='Commit to be marked as superseded')
-@subcommand.arg('change_ids', metavar='<change id>', nargs='+',
-                help='Change id which makes <commit> obsolete. The change id '
-                     'must be present in <upstream-branch> to drop <commit>. '
-                     'If more than one change id is specified, all must be '
-                     'present in <upstream-branch> to drop <commit>')
-@subcommand.arg('-f', '--force', dest='force', required=False,
-                action='store_true', default=False,
-                help='Apply the commit mark even if one or more change ids '
-                     'could not be found. Use this flag carefully as commits '
-                     'will not be dropped during import command execution as '
-                     'long as all associated change ids are present in the '
-                     'local copy of the upstream branch')
-@subcommand.arg('-u', '--upstream-branch', metavar='<upstream-branch>',
-                dest='upstream_branch', required=False,
-                default='upstream/master',
-                help='Search change ids values in <upstream-branch> branch '
-                     '(default: %(default)s)')
-def do_supersede(args):
-    """
-    Mark a commit as superseded by a set of change-ids.
-    Marked commits will be skipped during the upstream rebasing process.
-    See also the "git upstream import" command.
-    """
-
-    logger = log.get_logger('%s.%s' % (__name__,
-                                       inspect.stack()[0][0].f_code.co_name))
-
-    supersede = Supersede(git_object=args.commit, change_ids=args.change_ids,
-                          upstream_branch=args.upstream_branch,
-                          force=args.force)
-
-    if supersede.mark():
-        logger.notice("Supersede mark created successfully")
 
 # vim:sw=4:sts=4:ts=4:et:
