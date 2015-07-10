@@ -24,13 +24,12 @@ from git_upstream import commands as c
 class TestGetSubcommands(testtools.TestCase):
     """Test case for get_subcommands function"""
 
-    _available_subcommands = ('import', 'supersede', 'drop')
+    _available_subcommands = ('help', 'import', 'supersede', 'drop')
 
     def test_available_subcommands(self):
         """Test available subcommands"""
         parser = ArgumentParser()
-        subparsers = parser.add_subparsers()
-        subcommands = c.get_subcommands(subparsers)
+        subcommands = c.get_subcommands(parser)
         self.assertEqual(len(TestGetSubcommands._available_subcommands),
                          len(subcommands.keys()))
         for command in subcommands.keys():

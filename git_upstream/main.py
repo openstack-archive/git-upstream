@@ -30,7 +30,6 @@ from git_upstream import __version__
 from git_upstream import commands
 from git_upstream.errors import GitUpstreamError
 from git_upstream import log
-from git_upstream import subcommand
 
 try:
     import argcomplete
@@ -39,7 +38,7 @@ except ImportError:
     argparse_loaded = False
 
 
-def get_parser():
+def build_parsers():
     parser = argparse.ArgumentParser(
         description=__doc__.strip(),
         epilog='See "%(prog)s help COMMAND" for help on a specific command.',
@@ -62,37 +61,9 @@ def get_parser():
                         help=argparse.SUPPRESS)
     parser.add_argument('--log-file', dest='log_file', help=argparse.SUPPRESS)
 
-    subparsers = parser.add_subparsers(title="commands", metavar='<command>',
-                                       dest='subcommand')
-
-    # it would be nicer if we could hide this help command
-    desc = help.__doc__ or ''
-    subparser = subparsers.add_parser(
-        'help',
-        help=desc.strip().split('\n')[0],
-        description=desc,
-    )
-    for (args, kwargs) in getattr(help, 'arguments', []):
-        subparser.add_argument(*args, **kwargs)
-    subparser.set_defaults(func=help)
-
-    subcommand_parsers = commands.get_subcommands(subparsers)
+    subcommand_parsers = commands.get_subcommands(parser)
 
     return subcommand_parsers, parser
-
-
-@subcommand.arg('command', metavar='<command>', nargs='?',
-                help='Display help for <command>')
-def help(parser, args, commands=None):
-    """Display help about this program or one of its commands."""
-    if getattr(args, 'command', None):
-        if args.command in commands:
-            commands[args.command].print_help()
-        else:
-            parser.error("'%s' is not a valid subcommand" %
-                         args.command)
-    else:
-        parser.print_help()
 
 
 def setup_console_logging(options):
@@ -147,17 +118,18 @@ def main(argv=None):
     if not argv:
         argv = sys.argv[1:]
 
-    (cmds, parser) = get_parser()
+    (cmds, parser) = build_parsers()
 
-    if not sys.argv:
-        help(parser, argv)
+    if not argv:
+        parser.print_help()
         return 0
 
     if argparse_loaded:
         argcomplete.autocomplete(parser)
     args = parser.parse_args(argv)
-    if args.func == help:
-        help(parser, args, cmds)
+
+    if args.cmd.name == "help":
+        args.cmd.run(args, parser)
         return 0
 
     logger = setup_console_logging(args)
@@ -167,7 +139,9 @@ def main(argv=None):
         sys.exit(1)
 
     try:
-        args.func(args)
+        cmd = args.cmd
+        cmd.validate(args)
+        cmd.run(args)
     except GitUpstreamError as e:
         logger.fatal("%s", e[0])
         logger.debug("Git-Upstream: %s", e[0], exc_info=e)

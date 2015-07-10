@@ -15,16 +15,14 @@
 # limitations under the License.
 #
 
-import inspect
 import re
 
 from git import BadObject
 
+from git_upstream.commands import GitUpstreamCommand
 from git_upstream.errors import GitUpstreamError
 from git_upstream.lib.utils import GitMixin
-from git_upstream import log
 from git_upstream.log import LogDedentMixin
-from git_upstream import subcommand
 
 try:
     from git import BadName
@@ -50,6 +48,7 @@ class Drop(LogDedentMixin, GitMixin):
     Dropped: Walter White <heisenberg@hp.com>
 
     """
+
     DROP_HEADER = 'Dropped:'
     NOTE_REF = 'refs/notes/upstream-merge'
 
@@ -124,25 +123,31 @@ class Drop(LogDedentMixin, GitMixin):
                 self.commit)
 
 
-@subcommand.arg('commit', metavar='<commit>', nargs=None,
-                help='Commit to be marked as dropped')
-@subcommand.arg('-a', '--author', metavar='<author>',
-                dest='author',
-                default=None,
-                help='Git author for the mark')
-def do_drop(args):
-    """
-    Mark a commit as dropped.
+class DropCommand(LogDedentMixin, GitUpstreamCommand):
+    """Mark a commit as dropped.
+
     Marked commits will be skipped during the upstream rebasing process.
     See also the "git upstream import" command.
     """
+    name = "drop"
 
-    logger = log.get_logger('%s.%s' % (__name__,
-                                       inspect.stack()[0][0].f_code.co_name))
+    def __init__(self, *args, **kwargs):
+        # make sure to correctly initialize inherited objects before performing
+        # any computation
+        super(DropCommand, self).__init__(*args, **kwargs)
 
-    drop = Drop(git_object=args.commit, author=args.author)
+        self.parser.add_argument(
+            'commit', metavar='<commit>', nargs=None,
+            help='Commit to be marked as dropped')
+        self.parser.add_argument(
+            '-a', '--author', metavar='<author>', dest='author', default=None,
+            help='Git author for the mark')
 
-    if drop.mark():
-        logger.notice("Drop mark created successfully")
+    def run(self, args):
+
+        drop = Drop(git_object=args.commit, author=args.author)
+
+        if drop.mark():
+            self.log.notice("Drop mark created successfully")
 
 # vim:sw=4:sts=4:ts=4:et:
