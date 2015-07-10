@@ -44,7 +44,7 @@ class SubstringMatcher(object):
 
 class TestImportCommand(BaseTestCase):
 
-    commands, parser = main.get_parser()
+    commands, parser = main.build_parsers()
 
     def test_basic(self):
         """Test that default behaviour and options work
@@ -74,7 +74,7 @@ class TestImportCommand(BaseTestCase):
         self._build_git_tree(tree, branches.values())
         self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
         args = self.parser.parse_args(['-q', 'import', 'upstream/master'])
-        self.assertThat(args.func(args), Equals(True),
+        self.assertThat(args.cmd.run(args), Equals(True),
                         "import command failed to complete succesfully")
 
     def test_basic_additional(self):
@@ -111,7 +111,7 @@ class TestImportCommand(BaseTestCase):
         self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
         args = self.parser.parse_args(['-q', 'import', 'upstream/master',
                                        'packaging/master'])
-        self.assertThat(args.func(args), Equals(True),
+        self.assertThat(args.cmd.run(args), Equals(True),
                         "import command failed to complete succesfully")
 
     def test_basic_additional_missed(self):
@@ -149,15 +149,13 @@ class TestImportCommand(BaseTestCase):
         self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
         args = self.parser.parse_args(['import', 'upstream/master'])
 
-        mock_logger = mock.MagicMock()
-        with mock.patch('git_upstream.log.get_logger',
-                        return_value=mock_logger):
-            self.assertThat(args.func(args), Equals(True),
+        with mock.patch.object(args.cmd.log, 'warning') as mock_logger:
+            self.assertThat(args.cmd.run(args), Equals(True),
                             "import command failed to complete succesfully")
 
-        mock_logger.warning.assert_called_with(
-            SubstringMatcher(
-                containing="Previous import merged additional"))
+            mock_logger.assert_called_with(
+                SubstringMatcher(
+                    containing="Previous import merged additional"))
 
     def test_import_switch_branches_search(self):
         """Test that the import sub-command can correctly switch branches when
@@ -206,7 +204,7 @@ class TestImportCommand(BaseTestCase):
         self._build_git_tree(tree, branches.values())
         self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
         args = self.parser.parse_args(['-q', 'import'])
-        self.assertThat(args.func(args), Equals(True),
+        self.assertThat(args.cmd.run(args), Equals(True),
                         "import command failed to complete succesfully")
         changes = list(Commit.iter_items(
             self.repo, 'upstream/master..master^2'))
@@ -274,7 +272,7 @@ class TestImportCommand(BaseTestCase):
         self.git.tag(inspect.currentframe().f_code.co_name, 'custom/master')
         args = self.parser.parse_args(['-q', 'import',
                                        '--into=master', 'custom/master'])
-        self.assertThat(args.func(args), Equals(True),
+        self.assertThat(args.cmd.run(args), Equals(True),
                         "import command failed to complete succesfully")
         changes = list(Commit.iter_items(
             self.repo, 'custom/master..master^2'))
@@ -343,7 +341,7 @@ class TestImportCommand(BaseTestCase):
                                        '--search-refs=custom/*',
                                        '--search-refs=custom-d/*',
                                        '--into=master', 'custom/master'])
-        self.assertThat(args.func(args), Equals(True),
+        self.assertThat(args.cmd.run(args), Equals(True),
                         "import command failed to complete succesfully")
         changes = list(Commit.iter_items(
             self.repo, 'custom/master..master^2'))
