@@ -1,5 +1,5 @@
 hacking>=0.9,<=0.10.0
-mock
+mock<1.1.0
 Sphinx>=1.1.2,<1.2
 discover
 fixtures>=0.3.14
