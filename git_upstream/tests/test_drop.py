@@ -17,7 +17,8 @@
 
 from git import GitCommandError
 
-from git_upstream.commands import drop as d
+from git_upstream.lib.drop import Drop
+from git_upstream.lib.drop import DropError
 from git_upstream.tests import base
 
 
@@ -37,22 +38,22 @@ class TestDrop(base.BaseTestCase):
 
         automatic_author = '%s <%s>' % (self.repo.git.config('user.name'),
                                         self.repo.git.config('user.email'))
-        t = d.Drop(git_object=self.first_commit)
+        t = Drop(git_object=self.first_commit)
         self.assertEqual(t.author, automatic_author)
 
-        t = d.Drop(git_object=self.first_commit, author=self.author)
+        t = Drop(git_object=self.first_commit, author=self.author)
         self.assertEqual(t.author, self.author)
 
     def test_invalid_commit(self):
         """Test drop initialization with invalid commit"""
 
-        self.assertRaises(d.DropError, d.Drop,
+        self.assertRaises(DropError, Drop,
                           git_object=self.invalid_commit)
 
     def test_mark(self):
         """Test drop mark"""
 
-        t = d.Drop(git_object=self.first_commit, author=self.author)
+        t = Drop(git_object=self.first_commit, author=self.author)
 
         try:
             # Older git versions don't support --ignore-missing so we need to

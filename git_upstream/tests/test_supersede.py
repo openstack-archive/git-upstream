@@ -17,7 +17,8 @@
 
 from git import GitCommandError
 
-from git_upstream.commands import supersede as s
+from git_upstream.lib.supersede import Supersede
+from git_upstream.lib.supersede import SupersedeError
 from git_upstream.tests import base
 
 
@@ -46,9 +47,9 @@ class TestSupersede(base.BaseTestCase):
     def test_valid_parameters(self):
         """Test supersede initialization and read properties"""
 
-        t = s.Supersede(git_object=self.first_commit,
-                        change_ids=self.first_change_ids,
-                        upstream_branch=self.change_ids_branch)
+        t = Supersede(git_object=self.first_commit,
+                      change_ids=self.first_change_ids,
+                      upstream_branch=self.change_ids_branch)
 
         self.assertEqual(t.commit, self.first_commit)
         self.assertNotEqual(t.commit, self.second_commit)
@@ -60,7 +61,7 @@ class TestSupersede(base.BaseTestCase):
     def test_invalid_commit(self):
         """Test supersede initialization with invalid commit"""
 
-        self.assertRaises(s.SupersedeError, s.Supersede,
+        self.assertRaises(SupersedeError, Supersede,
                           git_object=self.invalid_commit,
                           change_ids=self.first_change_ids,
                           upstream_branch=self.change_ids_branch)
@@ -68,9 +69,9 @@ class TestSupersede(base.BaseTestCase):
     def test_multiple_change_id(self):
         """Test supersede initialization with multiple change ids"""
 
-        t = s.Supersede(git_object=self.first_commit,
-                        change_ids=self.second_change_ids,
-                        upstream_branch=self.change_ids_branch)
+        t = Supersede(git_object=self.first_commit,
+                      change_ids=self.second_change_ids,
+                      upstream_branch=self.change_ids_branch)
 
         self.assertEqual(t.commit, self.first_commit)
         self.assertNotEqual(t.commit, self.second_commit)
@@ -78,7 +79,7 @@ class TestSupersede(base.BaseTestCase):
     def test_invalid_cids(self):
         """Test supersede initialization with invalid cids"""
 
-        self.assertRaises(s.SupersedeError, s.Supersede,
+        self.assertRaises(SupersedeError, Supersede,
                           git_object=self.first_commit,
                           change_ids=self.invalid_change_ids,
                           upstream_branch=self.change_ids_branch)
@@ -86,7 +87,7 @@ class TestSupersede(base.BaseTestCase):
     def test_default_upstream_branch(self):
         """Test supersede initialization with no branch name"""
 
-        self.assertRaises(s.SupersedeError, s.Supersede,
+        self.assertRaises(SupersedeError, Supersede,
                           git_object=self.first_commit,
                           change_ids=self.invalid_change_ids,
                           upstream_branch=self.invalid_change_ids_branch)
@@ -94,16 +95,16 @@ class TestSupersede(base.BaseTestCase):
     def test_no_upstream_branch(self):
         """Test supersede initialization with invalid branch name"""
 
-        self.assertRaises(s.SupersedeError, s.Supersede,
+        self.assertRaises(SupersedeError, Supersede,
                           git_object=self.first_commit,
                           change_ids=self.invalid_change_ids)
 
     def test_mark(self):
         """Test Supersede mark"""
 
-        t = s.Supersede(git_object=self.first_commit,
-                        change_ids=self.first_change_ids,
-                        upstream_branch=self.change_ids_branch)
+        t = Supersede(git_object=self.first_commit,
+                      change_ids=self.first_change_ids,
+                      upstream_branch=self.change_ids_branch)
 
         try:
             # Older git versions don't support --ignore-missing
