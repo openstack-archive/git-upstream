@@ -399,7 +399,7 @@ git merge -s ours --no-commit <import-xxxx>
 Replacing tree contents with those from the import branch
 
 ```bash
-git read-tree <import-xxxx>
+git read-tree -u --reset <import-xxxx>
 ```
 
 Committing merge commit
