@@ -8,4 +8,4 @@
     name: git-upstream
     jobs:
       - 'mirror-openstack':
-          project_pattern: stackforge/git-upstream
+          project_pattern: openstack/git-upstream

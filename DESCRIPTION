@@ -31,9 +31,9 @@ knowing about git-upstream existence.
 
 - How can I contribute to git-upstream?
 
-Git-upstream is currently in Stackforge:
+Git-upstream is in OpenStack:
 
-  https://github.com/stackforge/git-upstream
+  https://git.openstack.org/openstack/git-upstream
 
 As for any other OpenStack project, contributions are submitted thru the Gerrit
 review system.
@@ -51,7 +51,7 @@ To summarise:
 
 3) clone the repo
 
-  git clone https://github.com/stackforge/git-upstream
+  git clone https://git.openstack.org/openstack/git-upstream
 
 4) setup to work with Gerrit
 
@@ -86,7 +86,7 @@ If you need help, please join us on IRC!
 Before writing new code, it is always a good idea to check if the required
 change is already in Gerrit:
 
-  https://review.openstack.org/#/q/project:stackforge/git-upstream,n,z
+  https://review.openstack.org/#/q/project:openstack/git-upstream,n,z
 
 More info about OpenStack and the Gerrit review process.
 

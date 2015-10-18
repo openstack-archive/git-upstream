@@ -91,7 +91,7 @@ git repository or using pip.
 ## Installing from git repository
 
 ```bash
-git clone https://github.com/stackforge/git-upstream.git
+git clone https://git.openstack.org/openstack/git-upstream.git
 cd git-upstream
 # Install git-upstream itself
 python setup.py install
