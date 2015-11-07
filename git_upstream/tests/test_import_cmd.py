@@ -357,3 +357,65 @@ class TestImportCommand(BaseTestCase):
                             "subject '%s' of commit '%s' does not match "
                             "subject '%s' of node '%s'" % (
                                 subject, commit.hexsha, node_subject, node))
+
+    def test_import_finish(self):
+        """Test the --finish option to the import command
+
+        Given manual intervention to resolve conflicts and complete
+        the import, check that we can finish the import by manually
+        requesting the merge to be performed by this tool.
+
+        Repository layout being checked (assumed already replayed)
+
+                C---D               local/master
+               /
+              /       C1---D1       import/H
+             /       /
+        A---B---G---H               upstream/master
+
+
+        Test that result is as follows
+
+                C---D------- G      local/master
+               /            /
+              /       C1---D1       import/F
+             /       /
+        A---B---E---F               upstream/master
+
+        """
+
+        tree = [
+            ('A', []),
+            ('B', ['A']),
+            ('C', ['B']),
+            ('D', ['C']),
+            ('E', ['B']),
+            ('F', ['E']),
+            ('C1', ['F']),
+            ('D1', ['C1'])
+        ]
+
+        # use 'custom/*' to ensure defaults are overriden correctly
+        branches = {
+            'head': ('master', 'D'),
+            'upstream': ('upstream/master', 'F'),
+            'import': ('import/F', 'D1')
+        }
+
+        self._build_git_tree(tree, branches.values())
+
+        self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
+        args = self.parser.parse_args(['-q', 'import', '--finish',
+                                       '--import-branch=import/F',
+                                       '--into=master', 'upstream/master'])
+        self.assertThat(args.cmd.run(args), Equals(True),
+                        "import command failed to complete succesfully")
+        self.assertThat(self.repo.git.rev_parse('master^{tree}'),
+                        Equals(self.repo.git.rev_parse('import/F^{tree}')),
+                        "--finish option failed to merge correctly")
+        commit = self.git.rev_list('master', parents=True, max_count=1).split()
+        parents = commit[1:]
+        self.assertThat(parents, Equals([self._graph['D'].hexsha,
+                                         self._graph['D1'].hexsha]),
+                        "import --finish merge does contain the correct "
+                        "parents")
