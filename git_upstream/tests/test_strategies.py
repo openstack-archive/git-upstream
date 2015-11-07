@@ -139,7 +139,7 @@ class TestStrategies(BaseTestCase):
         upstream having been completed, test that if a change was created on
         another branch before the previous import was created, and merged to
         the target branch after the previous import, can we find it correctly.
-        i.e. will the strategy also include commit 'O' in the diagram below.
+        That is will the strategy also include commit 'O' in the diagram below.
 
         Repository layout being tested
 
@@ -191,7 +191,7 @@ class TestStrategies(BaseTestCase):
         another branch before the previous import was created, and merged to
         the target branch before the previous import was merged, can we find
         it correctly.
-        i.e. will the strategy also include commit 'O' in the diagram below.
+        That is will the strategy also include commit 'O' in the diagram below.
 
         Repository layout being tested
 

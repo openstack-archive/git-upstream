@@ -30,7 +30,7 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
     merges additional branches given as arguments. Current branch, unless
     overridden by the --into option, is used as the target branch from which a
     list of changes to apply onto the new import is constructed based on the
-    the specified strategy.
+    specified strategy.
 
     Once complete it will merge and replace the contents of the target branch
     with those from the import branch, unless --no-merge is specified.

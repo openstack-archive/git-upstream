@@ -55,8 +55,8 @@ def build_parsers():
                        help='Increase verbosity from commands, conflicts '
                             'with --quiet. May be set more than once.')
     # support logging to files as hidden options until we can hide them in
-    # normal help output, which showing them in extended help or generated
-    # manpages and documentation.
+    # normal help output, while showing them in extended help or generated
+    # man pages and documentation.
     parser.add_argument('--log-level', dest='log_level', default='notset',
                         help=argparse.SUPPRESS)
     parser.add_argument('--log-file', dest='log_file', help=argparse.SUPPRESS)
