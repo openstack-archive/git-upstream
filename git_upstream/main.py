@@ -147,4 +147,8 @@ def main(argv=None):
         logger.debug("Git-Upstream: %s", e[0], exc_info=e)
         sys.exit(1)
 
+
+if __name__ == '__main__':
+    main()
+
 # vim:sw=4:sts=4:ts=4:et:
