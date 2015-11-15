@@ -113,3 +113,16 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                                          self._graph['D1'].hexsha]),
                         "import --finish merge does contain the correct "
                         "parents")
+
+    def _verify_resume(self):
+        """Additional verification for the resume results"""
+
+        self.assertThat(self.repo.git.rev_parse('master^{tree}'),
+                        Equals(self.repo.git.rev_parse('import/F^{tree}')),
+                        "--resume option failed to merge correctly")
+        commit = self.git.rev_list('master', parents=True, max_count=1).split()
+        parents = commit[1:]
+        self.assertThat(parents, Equals([self._graph['D'].hexsha,
+                                         self.repo.git.rev_parse('master^2')]),
+                        "import --resume merge does contain the correct "
+                        "parents")
