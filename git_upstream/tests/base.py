@@ -17,7 +17,9 @@ import io
 import logging
 import os
 from pprint import pformat
+import random
 import re
+import string
 import subprocess
 import tempfile
 
@@ -204,6 +206,7 @@ class BaseTestCase(testtools.TestCase):
         self.useFixture(DiveDir(repo_path))
         self.repo = self.testrepo.repo
         self.git = self.repo.git
+        self.log = logging.getLogger('BaseTestCase')
 
         self._graph = {}
         self.addOnException(self.attach_graph_info)
@@ -225,9 +228,12 @@ class BaseTestCase(testtools.TestCase):
         if p_node:
             self.git.cherry_pick(self._graph[p_node])
         else:
+            changeid = 'I' + ''.join(random.choice('abcdef' + string.digits)
+                                     for _ in range(40))
             # standard commit
             self.testrepo.add_commits(1, ref="HEAD",
-                                      message_prefix="[%s]" % node)
+                                      message_prefix="[%s]" % node,
+                                      change_ids=[changeid])
 
     def _merge_commit(self, node, parents):
         # merge commits
@@ -302,8 +308,7 @@ class BaseTestCase(testtools.TestCase):
                 self.git.symbolic_ref("HEAD", "refs/heads/%s" % node)
                 self.git.rm(".", r=True, cached=True)
                 self.git.clean(f=True, d=True, x=True)
-                self.testrepo.add_commits(1, ref="HEAD",
-                                          message_prefix="[%s]" % node)
+                self._commit(node)
                 # only explicitly listed branches should exist afterwards
                 self.git.checkout(self.repo.commit())
                 self.git.branch(node, D=True)
