@@ -292,8 +292,6 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 %s
             """, "\n    ".join([c.hexsha for c in commit_list]))
 
-        base = self.import_branch + "-base"
-
         self._set_branch(self.import_branch, self.branch, force=True)
         self.log.info(
             """
@@ -329,6 +327,14 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 """)
             # reset head back to the tip of the changes to be rebased
             self._set_branch(self.import_branch, self.branch, force=True)
+
+        return self._apply(commit_list, interactive=interactive,
+                           resume_cmdline=resume_cmdline)
+
+    def _apply(self, commit_list, base=None, interactive=False,
+               resume_cmdline=None):
+        if base is None:
+            base = self.import_branch + "-base"
 
         # build the command line
         rebase = RebaseEditor(resume_cmdline, interactive, repo=self.repo)
@@ -370,9 +376,20 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                              "changes already rebased onto " + self.upstream)
         return True
 
-    def resume(self, args):
+    def resume(self, strategy, interactive=False, resume_cmdline=None):
         """Resume previous partial import"""
-        raise NotImplementedError
+        base = self.import_branch
+        commit_list = list(strategy.filtered_iter())
+        if len(commit_list) == 0:
+            self.log.notice("All carried changes already applied")
+            # no resume_cmdline means to skip merge
+            if resume_cmdline is None:
+                return True
+            # otherwise perform the finish
+            return self.finish()
+
+        return self._apply(commit_list, base, interactive,
+                           resume_cmdline=resume_cmdline)
 
     def finish(self):
         """Finish import

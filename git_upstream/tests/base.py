@@ -17,7 +17,9 @@ import io
 import logging
 import os
 from pprint import pformat
+import random
 import re
+import string
 import subprocess
 import tempfile
 
@@ -207,9 +209,12 @@ class BuildTree(object):
         if p_node:
             self.git.cherry_pick(self.graph[p_node])
         else:
+            changeid = 'I' + ''.join(random.choice('abcdef' + string.digits)
+                                     for _ in range(40))
             # standard commit
             self.gitrepo.add_commits(1, ref="HEAD",
-                                     message_prefix="[%s]" % node)
+                                     message_prefix="[%s]" % node,
+                                     change_ids=[changeid])
 
     def _merge_commit(self, node, parents):
         # merge commits
@@ -292,8 +297,7 @@ class BuildTree(object):
                 self.git.symbolic_ref("HEAD", "refs/heads/%s" % node)
                 self.git.rm(".", r=True, cached=True)
                 self.git.clean(f=True, d=True, x=True)
-                self.gitrepo.add_commits(1, ref="HEAD",
-                                         message_prefix="[%s]" % node)
+                self._commit(node)
                 # only explicitly listed branches should exist afterwards
                 self.git.checkout(self.repo.commit())
                 self.git.branch(node, D=True)

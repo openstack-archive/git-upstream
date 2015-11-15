@@ -18,6 +18,7 @@
 from git_upstream.commands import GitUpstreamCommand
 from git_upstream.lib.importupstream import ImportUpstream
 from git_upstream.lib.importupstream import ImportUpstreamError
+from git_upstream.lib.strategies import DiscardDuplicateGerritChangeId
 from git_upstream.lib.strategies import ImportStrategiesFactory
 from git_upstream.lib.strategies import LocateChangesWalk
 from git_upstream.log import LogDedentMixin
@@ -58,7 +59,14 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             '-f', '--force', dest='force', required=False,
             action='store_true', default=False,
             help='Force overwrite of existing import branch if it exists.')
-        # finish options
+        # resume/finish options
+        self.parser.add_argument(
+            '--resume', dest='resume', required=False, action='store_true',
+            default=None,
+            help='Resume import on an existing import branch (default)')
+        self.parser.add_argument(
+            '--no-resume', dest='resume', required=False, action='store_false',
+            help='Disable resume import on an existing import branch')
         self.parser.add_argument(
             '--finish', dest='finish', required=False, action='store_true',
             default=False,
@@ -105,10 +113,11 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
     def validate(self):
         """Perform more complex validation of args that cannot be mixed"""
 
-        # check if --finish set with --no-merge
-        if self.args.finish and self.args.merge is False:
+        # check if --finish set with --no-resume or --no-merge
+        if self.args.finish and (self.args.resume is not None or
+                                 self.args.merge is False):
             self.parser.error(
-                "--finish cannot be used with '--no-merge'")
+                "--finish cannot be used with '--[no-]resume' or '--no-merge'")
 
     def finalize(self):
         """Perform additional parsing of args"""
@@ -181,11 +190,20 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             else:
                 return False
 
-        # otherwise perform fresh import
-        self.log.notice("Starting import of upstream")
-        import_upstream.create_import(force=self.args.force)
-        self.log.notice("Created import branch '%s'" %
-                        import_upstream.import_branch)
+        if self.args.resume:
+            self.log.notice("Resuming import of upstream")
+            import_method = import_upstream.resume
+            strategy.filters.insert(
+                0, DiscardDuplicateGerritChangeId(
+                    import_upstream.import_branch,
+                    limit=strategy.searcher.commit))
+        else:
+            # otherwise perform fresh import
+            self.log.notice("Starting import of upstream")
+            import_method = import_upstream.apply
+            import_upstream.create_import(force=self.args.force)
+            self.log.notice("Created import branch '%s'" %
+                            import_upstream.import_branch)
 
         # build suitable command line for interactive mode
         if self.args.merge:
@@ -199,7 +217,7 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
         else:
             cmdline = None
 
-        if not import_upstream.apply(strategy, self.args.interactive, cmdline):
+        if not import_method(strategy, self.args.interactive, cmdline):
             self.log.notice("Import cancelled")
             return False
 
