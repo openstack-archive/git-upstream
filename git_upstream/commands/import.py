@@ -51,7 +51,14 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             '-f', '--force', dest='force', required=False,
             action='store_true', default=False,
             help='Force overwrite of existing import branch if it exists.')
-        # finish options
+        # resume/finish options
+        self.parser.add_argument(
+            '--resume', dest='resume', required=False, action='store_true',
+            default=None,
+            help='Resume import on an existing import branch (default)')
+        self.parser.add_argument(
+            '--no-resume', dest='resume', required=False, action='store_false',
+            help='Disable resume import on an existing import branch')
         self.parser.add_argument(
             '--finish', dest='finish', required=False, action='store_true',
             default=False,
@@ -98,10 +105,10 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
     def validate(self, args):
         """Perform more complex validation of args that cannot be mixed"""
 
-        # check if --finish set with --no-merge
-        if args.finish and args.merge is False:
+        # check if --finish set with --no-resume or --no-merge
+        if args.finish and (args.resume is not None or args.merge is False):
             self.parser.error(
-                "--finish cannot be used with '--no-merge'")
+                "--finish cannot be used with '--[no-]resume' or '--no-merge'")
 
     def _finish(self, args, import_upstream):
         self.log.notice("Merging import to requested branch '%s'", args.branch)
@@ -167,27 +174,31 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
                 """, "\n    ".join(commit_list))
             return True
 
-        # finish and return if thats all
-        if args.finish:
-            return self._finish(args, import_upstream)
+        if not args.finish:
+            # only if either resuming or starting import
+            if args.resume:
+                self.log.notice("Resuming import of upstream")
+                import_method = import_upstream.resume
+            else:
+                # perform fresh import
+                self.log.notice("Starting import of upstream")
+                import_upstream.create_import(force=args.force)
+                self.log.notice("Successfully created import branch")
+                import_method = import_upstream.apply
 
-        # otherwise perform fresh import
-        self.log.notice("Starting import of upstream")
-        import_upstream.create_import(force=args.force)
-        self.log.notice("Successfully created import branch")
+            if not import_method(strategy, args.interactive):
+                self.log.notice("Import cancelled")
+                return False
 
-        if not import_upstream.apply(strategy, args.interactive):
-            self.log.notice("Import cancelled")
-            return False
+            if not args.merge:
+                self.log.notice(
+                    """\
+                    Import complete, not merging to target branch '%s' as
+                    requested.
+                    """, args.branch)
+                return True
 
-        if not args.merge:
-            self.log.notice(
-                """\
-                Import complete, not merging to target branch '%s' as
-                requested.
-                """, args.branch)
-            return True
-
+        # finish and return
         return self._finish(args, import_upstream)
 
 # vim:sw=4:sts=4:ts=4:et:
