@@ -18,6 +18,7 @@ import logging
 import os
 from pprint import pformat
 import re
+import shutil
 import subprocess
 import tempfile
 
@@ -138,6 +139,10 @@ class GitRepo(fixtures.Fixture):
         g.init()
 
         self.repo = git.Repo(self.path)
+        # setup the commit hook
+        shutil.copy(
+            os.path.join(os.path.dirname(__file__), 'resources', 'commit-msg'),
+            os.path.join(self.repo.git_dir, 'hooks'))
         self.repo.git.config('user.email', 'user@example.com')
         self.repo.git.config('user.name', 'Example User')
         self._create_file_commit()

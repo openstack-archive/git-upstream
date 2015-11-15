@@ -58,7 +58,14 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             '-f', '--force', dest='force', required=False,
             action='store_true', default=False,
             help='Force overwrite of existing import branch if it exists.')
-        # finish options
+        # resume/finish options
+        self.parser.add_argument(
+            '--resume', dest='resume', required=False, action='store_true',
+            default=None,
+            help='Resume import on an existing import branch (default)')
+        self.parser.add_argument(
+            '--no-resume', dest='resume', required=False, action='store_false',
+            help='Disable resume import on an existing import branch')
         self.parser.add_argument(
             '--finish', dest='finish', required=False, action='store_true',
             default=False,
@@ -105,10 +112,11 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
     def validate(self):
         """Perform more complex validation of args that cannot be mixed"""
 
-        # check if --finish set with --no-merge
-        if self.args.finish and self.args.merge is False:
+        # check if --finish set with --no-resume or --no-merge
+        if self.args.finish and (self.args.resume is not None or
+                                 self.args.merge is False):
             self.parser.error(
-                "--finish cannot be used with '--no-merge'")
+                "--finish cannot be used with '--[no-]resume' or '--no-merge'")
 
     def finalize(self):
         """Perform additional parsing of args"""
@@ -185,37 +193,41 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
                 """, "\n    ".join(commit_list))
             return True
 
-        # finish and return if thats all
-        if self.args.finish:
-            return self._finish(import_upstream)
+        if not self.args.finish:
+            # only if either resuming or starting import
+            if self.args.resume:
+                self.log.notice("Resuming import of upstream")
+                import_method = import_upstream.resume
+            else:
+                # perform fresh import
+                self.log.notice("Starting import of upstream")
+                import_upstream.create_import(force=self.args.force)
+                self.log.notice("Successfully created import branch")
+                import_method = import_upstream.apply
 
-        # otherwise perform fresh import
-        self.log.notice("Starting import of upstream")
-        import_upstream.create_import(force=self.args.force)
-        self.log.notice("Successfully created import branch")
+            # build suitable command line for interactive mode
+            if self.args.merge:
+                cmdline = self.args.script_cmdline + [
+                    self.name,
+                    '--finish',
+                    '--into=%s' % import_upstream.branch,
+                    '--import-branch=%s' % import_upstream.import_branch,
+                    import_upstream.upstream
+                ] + import_upstream.extra_branches
 
-        # build suitable command line for interactive mode
-        if self.args.merge:
-            cmdline = self.args.script_cmdline + [
-                self.name,
-                '--finish',
-                '--into=%s' % import_upstream.branch,
-                '--import-branch=%s' % import_upstream.import_branch,
-                import_upstream.upstream
-            ] + import_upstream.extra_branches
+            if not import_method(strategy, self.args.interactive, cmdline):
+                self.log.notice("Import cancelled")
+                return False
 
-        if not import_upstream.apply(strategy, self.args.interactive, cmdline):
-            self.log.notice("Import cancelled")
-            return False
+            if not self.args.merge:
+                self.log.notice(
+                    """\
+                    Import complete, not merging to target branch '%s' as
+                    requested.
+                    """, self.args.branch)
+                return True
 
-        if not self.args.merge:
-            self.log.notice(
-                """
-                Import complete, not merging to target branch '%s' as
-                requested.
-                """, self.args.branch)
-            return True
-
+        # finish and return
         return self._finish(import_upstream)
 
 # vim:sw=4:sts=4:ts=4:et:
