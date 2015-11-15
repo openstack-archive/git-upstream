@@ -17,6 +17,7 @@ import logging
 import os
 from pprint import pformat
 import re
+import shutil
 import tempfile
 
 import fixtures
@@ -122,6 +123,10 @@ class GitRepo(fixtures.Fixture):
         g = git.Git(self.path)
         g.init()
         self.repo = git.Repo(self.path)
+        # setup the commit hook
+        shutil.copy(
+            os.path.join(os.path.dirname(__file__), 'resources', 'commit-msg'),
+            os.path.join(self.repo.git_dir, 'hooks'))
         self.repo.git.config('user.email', 'user@example.com')
         self.repo.git.config('user.name', 'Example User')
         self._create_file_commit()
@@ -174,8 +179,8 @@ class BaseTestCase(testtools.TestCase):
     def setUp(self):
         super(BaseTestCase, self).setUp()
 
-        self.testrepo = self.useFixture(GitRepo())
         self.useFixture(fixtures.FakeLogger(level=logging.DEBUG))
+        self.testrepo = self.useFixture(GitRepo())
         repo_path = self.testrepo.path
         self.useFixture(DiveDir(repo_path))
         self.repo = self.testrepo.repo

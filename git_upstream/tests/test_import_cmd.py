@@ -425,3 +425,69 @@ class TestImportCommand(BaseTestCase):
                                          self._graph['D1'].hexsha]),
                         "import --finish merge does contain the correct "
                         "parents")
+
+    def test_import_resume(self):
+        """Test the --resume option to the import command
+
+        Given a partial import, check that use of '--resume' option can pick
+        up the existing import branch and complete the import as expected/
+
+        Repository layout being checked
+
+                C---D               local/master
+               /
+              /       C1            import/F
+             /       /
+        A---B---E---F               upstream/master
+
+
+        Test that result is as follows
+
+                C---D------- G      local/master
+               /            /
+              /       C1---D1       import/F
+             /       /
+        A---B---E---F               upstream/master
+
+        """
+
+        tree = [
+            ('A', []),
+            ('B', ['A']),
+            ('C', ['B']),
+            ('D', ['C']),
+            ('E', ['B']),
+            ('F', ['E']),
+            ('C1', ['F'])
+        ]
+
+        branches = {
+            'head': ('master', 'D'),
+            'upstream': ('upstream/master', 'F'),
+            'import': ('import/F', 'C1')
+        }
+
+        self._build_git_tree(tree, branches.values())
+
+        self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
+        args = self.parser.parse_args(['-q', 'import', '--resume',
+                                       '--import-branch=import/F',
+                                       '--into=master', 'upstream/master'])
+        self.assertThat(args.cmd.run(args), Equals(True),
+                        "import command failed to complete succesfully")
+        changes = list(Commit.iter_items(
+            self.repo, 'upstream/master..master^2'))
+        self.assertThat(len(changes), Equals(2),
+                        "should only have seen two changes, got: %s" %
+                        ", ".join(["%s:%s" % (commit.hexsha,
+                                              commit.message.splitlines()[0])
+                                   for commit in changes]))
+        self.assertThat(self.repo.git.rev_parse('master^{tree}'),
+                        Equals(self.repo.git.rev_parse('import/F^{tree}')),
+                        "--resume option failed to merge correctly")
+        commit = self.git.rev_list('master', parents=True, max_count=1).split()
+        parents = commit[1:]
+        self.assertThat(parents, Equals([self._graph['D'].hexsha,
+                                         self._graph['D1'].hexsha]),
+                        "import --resume merge does contain the correct "
+                        "parents")
