@@ -203,6 +203,7 @@ class BaseTestCase(testtools.TestCase):
         super(BaseTestCase, self).setUp()
 
         self.testrepo = self.useFixture(GitRepo())
+        self.useFixture(fixtures.FakeLogger(level=logging.DEBUG))
         repo_path = self.testrepo.path
         self.useFixture(DiveDir(repo_path))
         self.repo = self.testrepo.repo
