@@ -1,0 +1,9 @@
+Verified+2: Jenkins
+Code-Review+2: Darragh Bailey <daragh.bailey@gmail.com>
+Workflow+1: Darragh Bailey <daragh.bailey@gmail.com>
+Code-Review+1: Manuel Desbonnet <manuel.desbonnet@hp.com>
+Submitted-by: Jenkins
+Submitted-at: Mon, 23 Nov 2015 21:07:19 +0000
+Reviewed-on: https://review.openstack.org/245605
+Project: openstack/git-upstream
+Branch: refs/heads/master
