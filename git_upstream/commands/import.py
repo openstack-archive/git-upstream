@@ -51,6 +51,12 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             '-f', '--force', dest='force', required=False,
             action='store_true', default=False,
             help='Force overwrite of existing import branch if it exists.')
+        # finish options
+        self.parser.add_argument(
+            '--finish', dest='finish', required=False, action='store_true',
+            default=False,
+            help='Merge the specified import branch into the target')
+        # result behaviour options
         self.parser.add_argument(
             '--merge', dest='merge', required=False, action='store_true',
             default=True,
@@ -59,6 +65,7 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
         self.parser.add_argument(
             '--no-merge', dest='merge', required=False, action='store_false',
             help='Disable merge of the resulting import branch')
+        # search/include options
         self.parser.add_argument(
             '--search-refs', action='append_replace', metavar='<pattern>',
             default=['upstream/*'], dest='search_refs',
@@ -77,6 +84,7 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
         self.parser.add_argument(
             '--import-branch', metavar='<import-branch>',
             default='import/{describe}', help='Name of import branch to use')
+        # data args
         self.parser.add_argument(
             'upstream_branch', metavar='<upstream-branch>', nargs='?',
             default='upstream/master',
@@ -86,6 +94,32 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             'branches', metavar='<branches>', nargs='*',
             help='Branches to additionally merge into the import branch using '
                  'default git merging behaviour')
+
+    def validate(self, args):
+        """Perform more complex validation of args that cannot be mixed"""
+
+        # check if --finish set with --no-merge
+        if args.finish and args.merge is False:
+            self.parser.error(
+                "--finish cannot be used with '--no-merge'")
+
+    def _finish(self, args, import_upstream):
+        self.log.notice("Merging import to requested branch '%s'", args.branch)
+        if import_upstream.finish():
+            self.log.notice(
+                """\
+                Successfully finished import:
+                    target branch: '%s'
+                    upstream branch: '%s'
+                    import branch: '%s'""", args.branch, args.upstream_branch,
+                import_upstream.import_branch)
+            if args.branches:
+                for branch in args.branches:
+                    self.log.notice("    extra branch: '%s'", branch,
+                                    dedent=False)
+            return True
+        else:
+            return False
 
     def run(self, args):
 
@@ -133,6 +167,11 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
                 """, "\n    ".join(commit_list))
             return True
 
+        # finish and return if thats all
+        if args.finish:
+            return self._finish(args, import_upstream)
+
+        # otherwise perform fresh import
         self.log.notice("Starting import of upstream")
         import_upstream.create_import(force=args.force)
         self.log.notice("Successfully created import branch")
@@ -149,22 +188,6 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
                 """, args.branch)
             return True
 
-        self.log.notice("Merging import to requested branch '%s'", args.branch)
-        if import_upstream.finish():
-            self.log.notice(
-                """\
-                Successfully finished import:
-                    target branch: '%s'
-                    upstream branch: '%s'
-                    import branch: '%s'""", args.branch, args.upstream_branch,
-                import_upstream.import_branch)
-            if args.branches:
-                for branch in args.branches:
-                    self.log.notice("    extra branch: '%s'", branch,
-                                    dedent=False)
-            return True
-        else:
-            return False
-
+        return self._finish(args, import_upstream)
 
 # vim:sw=4:sts=4:ts=4:et:
