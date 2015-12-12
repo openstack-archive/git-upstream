@@ -19,6 +19,7 @@
 import abc
 import argparse
 import os
+import textwrap
 
 
 class AppendReplaceAction(argparse._AppendAction):
@@ -46,6 +47,7 @@ class GitUpstreamCommand(object):
     """
 
     __metaclass__ = abc.ABCMeta
+    usage = ""
 
     def __init__(self, parser):
         self.parser = parser
@@ -81,13 +83,17 @@ def _find_actions(subparsers, module_path):
 
     for cmd_class in GitUpstreamCommand.__subclasses__():
         command = cmd_class.name
-        desc = cmd_class.__doc__ or None
-        help = desc.strip().split('\n')[0]
+        desc = cmd_class.__doc__ or ''
 
-        subparser = subparsers.add_parser(
-            command,
-            help=help,
-            description=desc)
+        parser_kwargs = {
+            'help': desc.strip().split('\n')[0],
+            'description': desc,
+        }
+
+        if cmd_class.usage:
+            parser_kwargs['usage'] = textwrap.dedent(cmd_class.usage)
+
+        subparser = subparsers.add_parser(command, **parser_kwargs)
         subparser.register('action', 'append_replace', AppendReplaceAction)
         subparser.set_defaults(cmd=cmd_class(subparser))
         subcommands[command] = subparser
