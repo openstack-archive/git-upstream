@@ -18,6 +18,7 @@
 
 import abc
 import argparse
+import textwrap
 import os
 
 
@@ -82,12 +83,17 @@ def _find_actions(subparsers, module_path):
     for cmd_class in GitUpstreamCommand.__subclasses__():
         command = cmd_class.name
         desc = cmd_class.__doc__ or None
-        help = desc.strip().split('\n')[0]
 
-        subparser = subparsers.add_parser(
-            command,
-            help=help,
-            description=desc)
+        parser_kwargs = {
+            'help': desc.strip().split('\n')[0],
+            'description': desc,
+        }
+
+        if cmd_class.__init__.__doc__:
+            parser_kwargs['usage'] = textwrap.dedent(
+                cmd_class.__init__.__doc__)
+
+        subparser = subparsers.add_parser(command, **parser_kwargs)
         subparser.register('action', 'append_replace', AppendReplaceAction)
         subparser.set_defaults(cmd=cmd_class(subparser))
         subcommands[command] = subparser
