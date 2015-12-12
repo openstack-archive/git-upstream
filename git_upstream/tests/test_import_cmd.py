@@ -406,7 +406,7 @@ class TestImportCommand(BaseTestCase):
         self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
         args = self.parser.parse_args(['-q', 'import', '--finish',
                                        '--import-branch=import/F',
-                                       '--into=master', 'upstream/master'])
+                                       '--into=master'])
         self.assertThat(args.cmd.run(args), Equals(True),
                         "import command failed to complete succesfully")
         changes = list(Commit.iter_items(
