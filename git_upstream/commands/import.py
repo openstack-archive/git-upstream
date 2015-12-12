@@ -38,6 +38,14 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
     name = "import"
 
     def __init__(self, *args, **kwargs):
+        """
+        %(prog)s [-i] [options] [--onto <branch>]
+            [--import-branch <import-branch>] [<upstream-branch>]
+            [<branches> ...]
+        %(prog)s [--finish] [options] [--onto <branch>]
+            [--import-branch <import-branch>]
+        """
+
         super(ImportCommand, self).__init__(*args, **kwargs)
 
         self.parser.add_argument(
