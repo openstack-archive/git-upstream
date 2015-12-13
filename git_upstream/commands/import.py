@@ -103,44 +103,47 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             help='Branches to additionally merge into the import branch using '
                  'default git merging behaviour')
 
-    def validate(self, args):
+    def validate(self):
         """Perform more complex validation of args that cannot be mixed"""
 
         # check if --finish set with --no-merge
-        if args.finish and args.merge is False:
+        if self.args.finish and self.args.merge is False:
             self.parser.error(
                 "--finish cannot be used with '--no-merge'")
 
-    def _finish(self, args, import_upstream):
-        self.log.notice("Merging import to requested branch '%s'", args.branch)
+    def _finish(self, import_upstream):
+        self.log.notice("Merging import to requested branch '%s'",
+                        self.args.branch)
         if import_upstream.finish():
             self.log.notice(
                 """\
                 Successfully finished import:
                     target branch: '%s'
                     upstream branch: '%s'
-                    import branch: '%s'""", args.branch, args.upstream_branch,
+                    import branch: '%s'""",
+                self.args.branch, self.args.upstream_branch,
                 import_upstream.import_branch)
-            if args.branches:
-                for branch in args.branches:
+            if self.args.branches:
+                for branch in self.args.branches:
                     self.log.notice("    extra branch: '%s'", branch,
                                     dedent=False)
             return True
         else:
             return False
 
-    def run(self, args):
+    def execute(self):
 
         import_upstream = ImportUpstream(
-            branch=args.branch,
-            upstream=args.upstream_branch,
-            import_branch=args.import_branch,
-            extra_branches=args.branches)
+            branch=self.args.branch,
+            upstream=self.args.upstream_branch,
+            import_branch=self.args.import_branch,
+            extra_branches=self.args.branches)
 
         self.log.notice("Searching for previous import")
         strategy = ImportStrategiesFactory.create_strategy(
-            args.strategy, branch=args.branch, upstream=args.upstream_branch,
-            search_refs=args.search_refs)
+            self.args.strategy, branch=self.args.branch,
+            upstream=self.args.upstream_branch,
+            search_refs=self.args.search_refs)
 
         if len(strategy) == 0:
             raise ImportUpstreamError("Cannot find previous import")
@@ -156,14 +159,14 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             if idxs:
                 additional_commits = [prev_import_merge.parents[i]
                                       for i in idxs]
-                if additional_commits and len(args.branches) == 0:
+                if additional_commits and len(self.args.branches) == 0:
                     self.log.warning("""\
                         **************** WARNING ****************
                         Previous import merged additional branches but none
                         have been specified on the command line for this
                         import.\n""")
 
-        if args.dry_run:
+        if self.args.dry_run:
             commit_list = [c.hexsha[:6] + " - " + c.summary[:60] +
                            (c.summary[60:] and "...")
                            for c in list(strategy.filtered_iter())]
@@ -176,26 +179,26 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             return True
 
         # finish and return if thats all
-        if args.finish:
-            return self._finish(args, import_upstream)
+        if self.args.finish:
+            return self._finish(import_upstream)
 
         # otherwise perform fresh import
         self.log.notice("Starting import of upstream")
-        import_upstream.create_import(force=args.force)
+        import_upstream.create_import(force=self.args.force)
         self.log.notice("Successfully created import branch")
 
-        if not import_upstream.apply(strategy, args.interactive):
+        if not import_upstream.apply(strategy, self.args.interactive):
             self.log.notice("Import cancelled")
             return False
 
-        if not args.merge:
+        if not self.args.merge:
             self.log.notice(
                 """\
                 Import complete, not merging to target branch '%s' as
                 requested.
-                """, args.branch)
+                """, self.args.branch)
             return True
 
-        return self._finish(args, import_upstream)
+        return self._finish(import_upstream)
 
 # vim:sw=4:sts=4:ts=4:et:

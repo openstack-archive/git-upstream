@@ -50,15 +50,26 @@ class GitUpstreamCommand(object):
 
     def __init__(self, parser):
         self.parser = parser
+        self.args = None
 
-    def validate(self, args):
+    def validate(self):
         """Verify the arguments passed for this command"""
-        return
+        return True
+
+    def finialize(self):
+        """Additional updating of the args to set values"""
+        return True
 
     @abc.abstractmethod
-    def run(self, args):
+    def execute(self, args):
         """Execute this command"""
-        return
+        raise NotImplementedError
+
+    def run(self, args):
+        self.args = args
+        self.finalize()
+        self.validate()
+        return self.execute()
 
 
 def get_subcommands(parser):
