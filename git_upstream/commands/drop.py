@@ -40,9 +40,9 @@ class DropCommand(LogDedentMixin, GitUpstreamCommand):
             '-a', '--author', metavar='<author>', dest='author', default=None,
             help='Git author for the mark')
 
-    def run(self, args):
+    def execute(self):
 
-        drop = Drop(git_object=args.commit, author=args.author)
+        drop = Drop(git_object=self.args.commit, author=self.args.author)
 
         if drop.mark():
             self.log.notice("Drop mark created successfully")

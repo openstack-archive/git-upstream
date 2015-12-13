@@ -57,12 +57,12 @@ class SupersedeCommand(LogDedentMixin, GitUpstreamCommand):
             help='Search change ids values in <upstream-branch> branch '
                  '(default: %(default)s)')
 
-    def run(self, args):
+    def execute(self):
 
-        supersede = Supersede(git_object=args.commit,
-                              change_ids=args.change_ids,
-                              upstream_branch=args.upstream_branch,
-                              force=args.force)
+        supersede = Supersede(git_object=self.args.commit,
+                              change_ids=self.args.change_ids,
+                              upstream_branch=self.args.upstream_branch,
+                              force=self.args.force)
 
         if supersede.mark():
             self.logger.notice("Supersede mark created successfully")

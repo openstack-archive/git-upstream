@@ -139,9 +139,7 @@ def main(argv=None):
         sys.exit(1)
 
     try:
-        cmd = args.cmd
-        cmd.validate(args)
-        cmd.run(args)
+        args.cmd.run(args)
     except GitUpstreamError as e:
         logger.fatal("%s", e[0])
         logger.debug("Git-Upstream: %s", e[0], exc_info=e)
