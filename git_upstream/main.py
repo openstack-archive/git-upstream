@@ -128,11 +128,11 @@ def main(argv=None):
         argcomplete.autocomplete(parser)
     args = parser.parse_args(argv)
 
+    logger = setup_console_logging(args)
+
     if args.cmd.name == "help":
         args.cmd.run(args, parser)
         return 0
-
-    logger = setup_console_logging(args)
 
     if git.Git().version_info < (1, 7, 5):
         logger.fatal("Git-Upstream requires git version 1.7.5 or later")
