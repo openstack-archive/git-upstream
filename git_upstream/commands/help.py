@@ -29,7 +29,7 @@ class HelpCommand(LogDedentMixin, GitUpstreamCommand):
         self.parser.add_argument('command', metavar='<command>', nargs='?',
                                  help="command to display help about")
 
-    def run(self, args, parent_parser=None):
+    def execute(self, args, parent_parser=None):
         if getattr(args, 'command', None):
             if args.command in args.subcommands:
                 args.subcommands[args.command].print_help()
