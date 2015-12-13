@@ -397,20 +397,20 @@ class TestImportCommand(BaseTestCase):
 
         branches = {
             'head': ('master', 'D'),
-            'upstream': ('upstream/master', 'F'),
+            'upstream': ('custom/master', 'F'),
             'import': ('import/F', 'D1')
         }
 
         self._build_git_tree(tree, branches.values())
 
-        self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
+        self.git.tag(inspect.currentframe().f_code.co_name, 'custom/master')
         args = self.parser.parse_args(['-q', 'import', '--finish',
                                        '--import-branch=import/F',
-                                       '--into=master', 'upstream/master'])
+                                       '--into=master'])
         self.assertThat(args.cmd.run(args), Equals(True),
                         "import command failed to complete succesfully")
         changes = list(Commit.iter_items(
-            self.repo, 'upstream/master..master^2'))
+            self.repo, 'custom/master..master^2'))
         self.assertThat(len(changes), Equals(2),
                         "should only have seen two changes, got: %s" %
                         ", ".join(["%s:%s" % (commit.hexsha,
