@@ -111,6 +111,12 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             self.parser.error(
                 "--finish cannot be used with '--no-merge'")
 
+    def finalize(self):
+        """Perform additional parsing of args"""
+
+        if self.args.finish:
+            self.args.upstream_branch = self.args.import_branch
+
     def _finish(self, import_upstream):
         self.log.notice("Merging import to requested branch '%s'",
                         self.args.branch)
