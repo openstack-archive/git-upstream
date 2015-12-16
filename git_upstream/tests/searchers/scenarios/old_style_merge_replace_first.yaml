@@ -1,0 +1,36 @@
+- desc: |
+    Construct a repo layout using an old approach where the mainline
+    would be replaced with the upstream and then local changes replayed
+    on top. Check to see if we can correctly convert from this
+    approach.
+
+    Repository layout being tested
+
+      B-----------G                     packaging
+       \           \
+        C---D---E---H--D1--E1           master
+       /           /
+      /           /
+     /           /
+    A---F-----------I---J               upstream/master
+
+  tree:
+    - [A, []]
+    - [B, []]
+    - [C, [A, B]]
+    - [D, [C]]
+    - [E, [D]]
+    - [F, [A]]
+    - [G, [B]]
+    - [H, [E, =F, =G]]
+    - [D1, [H]]
+    - [E1, [D1]]
+    - [I, [F]]
+    - [J, [I]]
+
+  branches:
+    head: [master, E1]
+    upstream: [upstream/master, I]
+    packaging: [packaging, B]
+
+  expected_changes: [H, D1, E1]
