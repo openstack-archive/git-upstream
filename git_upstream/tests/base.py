@@ -96,10 +96,10 @@ class DiveDir(fixtures.Fixture):
     """
 
     def __init__(self, path):
+        super(DiveDir, self).__init__()
         self.path = path
 
-    def setUp(self):
-        super(DiveDir, self).setUp()
+    def _setUp(self):
         self.addCleanup(os.chdir, os.getcwd())
         os.chdir(self.path)
 
@@ -107,20 +107,15 @@ class DiveDir(fixtures.Fixture):
 class GitRepo(fixtures.Fixture):
     """Create an empty git repo in which to operate."""
 
-    def __init__(self):
-        self.repo = None
-        self.path = ''
+    def _setUp(self):
         self._file_list = set()
-
-    def setUp(self):
-        super(GitRepo, self).setUp()
-        tempdir = fixtures.TempDir()
-        self.addCleanup(tempdir.cleanUp)
-        tempdir.setUp()
+        tempdir = self.useFixture(fixtures.TempDir())
         self.path = os.path.join(tempdir.path, 'git')
+
         os.mkdir(self.path)
         g = git.Git(self.path)
         g.init()
+
         self.repo = git.Repo(self.path)
         self.repo.git.config('user.email', 'user@example.com')
         self.repo.git.config('user.name', 'Example User')
@@ -174,15 +169,20 @@ class BaseTestCase(testtools.TestCase):
     def setUp(self):
         super(BaseTestCase, self).setUp()
 
-        self.testrepo = self.useFixture(GitRepo())
         self.useFixture(fixtures.FakeLogger(level=logging.DEBUG))
+        self.testrepo = self.useFixture(GitRepo())
         repo_path = self.testrepo.path
         self.useFixture(DiveDir(repo_path))
         self.repo = self.testrepo.repo
         self.git = self.repo.git
-        self._graph = {}
 
+        self._graph = {}
         self.addOnException(self.attach_graph_info)
+
+        # _testMethodDoc is a hidden attribute containing the docstring for
+        # the given test
+        if getattr(self, '_testMethodDoc', None):
+            self.addDetail('description', text_content(self._testMethodDoc))
 
     def _commit(self, node):
         p_node = _get_node_to_pick(node)
