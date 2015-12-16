@@ -1,0 +1,35 @@
+- desc:
+    Search a repository layout where previously was tracking a
+    difference branch to the one that the user now wishes to import
+
+    Repository layout being tested
+
+          B-----------J         master
+         /           /
+        /           B1
+       /           /
+      /       E---I             upstream/stable
+     /       /
+    A---C---D---F---G---H       upstream/master
+
+  tree:
+    - [A, []]
+    - [B, [A]]
+    - [C, [A]]
+    - [D, [C]]
+    - [E, [D]]
+    - [F, [D]]
+    - [G, [F]]
+    - [H, [G]]
+    - [I, [E]]
+    - [B1, [I]]
+    - [J, [B, =B1]]
+
+  branches:
+    head: [master, J]
+    stable: [upstream/stable, I]
+    upstream: [upstream/master, H]
+
+  expected_changes: [B1, J]
+
+  pattern: upstream/*
