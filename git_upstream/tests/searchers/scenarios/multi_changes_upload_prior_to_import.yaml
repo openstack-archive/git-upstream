@@ -1,0 +1,46 @@
+- desc: |
+    Construct a repo layout where using a complex layout involving
+    additional branches having been included, and a previous import
+    from upstream having been completed, test that if a change was
+    created on another branch before the previous import was created,
+    and merged to the target branch after the previous import, can we
+    find it correctly.
+    i.e. will the strategy also include commit 'O' in the diagram
+    below.
+
+    Repository layout being tested
+
+    B--        L-------------
+     \ \      /              \
+      \ \    /    J---------  \
+       \ \  /    /          \  \
+        C---D---E-------I---K---M---O---P   master
+       /   \           /
+      /     --H---D1--E1
+     /       /
+    A---F---G---Q---R                       upstream/master
+
+  tree:
+    - [A, []]
+    - [B, []]
+    - [C, [A, B]]
+    - [D, [C]]
+    - [E, [D]]
+    - [F, [A]]
+    - [G, [F]]
+    - [H, [G, B]]
+    - [D1, [H]]
+    - [E1, [D1]]
+    - [I, [E, =E1]]
+    - [J, [E]]
+    - [K, [I, J]]
+    - [L, [D]]
+    - [M, [K, L]]
+    - [O, [M]]
+    - [P, [O]]
+    - [Q, [G]]
+    - [R, [Q]]
+  branches:
+    head: [master, P]
+    upstream: [upstream/master, R]
+  expected_changes: [H, D1, E1, I, J, K, L, M, O, P]
