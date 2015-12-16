@@ -1,0 +1,52 @@
+#
+# Copyright (c) 2016 Hewlett-Packard Enterprise Development Company, L.P.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+---
+- desc: |
+    Construct a repo layout using an old approach where the mainline would
+    be replaced with the upstream and then local changes replayed on top.
+    Check to see if we can correctly convert from this approach.
+
+    Repository layout being tested
+
+      B-----------G                     packaging
+       \           \
+        C---D---E---H--D1--E1           master
+       /           /
+      /           /
+     /           /
+    A---F-----------I---J               upstream/master
+
+  tree:
+    - [A, []]
+    - [B, []]
+    - [C, [A, B]]
+    - [D, [C]]
+    - [E, [D]]
+    - [F, [A]]
+    - [G, [B]]
+    - [H, [E, =F, =G]]
+    - [D1, [H]]
+    - [E1, [D1]]
+    - [I, [F]]
+    - [J, [I]]
+
+  branches:
+    head: [master, E1]
+    upstream: [upstream/master, I]
+    packaging: [packaging, B]
+
+  expected_changes: [H, D1, E1]
