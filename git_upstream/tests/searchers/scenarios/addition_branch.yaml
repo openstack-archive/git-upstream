@@ -1,0 +1,25 @@
+- desc: |
+    Construct a repo layout where previously an additional branch has
+    been included and validate that locate changes walker can find the
+    expected changes
+
+    Repository layout being tested
+
+    B             example/packaging
+     \
+      C---D---E   master
+     /
+    A---F---G     upstream/master
+
+  tree:
+      - [A, []]
+      - [B, []]
+      - [C, [A, B]]
+      - [D, [C]]
+      - [E, [D]]
+      - [F, [A]]
+      - [G, [F]]
+  branches:
+      head: [master, E]
+      upstream: [upstream/master, G]
+  expected_changes: [C, D, E]

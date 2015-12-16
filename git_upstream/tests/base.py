@@ -13,6 +13,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import io
 import logging
 import os
 from pprint import pformat
@@ -24,6 +25,7 @@ import git
 import loremipsum
 import testtools
 from testtools.content import text_content
+import yaml
 
 
 def _get_node_to_pick(node):
@@ -87,6 +89,22 @@ def reverse_toposort(data):
                                    "of %s, but has been visited without being "
                                    "processed before it." % (r_d, node))
                         raise RuntimeError(message)
+
+
+def get_scenarios(scenarios_path):
+    """Returns a list of scenarios, each scenario being describe
+    by it's name, and a dict containing the parameters
+    """
+
+    scenarios = []
+    for root, dirs, files in os.walk(scenarios_path):
+        for f in files:
+            if f.endswith('.yaml'):
+                filename = os.path.join(root, f)
+                with io.open(filename, 'r', encoding='utf-8') as yaml_file:
+                    data = yaml.load(yaml_file)
+                scenarios.append((filename, data[0]))
+    return scenarios
 
 
 class DiveDir(fixtures.Fixture):
@@ -296,9 +314,18 @@ class BaseTestCase(testtools.TestCase):
         return [self._graph[n] for n in nodes]
 
     def attach_graph_info(self, exc_info):
+        # appears to be an odd bug where this method is called twice
+        # if registered with addOnException so make sure to guard
+        # that the path actually exists before running
+        if not (hasattr(self.testrepo, 'path') and
+                os.path.exists(self.testrepo.path)):
+            return
+
         if not self._graph:
             return
         self.addDetail('graph-dict', text_content(pformat(self._graph)))
-        self.addDetail('git-log-with-graph',
-                       text_content(self.git.log(graph=True, oneline=True,
-                                                 decorate=True, all=True)))
+
+        self.addDetail(
+            'git-log-with-graph',
+            text_content(self.repo.git.log(graph=True, oneline=True,
+                                           decorate=True, all=True)))
