@@ -1,0 +1,57 @@
+#
+# Copyright (c) 2016 Hewlett-Packard Enterprise Development Company, L.P.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+---
+- desc: |
+    Construct a repository layout where the upstream branch is switched
+    after an initial import, from 'upstream/stable' to 'upstream/master'.
+    Test that using the new branch as the search pattern forces changes
+    from 'upstream/stable' to be included. This is in contrast to the
+    test in `switch_tracked_branches`.
+
+    This shows the additional changes that are picked up.
+
+    Repository layout being tested
+
+          B-----------J         master
+         /           /
+        /           B1
+       /           /
+      /       E---I             upstream/stable
+     /       /
+    A---C---D---F---G---H       upstream/master
+
+  tree:
+    - [A, []]
+    - [B, [A]]
+    - [C, [A]]
+    - [D, [C]]
+    - [E, [D]]
+    - [F, [D]]
+    - [G, [F]]
+    - [H, [G]]
+    - [I, [E]]
+    - [B1, [I]]
+    - [J, [B, =B1]]
+
+  branches:
+    head: [master, J]
+    stable: [upstream/stable, I]
+    upstream: [upstream/master, H]
+
+  expected_changes: [E, I, B1, J]
+
+  pattern: upstream/master
