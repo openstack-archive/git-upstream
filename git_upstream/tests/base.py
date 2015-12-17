@@ -141,15 +141,18 @@ class GitRepo(fixtures.Fixture):
         tmpfile.close()
         return tmpfile.name
 
-    def _create_file_commit(self, change_id=None):
+    def _create_file_commit(self, change_id=None, msg_prefix=None):
         filename = self._create_file()
         self.repo.git.add(filename)
         message = "Adding %s" % os.path.basename(filename)
+        if msg_prefix:
+            message = "%s %s" % (msg_prefix, message)
         if change_id:
             message = message + "\n\nChange-Id: %s" % change_id
         self.repo.git.commit(m=message)
 
-    def add_commits(self, num=1, ref="HEAD", change_ids=[]):
+    def add_commits(self, num=1, ref="HEAD", change_ids=[],
+                    message_prefix=None):
         """Create the given number of commits using generated files"""
         if ref != "HEAD":
             self.repo.git.checkout(ref)
@@ -158,7 +161,7 @@ class GitRepo(fixtures.Fixture):
         ids = list(change_ids) + [None] * (num - len(change_ids))
 
         for x in range(num):
-            self._create_file_commit(ids[x])
+            self._create_file_commit(ids[x], msg_prefix=message_prefix)
 
 
 class BaseTestCase(testtools.TestCase):
@@ -190,7 +193,8 @@ class BaseTestCase(testtools.TestCase):
             self.git.cherry_pick(self._graph[p_node])
         else:
             # standard commit
-            self.testrepo.add_commits(1, ref="HEAD")
+            self.testrepo.add_commits(1, ref="HEAD",
+                                      message_prefix="[%s]" % node)
 
     def _merge_commit(self, node, parents):
         # merge commits
@@ -265,7 +269,8 @@ class BaseTestCase(testtools.TestCase):
                 self.git.symbolic_ref("HEAD", "refs/heads/%s" % node)
                 self.git.rm(".", r=True, cached=True)
                 self.git.clean(f=True, d=True, x=True)
-                self.testrepo.add_commits(1, ref="HEAD")
+                self.testrepo.add_commits(1, ref="HEAD",
+                                          message_prefix="[%s]" % node)
                 # only explicitly listed branches should exist afterwards
                 self.git.checkout(self.repo.commit())
                 self.git.branch(node, D=True)
