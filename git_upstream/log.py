@@ -126,13 +126,13 @@ class DedentLoggerMeta(type):
                 def _dedent_log(self, level, msg, *args, **kwargs):
                     dedent = kwargs.pop('dedent', True)
                     if dedent:
-                        msg = textwrap.dedent(msg)
+                        msg = textwrap.dedent(msg.lstrip('\n'))
                     func(self, level, msg, *args, **kwargs)
             else:
                 def _dedent_log(self, msg, *args, **kwargs):
                     dedent = kwargs.pop('dedent', True)
                     if dedent:
-                        msg = textwrap.dedent(msg)
+                        msg = textwrap.dedent(msg.lstrip('\n'))
                     func(self, msg, *args, **kwargs)
             return wraps(func)(_dedent_log)
         return dedentlog
