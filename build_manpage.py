@@ -36,7 +36,7 @@ class BuildManpage(Command):
 
     def finalize_options(self):
         from git_upstream import main
-        self._commands, self._parser = main.get_parser()
+        self._commands, self._parser = main.build_parsers()
         self._parser.formatter = ManPageFormatter()
 
     def _markup(self, txt):
