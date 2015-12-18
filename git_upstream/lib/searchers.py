@@ -88,20 +88,94 @@ class Searcher(GitMixin):
                                             topo_order=True,
                                             ancestry_path=True, merges=True))
         ignore_args = []
-        for c in merge_list:
-            for p in c.parents:
-                # previous merge using 'ours' strategy to ignore commits
-                if (self.git.rev_parse("%s^{tree}" % p.hexsha) ==
-                        self.git.rev_parse("%s^{tree}" % c.hexsha)):
-                    ignore_args.extend(["^%s" % ip
-                                        for ip in c.parents if ip != p])
-                    break
+        possible_ignore = []
+        previous_import = None
+        possible_previous_import = None
+        for mergecommit in merge_list:
+            for p in mergecommit.parents:
+                # possible found previous merge using 'ours' strategy to
+                # ignore commits, need to check if we can see the previous
+                # upstream commit from here to determine whether to exclude.
+                if (self.git.rev_parse("%s^{tree}" % p) ==
+                        self.git.rev_parse("%s^{tree}" % mergecommit)):
+                    # if 2 commits merge base is each to one of the commits
+                    # then that commit is a descendent of the other
+                    mergebase = self.git.merge_base(
+                        p, self.commit, with_exceptions=False)
+                    self.log.debug(
+                        """\
+                        previous upstream: %s
+                        merge-base: %s
+                        parent: %s
+                        """, self.commit, mergebase, p.hexsha)
+                    # confirm that the current parent is not a descendent
+                    # of the previous upstream imported
+                    if mergebase and mergebase != self.commit.hexsha:
+                        self.log.info(
+                            """\
+                            Found a possible previous import merge, as current
+                            parent is not a descented of previous upstream:
+                                %s
+                            """, mergecommit)
+                        # This may just have been a merge of the previous
+                        # import merge with the target branch having another
+                        # commit landed. Have to check at the end
+                        possible_ignore.append(p)
+                        possible_previous_import = mergecommit
+                    # otherwise if we got valid response from merge-base
+                    # the current parent is a descendent and has an identical
+                    # tree to the merge commit, and so can only be the
+                    # previous import merge
+                    elif mergebase:
+                        self.log.info(
+                            """\
+                            Found the previous import merge:
+                                %s
+                            """, mergecommit)
+                        new_ignores = ["^%s" % ip
+                                       for ip in mergecommit.parents
+                                       if ip != p and ip not in possible_ignore]
+                        self.log.debug(
+                            """\
+                            Adding following to ignore list:
+                                %s
+                            """, "\n    ".join(new_ignores))
+                        previous_import = mergecommit
+                        ignore_args.extend(new_ignores)
+                        break
+                    # finally if no valid mergebase found, then this is a
+                    # merge of an additional branch and should definitely
+                    # be ignored when listing commits
+                    else:
+                        self.log.info(
+                            """\
+                            Found merge of additional branch:
+                                %s
+                            """, mergecommit)
+                        self.log.debug(
+                            """\
+                            Adding following to ignore list:
+                                %s
+                            """, p)
+                        ignore_args.append("^%s" % p)
 
-        if merge_list:
+        if not previous_import:
+            # if we didn't find an explicit previous import, it means the
+            # possible previous import commit we found, was in fact the
+            # correct import
+            previous_import = possible_previous_import
+            self.log.debug(
+                """\
+                Adding following possibles to ignore list:
+                    %s
+                """, "\n    ".join(str(c) for c in possible_ignore))
+            ignore_args.extend(["^%s" % pic for pic in possible_ignore])
+
+        if merge_list and not previous_import:
             for p in merge_list[-1].parents:
                 if p.hexsha == self.commit.hexsha:
                     ignore_args.extend(["^%s" % ip
-                                        for ip in c.parents if ip != p])
+                                        for ip in mergecommit.parents if ip != p])
 
         # walk the tree and find all commits that lie in the path between the
         # commit found by find() and head of the branch to provide a list of
