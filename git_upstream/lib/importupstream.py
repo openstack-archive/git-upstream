@@ -103,7 +103,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
         if str(self.repo.active_branch) == branch:
             self.log.info(
-                """\
+                """
                 Resetting branch '%s' to specified commit '%s'
                     git reset --hard %s
                 """, branch, commit, commit)
@@ -115,14 +115,14 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 checkout_opt = '-b'
 
             self.log.info(
-                """\
+                """
                 Checking out branch '%s' using specified commit '%s'
                     git checkout %s %s %s
                 """, branch, commit, checkout_opt, branch, commit)
             self.git.checkout(checkout_opt, branch, commit)
         else:
             self.log.info(
-                """\
+                """
                 Creating  branch '%s' from specified commit '%s'
                     git branch --force %s %s
                 """, branch, commit, branch, commit)
@@ -166,7 +166,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self.log.warning("No tag describes the upstream branch")
             describe_commit = self.git.describe(commit, always=True, tags=True)
 
-        self.log.info("""\
+        self.log.info("""
                     Using '%s' to describe:
                         %s
                     """, describe_commit, commit)
@@ -184,7 +184,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                        "created from '%s' (%s)", base, self.upstream, commit)
 
         self.log.info(
-            """\
+            """
             Checking if import branch '%s' already exists:
                 git branch --list %s
             """, base, base)
@@ -198,7 +198,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
         if self.extra_branches:
             self.log.info(
-                """\
+                """
                 Merging additional branch(es) '%s' into import branch '%s'
                     git checkout %s
                     git merge %s
@@ -243,7 +243,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self._set_branch(branch, tip, force=True)
             try:
                 self.log.debug(
-                    """\
+                    """
                         git rebase -p --onto=%s \\
                             %s %s
                     """, previous, root, branch)
@@ -264,7 +264,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             return False
 
         self.log.debug(
-            """\
+            """
             Should apply the following list of commits
                 %s
             """, "\n    ".join([c.hexsha for c in commit_list]))
@@ -273,7 +273,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
         self._set_branch(self.import_branch, self.branch, force=True)
         self.log.info(
-            """\
+            """
             Creating import branch '%s' from specified commit '%s' in prep to
             linearize the local changes before transposing to the new upstream:
                 git branch --force %s %s
@@ -293,7 +293,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             # provided they don't mind that 'git rebase --abort' will result
             # in a virtually useless local import branch
             self.log.warning(
-                """\
+                """
 
                 Exception occurred during linearisation of local changes on to
                 previous import to simplify behaviour should user need to abort
@@ -312,7 +312,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             first = commit_list[0]
 
             self.log.info(
-                """\
+                """
                 Rebase changes, dropping merges through editor:
                     git rebase --onto %s \\
                         %s %s
@@ -361,24 +361,24 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
         try:
             self.log.info(
-                """\
+                """
                 Merging by inverting the 'ours' strategy discard all changes
                 and replace existing branch contents with the new import.
                 """)
             self.log.info(
-                """\
+                """
                 Merging import branch to HEAD and ignoring changes:
                     git merge -s ours --no-commit %s
                 """, self.import_branch)
             self.git.merge('-s', 'ours', self.import_branch, no_commit=True)
             self.log.info(
-                """\
+                """
                 Replacing tree contents with those from the import branch:
                     git read-tree -u --reset %s
                 """, self.import_branch)
             self.git.read_tree(self.import_branch, u=True, reset=True)
             self.log.info(
-                """\
+                """
                 Committing merge commit:
                     git commit --no-edit
                 """)
@@ -391,7 +391,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                     "Resulting tree does not match import")
         except (GitCommandError, ImportUpstreamError):
             self.log.error(
-                """\
+                """
                 Failed to finish import by merging branch:
                     '%s'
                 into and replacing the contents of:
