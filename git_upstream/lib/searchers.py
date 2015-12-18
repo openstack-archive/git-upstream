@@ -83,7 +83,7 @@ class Searcher(GitMixin):
         mergebase = self.git.merge_base(parent, self.commit,
                                         with_exceptions=False)
         self.log.debug(
-            """\
+            """
             previous upstream: %s
             merge-base: %s
             parent: %s
@@ -93,7 +93,7 @@ class Searcher(GitMixin):
         # branch with unrelated history that can be ignored
         if not mergebase:
             self.log.info(
-                """\
+                """
                 Found merge of additional branch:
                     %s
                 """, mergecommit)
@@ -139,7 +139,7 @@ class Searcher(GitMixin):
         # the discarded parents as part of the set of changes to ignore in the
         # final list.
         self.log.debug(
-            """\
+            """
             Searching for previous merges that exclude one side of the history
             since the last import.
                 git rev-list --ancestry-path --merges %s
@@ -159,7 +159,7 @@ class Searcher(GitMixin):
 
             if ignores:
                 self.log.debug(
-                    """\
+                    """
                     Adding following to ignore list:
                         %s
                     """, "\n    ".join(ignores))
@@ -167,7 +167,7 @@ class Searcher(GitMixin):
 
             if previous_import:
                 self.log.info(
-                    """\
+                    """
                     Found the previous import merge:
                         %s
                     """, mergecommit)
@@ -189,7 +189,7 @@ class Searcher(GitMixin):
         # commit found by find() and head of the branch to provide a list of
         # commits to the caller
         self.log.info(
-            """\
+            """
             Walking the changes between found commit and target, excluding
             those behind the previous import or merged as an additional branch
             during the previous import
@@ -208,7 +208,7 @@ class Searcher(GitMixin):
         commits = list(commit_list)
 
         self.log.debug(
-            """\
+            """
             commits found:
                 %s
             """, ("\n" + " " * 4).join([c.hexsha for c in commits]))
@@ -303,7 +303,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
         rev_list_args = self.git.for_each_ref(
             *self._references, format="%(refname:short)").splitlines()
         self.log.info(
-            """\
+            """
             Upstream refs:
                 %s
             """, "\n    ".join(rev_list_args)
@@ -312,7 +312,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
         # get the sha1 for the tip of each of the upstream refs we are going to
         #  search
         self.log.info(
-            """\
+            """
             Construct list of upstream revs to search:
                 git rev-list --min-parents=1 --no-walk \\
                     %s
@@ -343,7 +343,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
         rev_list_args.append("--not")
         rev_list_args.extend(prune_list)
         self.log.info(
-            """\
+            """
             Retrieve minimal list of revs to check with merge-base by excluding
             revisions that are in the reachable from others in the list:
                 git rev-list \\
@@ -356,7 +356,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
         # portion of the tree for each call. If the constructed graph was
         # retained betweens we could likely remove much of the code above.
         self.log.info(
-            """\
+            """
             Running merge-base against each found upstream revision and target
                 git merge-base %s ${upstream_rev}
             """, self.branch)
@@ -373,7 +373,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
                             "is no common ancestor for the involved branches")
         else:
             self.log.info(
-                """\
+                """
                 Order the possible merge-base commits in descendent order, to
                 find the most recent one used irrespective of date:
                     git rev-list --topo-order --max-count=1 --no-walk \\
@@ -521,7 +521,7 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
     def filter(self, commit_iter):
 
         self.log.info(
-            """\
+            """
             Filtering out all commits marked with a Superseded-by Change-Id
             which is present in '%s'
             """, self.search_ref)
@@ -564,7 +564,7 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
             # present in upstream
             if superseding_change_ids:
                 self.log.debug(
-                    """\
+                    """
                 Including commit '%s %s'
                     because the following superseding change-ids have not been
                     found:
@@ -575,7 +575,7 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
                 continue
 
             self.log.debug(
-                """\
+                """
                 Filtering out commit '%s %s'
                     because it has been marked as superseded by the following
                     note:
@@ -696,7 +696,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
     def filter(self, commit_iter):
 
         self.log.info(
-            """\
+            """
             Filtering out all commits that have a Change-Id that matches one
             found in the given search ref: %s
             """, self.search_ref)
@@ -706,7 +706,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
             # if there is no change_id to compare against, return the commit
             if not change_id:
                 self.log.debug(
-                    """\
+                    """
                     Including change missing 'Change-Id'
                         Commit: %s %s
                         Message: %s
@@ -731,7 +731,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
 
             if duplicate_change_id and duplicate_change_id == change_id:
                 self.log.debug(
-                    """\
+                    """
                     Skipping duplicate Change-Id in search ref
                         %s
                         Commit: %s %s
@@ -741,7 +741,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
 
             # no match in the search ref, so include commit
             self.log.debug(
-                """\
+                """
                 Including unmatched change
                     %s
                     Commit: %s %s
