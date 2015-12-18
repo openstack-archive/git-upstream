@@ -107,7 +107,7 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
         self.log.notice("Merging import to requested branch '%s'", args.branch)
         if import_upstream.finish():
             self.log.notice(
-                """\
+                """
                 Successfully finished import:
                     target branch: '%s'
                     upstream branch: '%s'
@@ -149,7 +149,7 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
                 additional_commits = [prev_import_merge.parents[i]
                                       for i in idxs]
                 if additional_commits and len(args.branches) == 0:
-                    self.log.warning("""\
+                    self.log.warning("""
                         **************** WARNING ****************
                         Previous import merged additional branches but none
                         have been specified on the command line for this
@@ -159,7 +159,7 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             commit_list = [c.hexsha[:6] + " - " + c.summary[:60] +
                            (c.summary[60:] and "...")
                            for c in list(strategy.filtered_iter())]
-            self.log.notice("""\
+            self.log.notice("""
                 Requested a dry-run: printing the list of commit that should be
                 rebased
 
@@ -182,7 +182,7 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
 
         if not args.merge:
             self.log.notice(
-                """\
+                """
                 Import complete, not merging to target branch '%s' as
                 requested.
                 """, args.branch)

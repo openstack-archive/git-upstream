@@ -28,7 +28,7 @@ REBASE_EDITOR_SCRIPT = "rebase-editor"
 # enable syntax highlighting
 REBASE_EDITOR_TODO = "git-upstream/git-rebase-todo"
 
-TODO_EPILOGUE = """\
+TODO_EPILOGUE = """
 
 # Rebase %(shortrevisions)s onto %(shortonto)s
 #
