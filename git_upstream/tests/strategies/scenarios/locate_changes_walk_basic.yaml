@@ -1,0 +1,22 @@
+- desc: |
+    Construct a basic repo layout and validate that locate changes
+    walker can find the expected changes.
+
+    Repository layout being tested
+
+      B           master
+     /
+    A---C---D     upstream/master
+
+  tree:
+    - [A, []]
+    - [B, [A]]
+    - [C, [A]]
+    - [D, [C]]
+
+  branches:
+    head: [master, B]
+    upstream: [upstream/master, D]
+
+  expected_changes: [B]
+
