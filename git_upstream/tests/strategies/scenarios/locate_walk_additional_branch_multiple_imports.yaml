@@ -1,0 +1,37 @@
+- desc: |
+    Construct a repo layout where previously an additional branch has
+    been included and validate that locate changes walker can find the
+    right changes after an additional import
+
+    Repository layout being tested
+
+      B--                               example/packaging
+       \ \
+        C---D---E-------I---J---K       master
+       /   \           /
+      /     --H---D1--E1                import/next
+     /       /
+    A---F---G---L---M                   upstream/master
+
+  tree:
+    - [A, []]
+    - [B, []]
+    - [C, [A, B]]
+    - [D, [C]]
+    - [E, [D]]
+    - [F, [A]]
+    - [G, [F]]
+    - [H, [G, B]]
+    - [D1, [H]]
+    - [E1, [D1]]
+    - [I, [E, =E1]]
+    - [J, [I]]
+    - [K, [J]]
+    - [L, [G]]
+    - [M, [L]]
+
+  branches:
+    head: [master, K]
+    upstream: [upstream/master, M]
+
+  expected_changes: [D1, E1, J, K]
