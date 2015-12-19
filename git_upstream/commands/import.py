@@ -36,6 +36,13 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
     with those from the import branch, unless --no-merge is specified.
     """
     name = "import"
+    usage = """
+    %(prog)s [-i] [options] [--onto <branch>]
+        [--import-branch <import-branch>] [<upstream-branch>]
+        [<branches> ...]
+    %(prog)s [--finish] [options] [--onto <branch>]
+        [--import-branch <import-branch>]
+    """
 
     def __init__(self, *args, **kwargs):
         super(ImportCommand, self).__init__(*args, **kwargs)
