@@ -18,6 +18,7 @@
 from abc import ABCMeta
 from abc import abstractmethod
 import re
+import itertools
 
 from git_upstream.lib.pygitcompat import Commit
 from git_upstream.lib.utils import GitMixin
@@ -159,6 +160,7 @@ class Searcher(GitMixin):
                     ignore_args.append("^%s" % parent)
 
         if merge_list and not previous_import:
+            previous_import = merge_list[-1]
             for p in merge_list[-1].parents:
                 if p.hexsha == self.commit.hexsha:
                     ignore_args.extend(["^%s" % ip
@@ -166,22 +168,43 @@ class Searcher(GitMixin):
                                         if ip != p])
 
         # walk the tree and find all commits that lie in the path between the
-        # commit found by find() and head of the branch to provide a list of
-        # commits to the caller
-        self.log.info(
-            """
-            Walking the changes between found commit and target, excluding
-            those behind the previous import or merged as an additional branch
-            during the previous import
-                git rev-list --topo-order %s %s
-            """, revision_spec, " ".join(ignore_args))
+        # commit found by find() and head of the branch in two steps, to
+        # ensure a deterministic order between what is from the previous
+        # upstream to the last import, and from that import to what is on
+        # the tip of the head to avoid inversion where older commits
+        # started before the previous import merge and approved afterwards
+        # are not sorted by 'rev-list' predictably.
+        if previous_import:
+            search_list = [
+                (previous_import, self.branch),
+                (self.commit, previous_import),
+            ]
+        else:
+            search_list = [(self.commit, self.branch)]
 
-        commit_list = Commit._iter_from_process_or_stream(
-            self.repo, self.git.rev_list(revision_spec, *ignore_args,
-                                         as_process=True, topo_order=True))
+        commit_list = []
+        for start, end in search_list:
+            revision_spec = "{0}..{1}".format(start, end)
+
+            self.log.info(
+                """
+                Walking the changes between found commit and target, excluding
+                those behind the previous import or merged as an additional branch
+                during the previous import
+                    git rev-list --topo-order %s %s
+                """, revision_spec, " ".join(ignore_args))
+
+            commit_list.append(
+                Commit._iter_from_process_or_stream(
+                    self.repo,
+                    self.git.rev_list(revision_spec,
+                                      *ignore_args,
+                                      as_process=True,
+                                      topo_order=True)))
 
         # chain the filters as generators so that we don't need to allocate new
         # lists for each step in the filter chain.
+        commit_list = itertools.chain(*commit_list)
         for f in self.filters:
             commit_list = f.filter(commit_list)
 
