@@ -23,7 +23,7 @@ import textwrap
 
 
 class AppendReplaceAction(argparse._AppendAction):
-    """Allows setting of a default value which is overriden by the first use
+    """Allows setting of a default value which is overridden by the first use
     of the option, while subsequent calls will then append.
     """
     def __init__(self, *args, **kwargs):

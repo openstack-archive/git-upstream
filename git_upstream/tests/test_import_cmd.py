@@ -75,7 +75,7 @@ class TestImportCommand(BaseTestCase):
         self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
         args = self.parser.parse_args(['-q', 'import', 'upstream/master'])
         self.assertThat(args.cmd.run(args), Equals(True),
-                        "import command failed to complete succesfully")
+                        "import command failed to complete successfully")
 
     def test_basic_additional(self):
         """Test that default behaviour and options work
@@ -112,7 +112,7 @@ class TestImportCommand(BaseTestCase):
         args = self.parser.parse_args(['-q', 'import', 'upstream/master',
                                        'packaging/master'])
         self.assertThat(args.cmd.run(args), Equals(True),
-                        "import command failed to complete succesfully")
+                        "import command failed to complete successfully")
 
     def test_basic_additional_missed(self):
         """Test that forgetting an additional branch that was previously
@@ -151,7 +151,7 @@ class TestImportCommand(BaseTestCase):
 
         with mock.patch.object(args.cmd.log, 'warning') as mock_logger:
             self.assertThat(args.cmd.run(args), Equals(True),
-                            "import command failed to complete succesfully")
+                            "import command failed to complete successfully")
 
             mock_logger.assert_called_with(
                 SubstringMatcher(
@@ -205,7 +205,7 @@ class TestImportCommand(BaseTestCase):
         self.git.tag(inspect.currentframe().f_code.co_name, 'upstream/master')
         args = self.parser.parse_args(['-q', 'import'])
         self.assertThat(args.cmd.run(args), Equals(True),
-                        "import command failed to complete succesfully")
+                        "import command failed to complete successfully")
         changes = list(Commit.iter_items(
             self.repo, 'upstream/master..master^2'))
         self.assertThat(len(changes), Equals(2),
@@ -260,7 +260,7 @@ class TestImportCommand(BaseTestCase):
             ('H', ['G'])
         ]
 
-        # use 'custom/*' to ensure defaults are overriden correctly
+        # use 'custom/*' to ensure defaults are overridden correctly
         branches = {
             'head': ('master', 'F'),
             'upstream': ('custom/master', 'H'),
@@ -273,7 +273,7 @@ class TestImportCommand(BaseTestCase):
         args = self.parser.parse_args(['-q', 'import',
                                        '--into=master', 'custom/master'])
         self.assertThat(args.cmd.run(args), Equals(True),
-                        "import command failed to complete succesfully")
+                        "import command failed to complete successfully")
         changes = list(Commit.iter_items(
             self.repo, 'custom/master..master^2'))
         local_rebased = ['F', 'E', 'D', 'C']
@@ -328,7 +328,7 @@ class TestImportCommand(BaseTestCase):
             ('H', ['G'])
         ]
 
-        # use 'custom/*' to ensure defaults are overriden correctly
+        # use 'custom/*' to ensure defaults are overridden correctly
         branches = {
             'head': ('master', 'F'),
             'upstream': ('custom/master', 'H'),
@@ -342,7 +342,7 @@ class TestImportCommand(BaseTestCase):
                                        '--search-refs=custom-d/*',
                                        '--into=master', 'custom/master'])
         self.assertThat(args.cmd.run(args), Equals(True),
-                        "import command failed to complete succesfully")
+                        "import command failed to complete successfully")
         changes = list(Commit.iter_items(
             self.repo, 'custom/master..master^2'))
         self.assertThat(len(changes), Equals(2),
@@ -408,7 +408,7 @@ class TestImportCommand(BaseTestCase):
                                        '--import-branch=import/F',
                                        '--into=master', 'upstream/master'])
         self.assertThat(args.cmd.run(args), Equals(True),
-                        "import command failed to complete succesfully")
+                        "import command failed to complete successfully")
         changes = list(Commit.iter_items(
             self.repo, 'upstream/master..master^2'))
         self.assertThat(len(changes), Equals(2),

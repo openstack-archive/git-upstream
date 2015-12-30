@@ -26,7 +26,7 @@ Copy the following file
 
 giving it a name that matches the aforementioned regexp.
 
-Then edit the file definig a function that performs the actual test
+Then edit the file defining a function that performs the actual test
 
     function test_name1() {
       log DEBUG "Starting $TEST_NAME::$FUNCNAME"

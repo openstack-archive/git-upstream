@@ -21,7 +21,7 @@ Command line editor for modifying git rebase instructions file through use
 of the interactive mode. Will in turn launch an editor in turn if the user
 wished to use the interactive mode of git-rebase.
 
-Script will replace all occurances of 'pick' or any other instruction entry
+Script will replace all occurrences of 'pick' or any other instruction entry
 with a list of instructions read from the given input file.
 
 Avoid use of stdin for passing such information as many editors have problems

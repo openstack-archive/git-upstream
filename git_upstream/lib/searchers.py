@@ -689,5 +689,5 @@ class ReverseCommitFilter(LogDedentMixin, CommitFilter):
     """
 
     def filter(self, commit_iter):
-        self.log.debug("Comsuming generators to reverse commit list")
+        self.log.debug("Consuming generators to reverse commit list")
         return reversed(list(commit_iter))
