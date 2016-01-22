@@ -94,6 +94,10 @@ class GitUpstreamCompatCommit(Commit):
     def hexsha(self):
         return self.id
 
+    @property
+    def short(self):
+        return self.repo.git.rev_parse(self.hexsha, short=True)
+
     @classmethod
     def iter_items(cls, repo, ref, path='', **kwargs):
         """
@@ -113,3 +117,5 @@ if not hasattr(Commit, 'iter_items'):
     Commit = GitUpstreamCompatCommit
     # monkey patch class so that Repo will use the patched class
     git.commit.Commit = GitUpstreamCompatCommit
+else:
+    Commit.short = GitUpstreamCompatCommit.short
