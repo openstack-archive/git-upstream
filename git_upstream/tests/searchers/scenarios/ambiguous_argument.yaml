@@ -1,0 +1,64 @@
+#
+# Copyright (c) 2016 Hewlett-Packard Enterprise Development Company, L.P.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+---
+- desc: |
+    Construct a repo layout where using a simple layout of a single import
+    from upstream having been completed, test that the searcher correctly
+    delimits arguments and paths to the underlying git commands.
+
+    This is done by creating a file(s) with names that would match arguments
+    that are being passed to git, in this case a SHA1 that should be excluded
+    from the list of commits to process.
+
+    Repository layout being tested
+
+        B---C---F---G           master
+       /       /
+      /   B1--C1                import/next
+     /   /
+    A---D---E                   upstream/master
+
+
+  tree:
+    - [A, []]
+    - [B, [A]]
+    - [C, [B]]
+    - [D, [A]]
+    - [E, [D]]
+    - [B1, [D]]
+    - [C1, [B1]]
+    - [F, [C, =C1]]
+    - [G, [F]]
+
+  branches:
+    head: [master, G]
+    upstream: [upstream/master, E]
+
+  expected_changes: [B1, C1, F, G]
+
+  pre-script: |
+    #!/bin/sh
+
+    # add a file with the same name as the SHA1 for node [C], which will
+    # trigger an error unless the arguments are correct delimited from
+    # paths when the searcher lists commits
+    git checkout master
+    touch $(git log -1 --format="%H" HEAD~2)
+
+    # add one the same name as a merge-base commit which will be included in
+    # a rev-list of all or the merge-bases to ensure correct ordering.
+    touch $(git merge-base master upstream/master)
