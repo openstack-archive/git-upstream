@@ -148,7 +148,7 @@ class Searcher(GitMixin):
         merge_list = list(Commit.iter_items(self.repo, revision_spec,
                                             topo_order=True,
                                             ancestry_path=True, merges=True))
-        ignore_args = []
+        extra_args = []
         previous_import = False
         for mergecommit, parent in ((mc, p)
                                     for mc in merge_list
@@ -163,7 +163,7 @@ class Searcher(GitMixin):
                     Adding following to ignore list:
                         %s
                     """, "\n    ".join(ignores))
-                ignore_args.extend(ignores)
+                extra_args.extend(ignores)
 
             if previous_import:
                 self.log.info(
@@ -181,9 +181,9 @@ class Searcher(GitMixin):
         if merge_list and not previous_import:
             for p in merge_list[-1].parents:
                 if p.hexsha == self.commit.hexsha:
-                    ignore_args.extend(["^%s" % ip
-                                        for ip in merge_list[-1].parents
-                                        if ip != p])
+                    extra_args.extend(["^%s" % ip
+                                      for ip in merge_list[-1].parents
+                                      if ip != p])
 
         # walk the tree and find all commits that lie in the path between the
         # commit found by find() and head of the branch to provide a list of
@@ -194,10 +194,12 @@ class Searcher(GitMixin):
             those behind the previous import or merged as an additional branch
             during the previous import
                 git rev-list --topo-order %s %s
-            """, revision_spec, " ".join(ignore_args))
+            """, revision_spec, " ".join(extra_args))
 
+        # to prevent possibility of ambiguous commands
+        extra_args.append('--')
         commit_list = Commit._iter_from_process_or_stream(
-            self.repo, self.git.rev_list(revision_spec, *ignore_args,
+            self.repo, self.git.rev_list(revision_spec, *extra_args,
                                          as_process=True, topo_order=True))
 
         # chain the filters as generators so that we don't need to allocate new
