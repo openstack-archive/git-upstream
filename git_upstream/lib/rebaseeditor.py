@@ -82,34 +82,27 @@ class RebaseEditor(GitMixin, LogDedentMixin):
         with codecs.open(todo_file, "w", "utf-8") as todo:
             for commit in commits:
                 if not root:
-                    root = commit.parents[0].hexsha
+                    root = commit.parents[0]
                 subject = commit.message.splitlines()[0]
-                todo.write("pick %s %s\n" % (commit.hexsha[:7], subject))
+                todo.write("pick %s %s\n" % (self._shorten(commit), subject))
 
             # if root isn't set at this point, then there were no commits
             if not root:
                 todo.write("noop\n")
 
             todo.write(TODO_EPILOGUE %
-                       {'shortrevisions': self._short_revisions(root,
-                                                                commit.hexsha),
-                        'shortonto': self._short_onto(onto or root)})
+                       {'shortrevisions': "%s..%s" % (self._shorten(root),
+                                                      self._shorten(commit)),
+                        'shortonto': self._shorten(onto or root)})
 
         return todo_file
 
-    def _short_revisions(self, root, commit):
+    def _shorten(self, commit):
 
-        if not root:
+        if not commit:
             return "<none>"
 
-        return "%s..%s" % (root[:7], commit[:7])
-
-    def _short_onto(self, onto):
-
-        if not onto:
-            return "<none>"
-
-        return self.git.rev_parse(onto)[:7]
+        return self.git.rev_parse(commit, short=True)
 
     def _set_editor(self, editor):
 

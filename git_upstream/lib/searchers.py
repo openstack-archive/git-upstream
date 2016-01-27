@@ -569,7 +569,7 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
                     because the following superseding change-ids have not been
                     found:
                     %s
-                """, commit.hexsha[:7], commit.message.splitlines()[0],
+                """, commit.short, commit.message.splitlines()[0],
                     '\n    '.join(superseding_change_ids))
                 yield commit
                 continue
@@ -580,7 +580,7 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
                     because it has been marked as superseded by the following
                     note:
                     %s
-                """, commit.hexsha[:7], commit.message.splitlines()[0],
+                """, commit.short, commit.message.splitlines()[0],
                 commit_note)
 
 
@@ -710,7 +710,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
                     Including change missing 'Change-Id'
                         Commit: %s %s
                         Message: %s
-                    """, commit.hexsha[:7], commit.message.splitlines()[0],
+                    """, commit.short, commit.message.splitlines()[0],
                     commit.message)
                 yield commit
                 continue
@@ -735,7 +735,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
                     Skipping duplicate Change-Id in search ref
                         %s
                         Commit: %s %s
-                    """, change_id, commit.hexsha[:7],
+                    """, change_id, commit.short,
                     commit.message.splitlines()[0])
                 continue
 
@@ -745,7 +745,7 @@ class DiscardDuplicateGerritChangeId(LogDedentMixin, GitMixin, CommitFilter):
                 Including unmatched change
                     %s
                     Commit: %s %s
-                """, change_id, commit.hexsha[:7],
+                """, change_id, commit.short,
                 commit.message.splitlines()[0])
             yield commit
 
