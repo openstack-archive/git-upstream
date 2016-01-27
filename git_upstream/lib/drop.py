@@ -20,6 +20,7 @@ import re
 from git import BadObject
 
 from git_upstream.errors import GitUpstreamError
+from git_upstream import lib
 from git_upstream.lib.pygitcompat import BadName
 from git_upstream.lib.utils import GitMixin
 from git_upstream.log import LogDedentMixin
@@ -43,9 +44,6 @@ class Drop(LogDedentMixin, GitMixin):
     Dropped: Walter White <heisenberg@hp.com>
 
     """
-
-    DROP_HEADER = 'Dropped:'
-    NOTE_REF = 'refs/notes/upstream-merge'
 
     def __init__(self, git_object=None, author=None, *args, **kwargs):
 
@@ -90,9 +88,9 @@ class Drop(LogDedentMixin, GitMixin):
 
     def check_duplicates(self):
         """Check if a dropped header is already present"""
-        note = self.commit.note(note_ref=Drop.NOTE_REF)
+        note = self.commit.note(note_ref=lib.IMPORT_NOTE_REF)
         if note:
-            pattern = '^%s\s*(.+)' % Drop.DROP_HEADER
+            pattern = '^%s\s*(.+)' % lib.DROP_HEADER
             m = re.search(pattern, note, re.MULTILINE | re.IGNORECASE)
             if m:
                 self.log.warning(
@@ -108,10 +106,10 @@ class Drop(LogDedentMixin, GitMixin):
         self.log.debug("Creating a note for commit '%s'", self.commit)
 
         if self.check_duplicates():
-            git_note = '%s %s\n' % (Drop.DROP_HEADER, self.author)
+            git_note = '%s %s\n' % (lib.DROP_HEADER, self.author)
             self.log.debug('With the following content:')
             self.log.debug(git_note)
-            self.commit.append_note(git_note, note_ref=Drop.NOTE_REF)
+            self.commit.append_note(git_note, note_ref=lib.IMPORT_NOTE_REF)
         else:
             self.log.warning(
                 "Drop note has not been added as '%s' already has one" %
