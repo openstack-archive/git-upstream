@@ -16,6 +16,9 @@
 #
 
 import git
+from git import base
+
+from git_upstream.lib import note
 
 try:
     from git.objects.commit import Commit
@@ -119,3 +122,8 @@ if not hasattr(Commit, 'iter_items'):
     git.commit.Commit = GitUpstreamCompatCommit
 else:
     Commit.short = GitUpstreamCompatCommit.short
+
+
+base.Object.add_note = note.add_note
+base.Object.append_note = note.append_note
+base.Object.note = note.note_message

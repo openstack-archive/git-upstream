@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 
-from git import base
 from git import GitCommandError
 
 from git_upstream.errors import GitUpstreamError
@@ -68,7 +67,3 @@ def note_message(self, note_ref='refs/notes/commits'):
             return None
         else:
             raise e
-
-base.Object.add_note = add_note
-base.Object.append_note = append_note
-base.Object.note = note_message
