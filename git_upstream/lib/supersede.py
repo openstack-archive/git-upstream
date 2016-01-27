@@ -22,15 +22,10 @@ from git import Head
 
 from git_upstream.errors import GitUpstreamError
 from git_upstream.lib import note  # noqa
+from git_upstream.lib.pygitcompat import BadName
 from git_upstream.lib.searchers import CommitMessageSearcher
 from git_upstream.lib.utils import GitMixin
 from git_upstream.log import LogDedentMixin
-
-
-try:
-    from git import BadName
-except ImportError:
-    BadName = None
 
 
 class SupersedeError(GitUpstreamError):

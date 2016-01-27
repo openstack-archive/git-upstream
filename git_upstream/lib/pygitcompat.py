@@ -27,6 +27,11 @@ except ImportError:
     from git import Commit
     from git import Repo
 
+try:
+    from git import BadName
+except ImportError:
+    BadName = object
+
 
 class GitUpstreamCompatRepo(Repo):
 
