@@ -1,0 +1,10 @@
+Code-Review+2: Tom Cammann <tom.cammann@hpe.com>
+Code-Review+1: Manuel Desbonnet <mdes@hp.com>
+Code-Review+2: Darragh Bailey <daragh.bailey@gmail.com>
+Workflow+1: Darragh Bailey <daragh.bailey@gmail.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 27 Jan 2016 14:25:35 +0000
+Reviewed-on: https://review.openstack.org/271386
+Project: openstack/git-upstream
+Branch: refs/heads/master
