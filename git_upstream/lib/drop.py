@@ -20,13 +20,9 @@ import re
 from git import BadObject
 
 from git_upstream.errors import GitUpstreamError
+from git_upstream.lib.pygitcompat import BadName
 from git_upstream.lib.utils import GitMixin
 from git_upstream.log import LogDedentMixin
-
-try:
-    from git import BadName
-except ImportError:
-    BadName = None
 
 
 class DropError(GitUpstreamError):
