@@ -20,6 +20,7 @@ from abc import abstractmethod
 import itertools
 import re
 
+from git_upstream import lib
 from git_upstream.lib.pygitcompat import Commit
 from git_upstream.lib.utils import GitMixin
 from git_upstream.log import LogDedentMixin
@@ -496,9 +497,6 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
                         (optional).
     """
 
-    SUPERSEDE_HEADER = 'Superseded-by:'
-    NOTE_REF = 'refs/notes/upstream-merge'
-
     def __init__(self, search_ref, limit=None, *args, **kwargs):
 
         super(SupersededCommitFilter, self).__init__(*args, **kwargs)
@@ -554,11 +552,11 @@ class SupersededCommitFilter(LogDedentMixin, GitMixin, CommitFilter):
             """, self.search_ref)
 
         supersede_re = re.compile('^%s\s*(.+)\s*$' %
-                                  SupersededCommitFilter.SUPERSEDE_HEADER,
+                                  lib.SUPERSEDE_HEADER,
                                   re.IGNORECASE | re.MULTILINE)
 
         for commit in commit_iter:
-            commit_note = commit.note(note_ref=SupersededCommitFilter.NOTE_REF)
+            commit_note = commit.note(note_ref=lib.IMPORT_NOTE_REF)
             # include non-annotated commits
             if not commit_note:
                 yield commit
@@ -616,15 +614,12 @@ class DroppedCommitFilter(LogDedentMixin, CommitFilter):
     Prunes all commits that have a note with the Dropped: header
     """
 
-    DROPPED_HEADER = 'Dropped:'
-    NOTE_REF = 'refs/notes/upstream-merge'
-
     def filter(self, commit_iter):
         for commit in commit_iter:
-            commit_note = commit.note(note_ref=DroppedCommitFilter.NOTE_REF)
+            commit_note = commit.note(note_ref=lib.IMPORT_NOTE_REF)
             if not commit_note:
                 yield commit
-            elif not re.match('^%s.+' % DroppedCommitFilter.DROPPED_HEADER,
+            elif not re.match('^%s.+' % lib.DROP_HEADER,
                               commit_note, re.IGNORECASE | re.MULTILINE):
                 yield commit
             else:
