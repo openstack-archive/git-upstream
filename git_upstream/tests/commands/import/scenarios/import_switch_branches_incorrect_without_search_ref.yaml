@@ -1,0 +1,62 @@
+#
+# Copyright (c) 2016 Hewlett-Packard Enterprise Development Company, L.P.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+---
+- desc: |
+    Test that the import sub-command finds additional changes when
+    not given a search-ref to look under.
+
+    Repository layout being checked (assumed already replayed)
+
+                E---F         local/master
+               /
+          C---D               upstream/stable
+         /
+    A---B---G---H             upstream/master
+
+    New branch to be tracked will be upstream/master, so the resulting
+    commits found will be C, D, E & F because of not telling the searcher
+    to look under all of the namespace.
+
+    Test that result is as follows
+
+                  E---F-------------I   local/master
+                 /                 /
+            C---D                 /     upstream/stable
+           /                     /
+          /       C1---D1---E1--F1
+         /       /
+    A---B---G---H                       upstream/master
+
+
+
+  tree:
+    - [A, []]
+    - [B, [A]]
+    - [C, [B]]
+    - [D, [C]]
+    - [E, [D]]
+    - [F, [E]]
+    - [G, [B]]
+    - [H, [G]]
+
+  # use 'custom/*' to ensure defaults are overridden correctly
+  branches:
+    head: [master, F]
+    upstream: [custom/master, H]
+    stable: [custom/stable, D]
+
+  parser_args: [-q, import, --into=master, custom/master]
