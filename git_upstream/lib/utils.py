@@ -53,7 +53,7 @@ class GitMixin(object):
         return self.__git
 
     def is_detached(self):
-        return self.git.symbolic_ref("HEAD", q=True, with_exceptions=False)
+        return not self.git.symbolic_ref("HEAD", q=True, with_exceptions=False)
 
     def get_name(self, sha1, pattern=None):
         """
