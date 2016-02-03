@@ -62,7 +62,7 @@ class Supersede(LogDedentMixin, GitMixin):
             raise SupersedeError("Commit should be provided")
 
         # test that we can use this git repo
-        if not self.is_detached():
+        if self.is_detached():
             raise SupersedeError("In 'detached HEAD' state")
 
         # To Do: check if it possible and useful.
