@@ -71,7 +71,7 @@ class Drop(LogDedentMixin, GitMixin):
             self._author = author
 
         # test that we can use this git repo
-        if not self.is_detached():
+        if self.is_detached():
             raise DropError("In 'detached HEAD' state")
 
         # To Do: check if it possible and useful.

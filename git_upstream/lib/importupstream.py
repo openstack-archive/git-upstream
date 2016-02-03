@@ -48,7 +48,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         super(ImportUpstream, self).__init__(*args, **kwargs)
 
         # test that we can use this git repo
-        if not self.is_detached():
+        if self.is_detached():
             raise ImportUpstreamError("In 'detached HEAD' state")
 
         if self.repo.bare:
