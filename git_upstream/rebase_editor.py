@@ -80,19 +80,27 @@ def main():
     args = parser.parse_args()
     VERBOSE = args.verbose
 
-    # don't attempt to use stdin to pass the information between the parent
-    # process through 'git-rebase' and this script, as many editors will
-    # have problems if stdin is a pipe.
-    if VERBOSE:
-        print("rebase-editor: Replacing contents of rebase instructions file")
-    rebase_replace_insn(args.ofile, open(args.ifile, 'r'))
-
-    # if interactive mode, attempt to exec the editor defined by the user
-    # for use with git
-    if not args.interactive:
+    # If called with a commit message file as the argument, skip this next
+    # section, and try to spawn the user preferred editor. Should only be
+    # needed if reword command is encountered by git-rebase before an edit
+    # or conflict has occurred and git is older than 1.7.8, as otherwise
+    # sequence.editor will be used instead , which will ensure the normal
+    # editor is called by rebase for the commit message, and this editor is
+    # limited to only modifying the instruction sequence.
+    if os.path.basename(args.ofile) != "COMMIT_EDITMSG":
+        # don't attempt to use stdin to pass the information between the parent
+        # process through 'git-rebase' and this script, as many editors will
+        # have problems if stdin is a pipe.
         if VERBOSE:
-            print("rebase-editor: Interactive mode not enabled")
-        sys.exit(0)
+            print("rebase-editor: Replacing rebase instructions")
+        rebase_replace_insn(args.ofile, open(args.ifile, 'r'))
+
+        # if interactive mode, attempt to exec the editor defined by the user
+        # for use with git
+        if not args.interactive:
+            if VERBOSE:
+                print("rebase-editor: Interactive mode not enabled")
+            sys.exit(0)
 
     # calling code should only override one of the two editor variables,
     # starting with the one with the highest precedence
@@ -109,14 +117,14 @@ def main():
         editor_args = [editor]
         editor_args.extend(args.extra_args)
         editor_args.append(args.ofile)
+        editor_args.append(env)
         sys.stdin.flush()
         sys.stdout.flush()
         sys.stderr.flush()
-        os.execvpe(editor, editor_args, env=env)
+        os.execlpe(editor, *editor_args)
 
     sys.stderr.write("rebase-editor: No git EDITOR variables defined in "
-                     "environment to call as requested by the "
-                     "--interactive option.\n")
+                     "environment to call as required.\n")
     sys.exit(2)
 
 if __name__ == '__main__':

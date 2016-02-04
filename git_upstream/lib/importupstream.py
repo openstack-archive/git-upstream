@@ -47,10 +47,6 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         # any computation
         super(ImportUpstream, self).__init__(*args, **kwargs)
 
-        # test that we can use this git repo
-        if self.is_detached():
-            raise ImportUpstreamError("In 'detached HEAD' state")
-
         if self.repo.bare:
             raise ImportUpstreamError("Cannot perform imports in bare repos")
 
@@ -139,6 +135,10 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         If the branch doesn't exist, create it and switch to it
         automatically if checkout is true.
         """
+
+        # test that we can use this git repo
+        if self.is_detached():
+            raise ImportUpstreamError("In 'detached HEAD' state")
 
         if not commit:
             commit = self.upstream
@@ -255,7 +255,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             # set root commit for next loop
             root = sequence[counter].hexsha
 
-    def apply(self, strategy, interactive=False):
+    def apply(self, strategy, interactive=False, resume_cmdline=None):
         """Apply list of commits given onto latest import of upstream"""
 
         commit_list = list(strategy.filtered_iter())
@@ -307,7 +307,8 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             # reset head back to the tip of the changes to be rebased
             self._set_branch(self.import_branch, self.branch, force=True)
 
-        rebase = RebaseEditor(interactive, repo=self.repo)
+        # build the command line
+        rebase = RebaseEditor(resume_cmdline, interactive, repo=self.repo)
         if len(commit_list):
             first = commit_list[0]
 
@@ -356,6 +357,13 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         performing suitable verification checks.
         """
         self.log.info("No verification checks enabled")
+        in_rebase = False
+        if self.is_detached():
+            # called via rebase exec
+            target_sha = self.git.rev_parse("HEAD")
+            in_rebase = True
+        else:
+            target_sha = self.import_branch
         self.git.checkout(self.branch)
         current_sha = self.git.rev_parse("HEAD")
 
@@ -370,7 +378,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 Merging import branch to HEAD and ignoring changes:
                     git merge -s ours --no-commit %s
                 """, self.import_branch)
-            self.git.merge('-s', 'ours', self.import_branch, no_commit=True)
+            self.git.merge('-s', 'ours', target_sha, no_commit=True)
             self.log.info(
                 """
                 Replacing tree contents with those from the import branch:
@@ -389,7 +397,9 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                     self.git.rev_parse("%s^{tree}" % self.import_branch):
                 raise ImportUpstreamError(
                     "Resulting tree does not match import")
-        except (GitCommandError, ImportUpstreamError):
+            if in_rebase:
+                self.git.checkout(target_sha)
+        except (GitCommandError, ImportUpstreamError) as e:
             self.log.error(
                 """
                 Failed to finish import by merging branch:
@@ -397,6 +407,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 into and replacing the contents of:
                     '%s'
                 """, self.import_branch, self.branch)
+            self.log.error(str(e))
             self._set_branch(self.branch, current_sha, force=True)
             return False
         except Exception:
