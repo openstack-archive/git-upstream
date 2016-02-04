@@ -22,6 +22,7 @@ Command-line tool for tracking upstream revisions
 
 import argparse
 import logging
+import os
 import sys
 
 import git
@@ -62,6 +63,15 @@ def build_parsers():
     parser.add_argument('--log-file', dest='log_file', help=argparse.SUPPRESS)
 
     subcommand_parsers = commands.get_subcommands(parser)
+
+    # calculate the correct path to allow the program be re-executed
+    program = sys.argv[0]
+    if os.path.split(program)[-1] != 'git-upstream':
+        script_cmdline = ['python', program]
+    else:
+        script_cmdline = [program]
+
+    parser.set_defaults(script_cmdline=script_cmdline)
 
     return subcommand_parsers, parser
 
