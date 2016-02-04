@@ -114,7 +114,9 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
         """Perform additional parsing of args"""
 
         if self.args.finish and not self.args.upstream_branch:
-            self.args.upstream_branch = self.args.import_branch
+            self.args.real_upstream_branch = self.args.import_branch
+        else:
+            self.args.real_upstream_branch = self.args.upstream_branch
 
     def _finish(self, import_upstream):
         self.log.notice("Merging import to requested branch '%s'",
@@ -140,14 +142,14 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
 
         import_upstream = ImportUpstream(
             branch=self.args.branch,
-            upstream=self.args.upstream_branch,
+            upstream=self.args.real_upstream_branch,
             import_branch=self.args.import_branch,
             extra_branches=self.args.branches)
 
         self.log.notice("Searching for previous import")
         strategy = ImportStrategiesFactory.create_strategy(
             self.args.strategy, branch=self.args.branch,
-            upstream=self.args.upstream_branch,
+            upstream=self.args.real_upstream_branch,
             search_refs=self.args.search_refs)
 
         if len(strategy) == 0:
@@ -192,7 +194,17 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
         import_upstream.create_import(force=self.args.force)
         self.log.notice("Successfully created import branch")
 
-        if not import_upstream.apply(strategy, self.args.interactive):
+        # build suitable command line for interactive mode
+        if self.args.merge:
+            cmdline = self.args.script_cmdline + [
+                self.name,
+                '--finish',
+                '--into=%s' % import_upstream.branch,
+                '--import-branch=%s' % import_upstream.import_branch,
+                import_upstream.upstream
+            ] + import_upstream.extra_branches
+
+        if not import_upstream.apply(strategy, self.args.interactive, cmdline):
             self.log.notice("Import cancelled")
             return False
 
