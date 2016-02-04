@@ -18,6 +18,7 @@
 import inspect
 import os
 
+import mock
 from testscenarios import TestWithScenarios
 from testtools.content import text_content
 from testtools.matchers import Contains
@@ -29,6 +30,8 @@ from git_upstream.tests.base import BaseTestCase
 from git_upstream.tests.base import get_scenarios
 
 
+@mock.patch.dict('os.environ',
+                 {'TEST_GIT_UPSTREAM_REBASE_EDITOR': '1'})
 class TestImportCommand(TestWithScenarios, BaseTestCase):
 
     commands, parser = main.build_parsers()
@@ -96,6 +99,10 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
         extra_test_func = getattr(self, '_verify_%s' % self.name, None)
         if extra_test_func:
             extra_test_func()
+
+    def _verify_basic(self):
+
+        self.assertThat(self.git.log(n=1), Contains("Merge branch 'import/"))
 
     def _verify_basic_additional_missed(self):
         """Additional verification that test produces a warning"""
