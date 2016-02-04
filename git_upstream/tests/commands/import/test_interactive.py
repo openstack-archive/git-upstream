@@ -1,4 +1,4 @@
-# Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2016 Hewlett-Packard Development Company, L.P.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for the 'import' command"""
+"""Tests for the --interactive option to the  'import' command"""
 
-import inspect
+import subprocess
 import os
 
 import mock
 from testscenarios import TestWithScenarios
 from testtools.content import text_content
-from testtools.matchers import Equals, Contains
+from testtools.matchers import Equals
 
 from git_upstream.lib.pygitcompat import Commit
 from git_upstream import main
@@ -29,30 +29,30 @@ from git_upstream.tests.base import BaseTestCase
 from git_upstream.tests.base import get_scenarios
 
 
-@mock.patch.dict('os.environ',
-                 {'TEST_GIT_UPSTREAM_REBASE_EDITOR': '1'})
-class TestImportCommand(TestWithScenarios, BaseTestCase):
+@mock.patch.dict('os.environ', {'GIT_SEQUENCE_EDITOR': 'cat'})
+class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
 
     commands, parser = main.build_parsers()
     scenarios = get_scenarios(os.path.join(os.path.dirname(__file__),
-                              "scenarios"))
+                              "interactive_scenarios"))
 
     def setUp(self):
         # add description in case parent setup fails.
         self.addDetail('description', text_content(self.desc))
 
+        script_cmdline = self.parser.get_default('script_cmdline')
+        script_cmdline[-1] = os.path.join(os.getcwd(), script_cmdline[-1])
+        self.parser.set_defaults(script_cmdline=script_cmdline)
+
         # builds the tree to be tested
-        super(TestImportCommand, self).setUp()
+        super(TestImportInteractiveCommand, self).setUp()
 
-    def test_command(self):
-
+    def test_interactive(self):
         upstream_branch = self.branches['upstream'][0]
         target_branch = self.branches['head'][0]
 
-        self.git.tag(inspect.currentframe().f_code.co_name, upstream_branch)
-        args = self.parser.parse_args(self.parser_args)
-        self.assertThat(args.cmd.run(args), Equals(True),
-                        "import command failed to complete successfully")
+        cmdline = self.parser.get_default('script_cmdline') + self.parser_args
+        subprocess.check_output(cmdline, stderr=subprocess.STDOUT)
 
         expected = getattr(self, 'expect_rebased', [])
         if expected:
@@ -76,27 +76,3 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                                 "subject '%s' of commit '%s' does not match "
                                 "subject '%s' of node '%s'" % (
                                     subject, commit.hexsha, node_subject, node))
-
-        # allow additional test specific verification methods below
-        extra_test_func = getattr(self, '_verify_%s' % self.name, None)
-        if extra_test_func:
-            extra_test_func()
-
-    def _verify_basic_additional_missed(self):
-        """Additional verification that test produces a warning"""
-
-        self.assertThat(self.logger.output,
-                        Contains("Previous import merged additional"))
-
-    def _verify_import_finish(self):
-        """Additional verification for the finished results"""
-
-        self.assertThat(self.repo.git.rev_parse('master^{tree}'),
-                        Equals(self.repo.git.rev_parse('import/F^{tree}')),
-                        "--finish option failed to merge correctly")
-        commit = self.git.rev_list('master', parents=True, max_count=1).split()
-        parents = commit[1:]
-        self.assertThat(parents, Equals([self._graph['D'].hexsha,
-                                         self._graph['D1'].hexsha]),
-                        "import --finish merge does contain the correct "
-                        "parents")
