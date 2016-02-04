@@ -42,11 +42,11 @@ TODO_EPILOGUE = """
 
 class RebaseEditor(GitMixin, LogDedentMixin):
 
-    def __init__(self, interactive=False, *args, **kwargs):
+    def __init__(self, finish_args, interactive=False, *args, **kwargs):
 
         self._interactive = interactive
 
-        super(RebaseEditor, self).__init__()
+        super(RebaseEditor, self).__init__(*args, **kwargs)
 
         self._editor = REBASE_EDITOR_SCRIPT
         # interactive switch here determines if the script that is given
@@ -56,6 +56,8 @@ class RebaseEditor(GitMixin, LogDedentMixin):
         if interactive == 'debug':
             self.log.debug("Enabling interactive mode for rebase")
             self._editor = "%s --interactive" % self.editor
+
+        self.finish_args = finish_args
 
     @property
     def editor(self):
@@ -86,8 +88,11 @@ class RebaseEditor(GitMixin, LogDedentMixin):
                 subject = commit.message.splitlines()[0]
                 todo.write("pick %s %s\n" % (self._shorten(commit), subject))
 
+            if os.environ.get('TEST_GIT_UPSTREAM_REBASE_EDITOR', "") != "1":
+                todo.write("exec %s" % " ".join(self.finish_args))
             # if root isn't set at this point, then there were no commits
-            if not root:
+            # and we are in test mode, so no exec to perform either
+            elif not root:
                 todo.write("noop\n")
 
             todo.write(TODO_EPILOGUE %
@@ -106,31 +111,24 @@ class RebaseEditor(GitMixin, LogDedentMixin):
 
     def _set_editor(self, editor):
 
-        if self.git_sequence_editor:
-            self._saveeditor = self.git_sequence_editor
-            if self._interactive == 'debug':
-                os.environ['GIT_UPSTREAM_GIT_SEQUENCE_EDITOR'] = \
-                    self._saveeditor
-            os.environ['GIT_SEQUENCE_EDITOR'] = editor
+        env = os.environ.copy()
+        # if git is new enough, we can edit the sequence without overriding
+        # the editor, which allows rebase to call the correct editor if
+        # reaches a 'reword' command before it has exited for the first time
+        # otherwise the custom editor of git-upstream will executed with
+        # the path to a commit message as an argument and will need to be able
+        # to call the preferred user editor instead
+        if self.git.version_info >= (1, 7, 8):
+            env['GIT_SEQUENCE_EDITOR'] = editor
         else:
-            self._saveeditor = self.git_editor
-            if self._interactive == 'debug':
-                os.environ['GIT_UPSTREAM_GIT_EDITOR'] = self._saveeditor
-            os.environ['GIT_EDITOR'] = editor
+            env['GIT_UPSTREAM_GIT_EDITOR'] = self.git_editor
+            env['GIT_EDITOR'] = editor
+        return env
 
-    def _unset_editor(self):
-
-        for var in ['GIT_SEQUENCE_EDITOR', 'GIT_EDITOR']:
-            # GIT_UPSTREAM_* variations should only be set if script was in a
-            # debug mode.
-            if os.environ.get('GIT_UPSTREAM_' + var, None):
-                del os.environ['GIT_UPSTREAM_' + var]
-            # Restore previous editor only if the environment var is set. This
-            # isn't perfect since we should probably unset the env var if it
-            # wasn't previously set, but this shouldn't cause any problems.
-            if os.environ.get(var, None):
-                os.environ[var] = self._saveeditor
-                break
+    def cleanup(self):
+        todo_file = os.path.join(self.repo.git_dir, REBASE_EDITOR_TODO)
+        if os.path.exists(todo_file):
+            os.remove(todo_file)
 
     def run(self, commits, *args, **kwargs):
         """
@@ -144,37 +142,45 @@ class RebaseEditor(GitMixin, LogDedentMixin):
         todo_file = self._write_todo(commits, *args, **kwargs)
         if self._interactive:
             # spawn the editor
+            # It is not safe to redirect I/O channels as most editors will
+            # be expecting that I/O is from/to proper terminal. YMMV
             user_editor = self.git_sequence_editor or self.git_editor
             status = subprocess.call("%s %s" % (user_editor, todo_file),
                                      shell=True)
-            if status:
+            if status != 0:
                 return status, None, "Editor returned non-zero exit code"
 
         editor = "%s %s" % (self.editor, todo_file)
-        self._set_editor(editor)
+        environ = self._set_editor(editor)
 
-        try:
-            if self._interactive == 'debug':
-                # In general it's not recommended to run rebase in direct
-                # interactive mode because it's not possible to capture the
-                # stdout/stderr, but sometimes it's useful to allow it for
-                # debugging to check the final result.
-                #
-                # It is not safe to redirect I/O channels as most editors will
-                # be expecting that I/O is from/to proper terminal. YMMV
-                cmd = ['git', 'rebase', '--interactive']
-                cmd.extend(self.git.transform_kwargs(**kwargs))
-                cmd.extend(args)
+        cmd = ['git', 'rebase', '--interactive']
+        cmd.extend(self.git.transform_kwargs(**kwargs))
+        cmd.extend(args)
+        mode = os.environ.get('TEST_GIT_UPSTREAM_REBASE_EDITOR', "")
+        if mode.lower() == "debug":
+            # In general it's not recommended to run rebase in direct
+            # interactive mode because it's not possible to capture the
+            # stdout/stderr, but sometimes it's useful to allow it for
+            # debugging to check the final result.
+            try:
                 return subprocess.call(cmd), None, None
-            else:
-                return self.git.rebase(interactive=True, with_exceptions=False,
-                                       with_extended_output=True, *args,
-                                       **kwargs)
-        finally:
-            os.remove(todo_file)
-            # make sure to remove the environment tweaks added so as not to
-            # impact any subsequent use of git commands using editors
-            self._unset_editor()
+            finally:
+                self.cleanup()
+        elif mode == "1":
+            # run in test mode to avoid replacing the existing process
+            # to keep the majority of tests simple and only require special
+            # launching code for those tests written to check the rebase
+            # resume behaviour
+            try:
+                return 0, subprocess.check_output(
+                    cmd, stderr=subprocess.STDOUT, env=environ), None
+            except subprocess.CalledProcessError as e:
+                return e.returncode, e.output, None
+            finally:
+                self.cleanup()
+        else:
+            cmd.append(environ)
+            os.execlpe('git', *cmd)
 
     @property
     def git_sequence_editor(self):
