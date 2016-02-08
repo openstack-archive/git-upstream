@@ -1,6 +1,53 @@
 Changelog
 =========
 
+0.11.0 (2016-02-08)
+-------------------
+
+- Changelog for 0.11.0 Release.
+- Fix order of commits from previous imports.
+- Ask rev-parse for shortest unique SHA1.
+- Remove upstream branch requirement from '--finish'
+- Move logging setup earlier.
+- Support a finalize method for argument parsing.
+- Convert strategy tests to use scenarios.
+- Have pbr update AUTHORS but not changelog.
+- Fix manpage building.
+- Remove '\' from multiline strings.
+- Improve detection of the previous import merge.
+- Begin conversion to testscenarios.
+- Include node 'name' in commit subject.
+- Update typos.
+- Add more complex usage summary for import command.
+- Tidy up fixture usage.
+- Use standard library for text generation.
+- Update ChangeLog with missing releases.
+- Capture log messages for test failures.
+- Add option to perform finish only.
+- Allow direct execution of main module.
+- Tests: Switch to use list as stack.
+- Grammar fixes.
+- Change repository from stackforge to openstack.
+- Update .gitreview for new namespace.
+- Update the read-tree command in USAGE.md.
+- Re-factor and split code.
+- Restructure subcommands parser creation.
+- Mask broken versions of mock.
+- Update hacking, enable some checks and fix style issues.
+- Sample jobs for mirroring upstream repositories.
+- Find additional missing commit scenarios.
+- Use DFS reverse topological sort to allow unordered inputs.
+- Make function private and replace boolean with function result.
+- Catch BadName exceptions from newer GitPython.
+- Additional scenarios that result in missed commits.
+- Add test for obsolete approach to track upstream.
+- Refactor code used to build tree into helpers.
+- Add test support for creating carried changes.
+- Include graph of git log and node info on error.
+- Workflow documentation is now in infra-manual.
+- Fix typo.
+
+
 0.10.1 (2014-11-18)
 -------------------
 
