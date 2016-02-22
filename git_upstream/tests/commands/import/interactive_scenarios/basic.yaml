@@ -36,6 +36,6 @@
     head: [master, D]
     upstream: [upstream/master, F]
 
-  parser_args: [-v, import, -i, upstream/master]
+  parser-args: [-v, import, -i, upstream/master]
 
-  expect_rebased: [C, D]
+  expect-rebased: [C, D]

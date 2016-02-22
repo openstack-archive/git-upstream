@@ -57,6 +57,6 @@
     upstream: [upstream/master, H]
     stable: [upstream/stable, D]
 
-  parser_args: [-q, import]
+  parser-args: [-q, import]
 
-  expect_rebased: [E, F]
+  expect-rebased: [E, F]
