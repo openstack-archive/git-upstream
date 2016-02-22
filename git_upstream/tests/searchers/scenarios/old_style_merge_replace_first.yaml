@@ -49,4 +49,4 @@
     upstream: [upstream/master, I]
     packaging: [packaging, B]
 
-  expected_changes: [H, D1, E1]
+  expected-changes: [H, D1, E1]
