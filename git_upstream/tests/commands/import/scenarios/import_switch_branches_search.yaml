@@ -57,6 +57,6 @@
     upstream: [upstream/master, H]
     stable: [upstream/stable, D]
 
-  parser_args: [-q, import]
+  parser-args: [-q, import]
 
-  expect_found: [E, F]
+  expect-found: [E, F]
