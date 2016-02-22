@@ -44,4 +44,4 @@
     upstream: [upstream/master, H]
     packaging: [packaging/master, D]
 
-  parser_args: [-q, import, upstream/master, packaging/master]
+  parser-args: [-q, import, upstream/master, packaging/master]

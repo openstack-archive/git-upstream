@@ -59,4 +59,4 @@
     upstream: [custom/master, H]
     stable: [custom/stable, D]
 
-  parser_args: [-q, import, --into=master, custom/master]
+  parser-args: [-q, import, --into=master, custom/master]

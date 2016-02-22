@@ -49,6 +49,6 @@
     stable: [upstream/stable, I]
     upstream: [upstream/master, H]
 
-  expected_changes: [B1, J]
+  expected-changes: [B1, J]
 
   pattern: upstream/*

@@ -104,6 +104,10 @@ def get_scenarios(scenarios_path):
                 filename = os.path.join(root, f)
                 with io.open(filename, 'r', encoding='utf-8') as yaml_file:
                     data = yaml.load(yaml_file)[0]
+                # convert any keys with dashes to underscores for easy reference
+                for key in data.keys():
+                    if '-' in key:
+                        data[key.replace('-', '_')] = data.pop(key)
                 test_name = os.path.relpath(filename, scenarios_path)[:-5]
                 data['name'] = test_name
                 scenarios.append((filename, data))
@@ -212,7 +216,7 @@ class BaseTestCase(testtools.TestCase):
         if hasattr(self, 'tree'):
             self._build_git_tree(self.tree, self.branches.values())
 
-        if hasattr(self, 'pre-script'):
+        if hasattr(self, 'pre_script'):
             self.run_pre_script()
 
     def _commit(self, node):
@@ -351,7 +355,7 @@ class BaseTestCase(testtools.TestCase):
         # ensure we execute within context of the git repository
         with DiveDir(self.testrepo.path):
             try:
-                output = subprocess.check_output(getattr(self, 'pre-script'),
+                output = subprocess.check_output(getattr(self, 'pre_script'),
                                                  stderr=subprocess.STDOUT,
                                                  shell=True)
             except subprocess.CalledProcessError as e:

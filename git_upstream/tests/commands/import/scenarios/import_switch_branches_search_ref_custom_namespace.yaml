@@ -58,7 +58,7 @@
     upstream: [custom/master, H]
     stable: [custom/stable, D]
 
-  parser_args:
+  parser-args:
     - -q
     - import
     - --search-refs=custom/*
