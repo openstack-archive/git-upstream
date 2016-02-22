@@ -60,4 +60,4 @@
     head: [master, Q]
     upstream: [upstream/master, M]
 
-  expected_changes: [H, D1, E1, I, J, K, O, P, Q]
+  expected-changes: [H, D1, E1, I, J, K, O, P, Q]

@@ -48,7 +48,7 @@
     head: [master, G]
     upstream: [upstream/master, E]
 
-  expected_changes: [B1, C1, F, G]
+  expected-changes: [B1, C1, F, G]
 
   pre-script: |
     #!/bin/sh
