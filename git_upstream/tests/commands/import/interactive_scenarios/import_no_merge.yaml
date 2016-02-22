@@ -54,7 +54,7 @@
     head: [master, D]
     upstream: [custom/master, F]
 
-  parser_args:
+  parser-args:
     - -q
     - import
     - --no-merge
@@ -62,4 +62,4 @@
     - --into=master
     - custom/master
 
-  check_merge: False
+  check-merge: False

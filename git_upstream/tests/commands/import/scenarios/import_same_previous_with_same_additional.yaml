@@ -44,7 +44,7 @@
     additional_1: [additional/1, E]
     additional_2: [additional/2, F]
 
-  parser_args:
+  parser-args:
     - -q
     - import
     - --into=master
@@ -52,5 +52,5 @@
     - additional/1
     - additional/2
 
-  expect_found: []
-  check_merge: False
+  expect-found: []
+  check-merge: False

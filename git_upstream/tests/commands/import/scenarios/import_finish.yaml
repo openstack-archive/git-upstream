@@ -56,7 +56,7 @@
     upstream: [custom/master, F]
     import: [import/F, D1]
 
-  parser_args:
+  parser-args:
     - -q
     - import
     - --finish

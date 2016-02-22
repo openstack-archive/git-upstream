@@ -39,10 +39,10 @@
     head: [master, D]
     upstream: [upstream/master, D1]
 
-  parser_args:
+  parser-args:
     - -q
     - import
     - --into=master
     - upstream/master
 
-  expect_found: []
+  expect-found: []

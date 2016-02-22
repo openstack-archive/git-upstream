@@ -45,7 +45,7 @@
     additional_1: [additional/1, G]
     additional_2: [additional/2, F]
 
-  parser_args:
+  parser-args:
     - -q
     - import
     - --into=master
@@ -53,4 +53,4 @@
     - additional/1
     - additional/2
 
-  expect_found: [E, G, F,MERGE, D]
+  expect-found: [E, G, F,MERGE, D]
