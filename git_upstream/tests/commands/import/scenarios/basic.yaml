@@ -36,4 +36,4 @@
     head: [master, D]
     upstream: [upstream/master, F]
 
-  parser_args: [-q, import, upstream/master]
+  parser-args: [-q, import, upstream/master]

@@ -59,4 +59,4 @@
   branches:
     head: [master, P]
     upstream: [upstream/master, R]
-  expected_changes: [H, D1, E1, I, J, K, L, M, O, P]
+  expected-changes: [H, D1, E1, I, J, K, L, M, O, P]
