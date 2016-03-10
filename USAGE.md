@@ -334,7 +334,7 @@ To disable automatic merging, just use the `--no-merge` flag
 
 # Handling conflicts
 
-Of course n the real world things are much more complicated. From time to time,
+Of course in the real world things are much more complicated. From time to time,
 during import, you will get rebasing conflict (for instance due to changes from
 both local and upstream repository to the same piece of code).
 
