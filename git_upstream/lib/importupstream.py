@@ -370,7 +370,18 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         commit_message = (
             "Merge branch '{0}'\n\n"
             "Import of '{1}' into '{2}'.\n\n"
-        ).format(self.import_branch, self.upstream, self.branch)
+            "Git-Upstream-Import-Branch: {0}\n"
+            "Git-Upstream-Target-Branch: {2}\n"
+            "Git-Upstream-Upstream-Branch: {1}\n"
+            "Git-Upstream-Upstream-Commit: {3}\n"
+        ).format(self.import_branch, self.upstream, self.branch,
+                 self.git.rev_parse(self.upstream))
+        commit_message += "\n".join(
+            ("Git-Upstream-Additional[{0}]: {1}\n"
+             "Git-Upstream-Additional-Commit[{0}]: {2}").format(
+                 idx, name, self.git.rev_parse(name))
+            for idx, name in enumerate(self.extra_branches)
+        )
 
         try:
             self.log.info(
