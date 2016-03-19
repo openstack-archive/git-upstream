@@ -359,6 +359,22 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         self.git.checkout(self.branch)
         current_sha = self.git.rev_parse("HEAD")
 
+        commit_message = (
+            "Merge branch '{0}'\n\n"
+            "Import of '{1}' into '{2}'.\n\n"
+            "Git-Upstream-Import-Branch: {0}\n"
+            "Git-Upstream-Target-Branch: {2}\n"
+            "Git-Upstream-Upstream-Branch: {1}\n"
+            "Git-Upstream-Upstream-Commit: {3}\n"
+        ).format(self.import_branch, self.upstream, self.branch,
+                 self.git.rev_parse(self.upstream))
+        commit_message += "\n".join(
+            ("Git-Upstream-Additional[{0}]: {1}\n"
+             "Git-Upstream-Additional-Commit[{0}]: {2}").format(
+                 idx, name, self.git.rev_parse(name))
+            for idx, name in enumerate(self.extra_branches)
+        )
+
         try:
             self.log.info(
                 """
@@ -380,9 +396,9 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self.log.info(
                 """
                 Committing merge commit:
-                    git commit --no-edit
-                """)
-            self.git.commit(no_edit=True)
+                    git commit -m "%s"
+                """ % commit_message)
+            self.git.commit(m=commit_message)
             # finally test that everything worked correctly by comparing if
             # the tree object id's match
             if self.git.rev_parse("HEAD^{tree}") != \
