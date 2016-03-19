@@ -103,6 +103,11 @@ class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
             self.assertThat(commit_message,
                             Contains("of '%s' into '%s'" % (upstream_branch,
                                                             target_branch)))
+
+            self.assertThat(commit_message,
+                            Contains("Git-Upstream-Upstream-Commit: %s" %
+                                     self.git.rev_parse(upstream_branch)))
+
             # make sure the final state of merge is correct
             self.assertThat(
                 self.repo.git.rev_parse("%s^{tree}" % target_branch),
