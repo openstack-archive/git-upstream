@@ -21,6 +21,7 @@ import subprocess
 import mock
 from testscenarios import TestWithScenarios
 from testtools.content import text_content
+from testtools.matchers import Contains
 from testtools.matchers import Equals
 from testtools.matchers import Not
 
@@ -93,6 +94,14 @@ class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
                         Not(Equals(self.git.rev_parse(target_branch))),
                         "Import branch and target should have identical "
                         "contents, but not be the same")
+
+        commit_message = self.git.log(target_branch, n=1)
+        self.assertThat(commit_message,
+                        Contains("of '%s' into '%s'" % (upstream_branch,
+                                                        target_branch)))
+        self.assertThat(commit_message,
+                        Contains("Git-Upstream-Upstream-Commit: %s" %
+                                 self.git.rev_parse(upstream_branch)))
 
         # allow additional test specific verification methods below
         extra_test_func = getattr(self, '_verify_%s' % self.name, None)
