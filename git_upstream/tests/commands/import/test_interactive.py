@@ -95,6 +95,14 @@ class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
                         "Import branch and target should have identical "
                         "contents, but not be the same")
 
+        commit_message = self.git.log(target_branch, n=1)
+        self.assertThat(commit_message,
+                        Contains("of '%s' into '%s'" % (upstream_branch,
+                                                        target_branch)))
+        self.assertThat(commit_message,
+                        Contains("Git-Upstream-Upstream-Commit: %s" %
+                                 self.git.rev_parse(upstream_branch)))
+
         # allow additional test specific verification methods below
         extra_test_func = getattr(self, '_verify_%s' % self.name, None)
         if extra_test_func:
