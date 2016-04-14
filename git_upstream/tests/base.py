@@ -339,7 +339,8 @@ class BaseTestCase(testtools.TestCase):
         self.addDetail(
             'git-log-with-graph',
             text_content(self.repo.git.log(graph=True, oneline=True,
-                                           decorate=True, all=True)))
+                                           decorate=True, all=True,
+                                           parents=True)))
 
     def run_pre_script(self):
         """
