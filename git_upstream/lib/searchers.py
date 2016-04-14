@@ -149,7 +149,7 @@ class Searcher(GitMixin):
         merge_list = list(Commit.iter_items(self.repo, revision_spec,
                                             topo_order=True,
                                             ancestry_path=True, merges=True))
-        ignore_args = []
+        extra_args = []
         previous_import = False
         for mergecommit, parent in ((mc, p)
                                     for mc in merge_list
@@ -164,7 +164,7 @@ class Searcher(GitMixin):
                     Adding following to ignore list:
                         %s
                     """, "\n    ".join(ignores))
-                ignore_args.extend(ignores)
+                extra_args.extend(ignores)
 
             if previous_import:
                 self.log.info(
@@ -183,9 +183,9 @@ class Searcher(GitMixin):
             previous_import = merge_list[-1]
             for p in previous_import.parents:
                 if p.hexsha == self.commit.hexsha:
-                    ignore_args.extend(["^%s" % ip
-                                        for ip in previous_import.parents
-                                        if ip != p])
+                    extra_args.extend(["^%s" % ip
+                                      for ip in previous_import.parents
+                                      if ip != p])
 
         # walk the tree and find all commits that lie in the path between the
         # commit found by find() and head of the branch in two steps, to
@@ -203,6 +203,7 @@ class Searcher(GitMixin):
             search_list = [(self.commit, self.branch)]
 
         commit_list = []
+        extra_args.append('--')
         for start, end in search_list:
             revision_spec = "{0}..{1}".format(start, end)
 
@@ -212,13 +213,13 @@ class Searcher(GitMixin):
                 those behind the previous import or merged as an additional
                 branch during the previous import
                     git rev-list --topo-order %s %s
-                """, revision_spec, " ".join(ignore_args))
+                """, revision_spec, " ".join(extra_args))
 
             commit_list.append(
                 Commit._iter_from_process_or_stream(
                     self.repo,
                     self.git.rev_list(revision_spec,
-                                      *ignore_args,
+                                      *extra_args,
                                       as_process=True,
                                       topo_order=True)))
 
@@ -340,6 +341,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
                 git rev-list --min-parents=1 --no-walk \\
                     %s
             """, (" \\\n" + " " * 8).join(rev_list_args))
+        rev_list_args.append("--")
         search_list = set(self.git.rev_list(*rev_list_args,
                                             min_parents=1,
                                             no_walk=True).splitlines())
@@ -352,7 +354,8 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
         for rev in search_list:
             # only root commits won't have at least one parent which have been
             # excluded by the previous search
-            commit = self.git.rev_list(rev, parents=True, max_count=1).split()
+            commit = self.git.rev_list(rev, "--", parents=True,
+                                       max_count=1).split()
             parents = commit[1:]
             prune_list.extend(parents)
 
@@ -372,6 +375,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
                 git rev-list \\
                     %s
             """, " \\\n        ".join(rev_list_args))
+        rev_list_args.append("--")
         revsions = self.git.rev_list(*rev_list_args).splitlines()
 
         # Running 'git merge-base' is relatively expensive to pruning the list
@@ -402,8 +406,8 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
                     git rev-list --topo-order --max-count=1 --no-walk \\
                         %s
                 """, (" \\\n" + " " * 8).join(merge_bases))
-            sha1 = self.git.rev_list(
-                *merge_bases, topo_order=True, max_count=1)
+            args = list(merge_bases) + ["--"]
+            sha1 = self.git.rev_list(*args, topo_order=True, max_count=1)
             # now that we have the sha1, make sure to save the commit object
             self.commit = self.repo.commit(sha1)
             self.log.debug("Most recent merge-base commit is: '%s'",
