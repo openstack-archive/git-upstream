@@ -100,11 +100,14 @@ def get_scenarios(scenarios_path):
     scenarios = []
     for root, dirs, files in os.walk(scenarios_path):
         for f in files:
-            if f.endswith('.yaml'):
+            if os.path.splitext(f)[-1] in ['.yaml', '.yml']:
                 filename = os.path.join(root, f)
                 with io.open(filename, 'r', encoding='utf-8') as yaml_file:
-                    data = yaml.load(yaml_file)
-                scenarios.append((filename, data[0]))
+                    data = yaml.load(yaml_file)[0]
+                test_name = os.path.splitext(
+                    os.path.relpath(filename, scenarios_path))[0]
+                data['name'] = test_name
+                scenarios.append((filename, data))
     return scenarios
 
 
@@ -191,7 +194,7 @@ class BaseTestCase(testtools.TestCase):
     def setUp(self):
         super(BaseTestCase, self).setUp()
 
-        self.useFixture(fixtures.FakeLogger(level=logging.DEBUG))
+        self.logger = self.useFixture(fixtures.FakeLogger(level=logging.DEBUG))
         self.testrepo = self.useFixture(GitRepo())
         repo_path = self.testrepo.path
         self.useFixture(DiveDir(repo_path))
