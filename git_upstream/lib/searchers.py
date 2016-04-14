@@ -75,13 +75,6 @@ class Searcher(GitMixin):
         changes.
         """
 
-        # if the parent tree doesn't match the merge commit tree, we can
-        # skip inspecting it as it and it's parent commit must be
-        # included as it contributes changes to the tree.
-        if (self.git.rev_parse("%s^{tree}" % parent) !=
-                self.git.rev_parse("%s^{tree}" % mergecommit)):
-            return None, []
-
         mergebase = self.git.merge_base(parent, self.commit,
                                         with_exceptions=False)
         self.log.debug(
@@ -92,14 +85,21 @@ class Searcher(GitMixin):
             """, self.commit, mergebase, parent.hexsha)
 
         # if not a valid response from merge-base, we have an additional
-        # branch with unrelated history that can be ignored
+        # branch with unrelated history, and should ignore all parents
         if not mergebase:
             self.log.info(
                 """
                 Found merge of additional branch:
                     %s
                 """, mergecommit)
-            return None, ["^%s" % parent]
+            return None, ["^%s" % mp for mp in mergecommit.parents]
+
+        # if the parent tree doesn't match the merge commit tree, we can
+        # skip inspecting it as it and it's parent commit must be
+        # included as it contributes changes to the tree.
+        if (self.git.rev_parse("%s^{tree}" % parent) !=
+                self.git.rev_parse("%s^{tree}" % mergecommit)):
+            return None, []
 
         # otherwise we have a descendant commit with the same tree that
         # requires further inspection to determine if it is really the
@@ -174,19 +174,6 @@ class Searcher(GitMixin):
                         %s
                     """, mergecommit)
                 break
-
-        # handle old scenario where upstream would be merged in first using
-        # 'ours' to replace the existing target, followed by applying the
-        # replayed local changes. Possibly removable as defaulted to using
-        # an import branch and only merging the final result of upstream +
-        # local changes.
-        if merge_list and not previous_import:
-            previous_import = merge_list[-1]
-            for p in previous_import.parents:
-                if p.hexsha == self.commit.hexsha:
-                    extra_args.extend(["^%s" % ip
-                                      for ip in previous_import.parents
-                                      if ip != p])
 
         # walk the tree and find all commits that lie in the path between the
         # commit found by find() and head of the branch in two steps, to
