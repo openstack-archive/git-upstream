@@ -21,7 +21,7 @@ from git import BadObject
 from git import Head
 
 from git_upstream.errors import GitUpstreamError
-from git_upstream.lib import note  # noqa
+from git_upstream import lib
 from git_upstream.lib.pygitcompat import BadName
 from git_upstream.lib.searchers import CommitMessageSearcher
 from git_upstream.lib.utils import GitMixin
@@ -45,9 +45,6 @@ class Supersede(LogDedentMixin, GitMixin):
     Superseded-by: I82ef79c3621dacf619a02404f16464877a06f158
 
     """
-
-    SUPERSEDE_HEADER = 'Superseded-by:'
-    NOTE_REF = 'refs/notes/upstream-merge'
 
     CHANGE_ID_REGEX = '^I[0-9a-f]{6,40}$'
     CHANGE_ID_HEADER_REGEX_FMT = '^Change-Id:\s*%s'
@@ -135,9 +132,9 @@ class Supersede(LogDedentMixin, GitMixin):
         Check if a supersede header is already present in the note containing
         one of change ids passed on the command line
         """
-        new_note = self.commit.note(note_ref=Supersede.NOTE_REF)
+        new_note = self.commit.note(note_ref=lib.IMPORT_NOTE_REF)
         if new_note:
-            pattern = '^%s\s?(%s)$' % (Supersede.SUPERSEDE_HEADER,
+            pattern = '^%s\s?(%s)$' % (lib.SUPERSEDE_HEADER,
                                        '|'.join(self.change_ids))
             m = re.search(pattern, new_note, re.MULTILINE | re.IGNORECASE)
             if m:
@@ -154,9 +151,9 @@ class Supersede(LogDedentMixin, GitMixin):
         if self.check_duplicates():
             git_note = ''
             for change_id in self.change_ids:
-                git_note += '%s %s\n' % (Supersede.SUPERSEDE_HEADER, change_id)
+                git_note += '%s %s\n' % (lib.SUPERSEDE_HEADER, change_id)
             self.log.debug('With the following content:')
             self.log.debug(git_note)
-            self.commit.append_note(git_note, note_ref=Supersede.NOTE_REF)
+            self.commit.append_note(git_note, note_ref=lib.IMPORT_NOTE_REF)
         else:
             self.log.warning('Note has not been added')
