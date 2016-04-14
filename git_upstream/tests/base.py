@@ -18,6 +18,7 @@ import logging
 import os
 from pprint import pformat
 import re
+import subprocess
 import tempfile
 
 import fixtures
@@ -201,9 +202,16 @@ class BaseTestCase(testtools.TestCase):
         self.addOnException(self.attach_graph_info)
 
         # _testMethodDoc is a hidden attribute containing the docstring for
-        # the given test
+        # the given test, useful for some tests where description is not
+        # yet defined.
         if getattr(self, '_testMethodDoc', None):
             self.addDetail('description', text_content(self._testMethodDoc))
+
+        if hasattr(self, 'tree'):
+            self._build_git_tree(self.tree, self.branches.values())
+
+        if hasattr(self, 'pre-script'):
+            self.run_pre_script()
 
     def _commit(self, node):
         p_node = _get_node_to_pick(node)
@@ -329,3 +337,25 @@ class BaseTestCase(testtools.TestCase):
             'git-log-with-graph',
             text_content(self.repo.git.log(graph=True, oneline=True,
                                            decorate=True, all=True)))
+
+    def run_pre_script(self):
+        """
+        Run custom pre-script for test
+
+        Method which executes the pre-script defined for the test to perform
+        custom manipulation to the git tree to be tested before the test is
+        executed.
+        """
+        # ensure we execute within context of the git repository
+        with DiveDir(self.testrepo.path):
+            try:
+                output = subprocess.check_output(getattr(self, 'pre-script'),
+                                                 stderr=subprocess.STDOUT,
+                                                 shell=True)
+            except subprocess.CalledProcessError as e:
+                self.addDetail('pre-script-output',
+                               text_content(e.output))
+                raise
+
+        self.addDetail('pre-script-output',
+                       text_content(output))

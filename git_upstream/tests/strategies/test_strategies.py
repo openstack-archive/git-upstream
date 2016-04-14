@@ -35,10 +35,11 @@ class TestStrategies(TestWithScenarios, BaseTestCase):
                               "scenarios"))
 
     def setUp(self):
-        super(TestStrategies, self).setUp()
-
+        # add description in case parent setup fails.
         self.addDetail('description', text_content(self.desc))
-        self._build_git_tree(self.tree, self.branches.values())
+
+        # builds the tree to be tested
+        super(TestStrategies, self).setUp()
 
         # need the tree built at this point
         self.addDetail('expected-changes',
