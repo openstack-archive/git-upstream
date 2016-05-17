@@ -199,7 +199,7 @@ We are also interested in the following commit, which adds the Environment File
 Plugin (finally!).
 
 ```bash
-~# git show --summary bf4524fae25c11640ef839aa422ac81bd926ca20
+git show --summary bf4524fae25c11640ef839aa422ac81bd926ca20
 commit bf4524fae25c11640ef839aa422ac81bd926ca20
 Author: zaro0508 <zaro0508@gmail.com>
 Date:   Mon Jul 1 11:21:24 2013 -0700
