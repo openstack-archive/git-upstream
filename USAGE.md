@@ -45,7 +45,7 @@ Version: unknown-version
 Location: ../ve-git-upstream/lib/python2.7/site-packages/git-upstream-unknown_version-py2.7.egg
 Requires: GitPython
 
-~# git-upstream --help
+git-upstream --help
 usage: git-upstream [--version] [-h] [-q | -v] <command> ...
 
 [...]
@@ -199,7 +199,7 @@ We are also interested in the following commit, which adds the Environment File
 Plugin (finally!).
 
 ```bash
-~# git show --summary bf4524fae25c11640ef839aa422ac81bd926ca20
+git show --summary bf4524fae25c11640ef839aa422ac81bd926ca20
 commit bf4524fae25c11640ef839aa422ac81bd926ca20
 Author: zaro0508 <zaro0508@gmail.com>
 Date:   Mon Jul 1 11:21:24 2013 -0700
@@ -261,7 +261,7 @@ git checkout master
 ```
 
 ```bash
-~# git-upstream import import/0.6.0
+git-upstream import import/0.6.0
 Searching for previous import
 Starting import of upstream
 Successfully created import branch
@@ -342,7 +342,7 @@ In case of rebasing conflict, git-upstream will stop allowing the user to fix
 the conflict.
 
 ```bash
-~# git-upstream import import/0.5.0 --into master
+git-upstream import import/0.5.0 --into master
 Searching for previous import
 Starting import of upstream
 Successfully created import branch
@@ -360,7 +360,7 @@ Let's find out why git-upstream failed and let's try to continue the rebasing
 manually.
 
 ```bash
-~# git status
+git status
 # HEAD detached from 8e6b9e9
 # You are currently rebasing branch 'import/0.5.0' on '8e6b9e9'.
 #   (fix conflicts and then run "git rebase --continue")
