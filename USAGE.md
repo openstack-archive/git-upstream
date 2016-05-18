@@ -134,17 +134,9 @@ Now start to develop new feature or fix bugs on master, as usual.
 For this example, we are going to change the .gitreview file in order to use a
 local Gerrit server.
 
-echo "diff --git a/.gitreview b/.gitreview
-index bb7e85c..f98d928 100644
---- a/.gitreview
-+++ b/.gitreview
-@@ -1,4 +1,4 @@
- [Gerrit]
--host=review.openstack.org
-+host=gerrit.my.org
- port=29418
--project=openstack-infra/jenkins-job-builder.git
-+project=my-projects/jenkins-job-builder.git" | patch -p1
+```bash
+sed -i 's/review\.openstack\.org/gerrit\.my\.org/' .gitreview
+```
 
 Don’t forget to commit and push (after this step, you may want to use git
 review as usual)
