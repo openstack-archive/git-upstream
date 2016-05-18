@@ -53,25 +53,30 @@ usage: git-upstream [--version] [-h] [-q | -v] <command> ...
 
 ## Initial import of an upstream project
 
-To explain the usage of the git-upstream tool We are going to use a real-world
-(but trivial) example.
+To explain the usage of the git-upstream tool we are going to use a real-world
+(but trivial) example, by performing some sample operations on a project called
+``jenkins-job-builder``.
 
-We will be also using environment variables: in case you are keen on doing
-copy-paste, you will only need to change them to suite your environment.
+In this example, we will create a local file based Git repository to host our
+mirror of jenkins-job-builder. You could also use an existing internal mirror,
+a Github fork, etc.
+
+Start by setting the following environment variables:
 
 ```bash
 export REPO_NAME="jenkins-job-builder"
-export INTERNAL_REMOTE="https://your.org/my-projects/jenkins-job-builder.git"
+export INTERNAL_REMOTE="file:///tmp/jenkins-job-builder.git"
 export UPSTREAM_REMOTE="https://github.com/openstack-infra/jenkins-job-builder.git"
 export FIRST_IMPORT_REF="0.5.0"
 ```
 
-1) Create an empty repository
+1) Create two empty repositories, one to serve as your working copy, and one to
+serve as the remote:
 
 ```bash
-mkdir $REPO_NAME
+git init --bare /tmp/${REPO_NAME}.git
+git init $REPO_NAME
 cd $REPO_NAME
-git init
 ```
 
 2) Add your remotes
