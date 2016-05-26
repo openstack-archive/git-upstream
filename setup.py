@@ -19,4 +19,6 @@ import setuptools
 
 setuptools.setup(
     setup_requires=['pbr'],
-    pbr=True)
+    pbr=True,
+    package_data = {'git_upstream': ['resources/*']},
+    )
