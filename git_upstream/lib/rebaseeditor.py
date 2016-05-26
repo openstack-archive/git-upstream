@@ -16,28 +16,19 @@
 #
 
 import codecs
+import git
 import os
 import subprocess
 
 from git_upstream.lib.utils import GitMixin
 from git_upstream.log import LogDedentMixin
+from git_upstream import PROJECT_ROOT
 
 REBASE_EDITOR_SCRIPT = "rebase-editor"
 
 # ensure name of file will match any naming filters used by editors to
 # enable syntax highlighting
 REBASE_EDITOR_TODO = "git-upstream/git-rebase-todo"
-
-TODO_EPILOGUE = """
-
-# Rebase %(shortrevisions)s onto %(shortonto)s
-#
-# All commands from normal rebase instructions files are supported
-#
-# If you remove a line, that commit will be dropped.
-# Removing all commits will abort the rebase.
-#
-"""
 
 
 class RebaseEditor(GitMixin, LogDedentMixin):
@@ -60,6 +51,15 @@ class RebaseEditor(GitMixin, LogDedentMixin):
     @property
     def editor(self):
         return self._editor
+
+    def _todo_epilogue(self):
+        if git.Git().version_info < (2, 6, 0):
+            resource = 'todo_epilogue_1_7_5.txt'
+        else:
+            resource = 'todo_epilogue_2_6_0.txt'
+        with open('%s/resources/%s' % (PROJECT_ROOT, resource),
+                  'r') as epilogue:
+            return epilogue.read()
 
     def _write_todo(self, commits, *args, **kwargs):
         todo_file = os.path.join(self.repo.git_dir, REBASE_EDITOR_TODO)
@@ -90,7 +90,7 @@ class RebaseEditor(GitMixin, LogDedentMixin):
             if not root:
                 todo.write("noop\n")
 
-            todo.write(TODO_EPILOGUE %
+            todo.write(self._todo_epilogue() %
                        {'shortrevisions': "%s..%s" % (self._shorten(root),
                                                       self._shorten(commit)),
                         'shortonto': self._shorten(onto or root)})

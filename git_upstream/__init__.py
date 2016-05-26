@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+import os
 import pkg_resources
 
 
@@ -32,3 +33,5 @@ except pkg_resources.DistributionNotFound:
     _version_info = pbr.version.VersionInfo('git-upstream')
     __version__ = _version_info.release_string()
     __canonical_version__ = _version_info.version_string()
+
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
