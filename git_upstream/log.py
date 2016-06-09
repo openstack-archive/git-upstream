@@ -28,9 +28,11 @@ from functools import wraps
 import logging
 import textwrap
 
+import six
+
 
 # Add new NOTICE logging level
-NOTICE = (logging.INFO + logging.WARN) / 2
+NOTICE = (logging.INFO + logging.WARN) // 2
 logging.NOTICE = NOTICE
 logging.addLevelName(NOTICE, "NOTICE")
 
@@ -51,7 +53,7 @@ def get_logger(name=None):
     Wrapper for standard logging.getLogger that ensures all loggers in this
     application will have their name prefixed with 'git-upstream'.
     """
-    name = ".".join([x for x in "git-upstream", name if x])
+    name = ".".join([x for x in ("git-upstream", name) if x])
 
     logger = logging.getLogger(name)
     return logger
@@ -138,8 +140,9 @@ class DedentLoggerMeta(type):
         return dedentlog
 
 
+@six.add_metaclass(DedentLoggerMeta)
 class DedentLogger(logging.Logger):
-    __metaclass__ = DedentLoggerMeta
+    pass
 
 
 # override default logger class for everything that imports this module

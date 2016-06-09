@@ -15,10 +15,10 @@
 
 """Tests for the 'import' module"""
 
-from base import BaseTestCase
+from .base import BaseTestCase
 
 import_command = __import__("git_upstream.commands.import", globals(),
-                            locals(), ['ImportUpstream'], -1)
+                            locals(), ['ImportUpstream'])
 ImportUpstream = import_command.ImportUpstream
 
 
