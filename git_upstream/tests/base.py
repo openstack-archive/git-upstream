@@ -159,7 +159,7 @@ class GitRepo(fixtures.Fixture):
                 break
             tmpfile.close()
             os.remove(tmpfile.name)
-        tmpfile.write(contents)
+        tmpfile.write(contents.encode('utf-8'))
         tmpfile.close()
         return tmpfile.name
 
@@ -362,4 +362,4 @@ class BaseTestCase(testtools.TestCase):
                 raise
 
         self.addDetail('pre-script-output',
-                       text_content(output))
+                       text_content(output.decode('utf-8')))

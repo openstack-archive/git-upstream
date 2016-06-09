@@ -79,7 +79,7 @@ def setup_console_logging(options):
     # determine maximum logging requested for file and console provided they
     # are not disabled, and including stderr which is fixed at ERROR
     main_log_level = min([value
-                          for value in options.log_level, console_log_level
+                          for value in (options.log_level, console_log_level)
                           if value != logging.NOTSET
                           ] + [logging.ERROR])
     logger = log.get_logger()
