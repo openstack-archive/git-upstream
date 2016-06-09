@@ -25,7 +25,7 @@ from git_upstream.tests.base import BaseTestCase
 from git_upstream.tests.base import get_scenarios
 
 import_command = __import__("git_upstream.commands.import", globals(),
-                            locals(), ['LocateChangesWalk'], -1)
+                            locals(), ['LocateChangesWalk'])
 LocateChangesWalk = import_command.LocateChangesWalk
 
 
