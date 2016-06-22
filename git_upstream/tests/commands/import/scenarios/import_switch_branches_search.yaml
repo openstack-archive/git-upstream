@@ -59,4 +59,4 @@
 
   parser_args: [-q, import]
 
-  expect_rebased: [E, F]
+  expect_found: [E, F]

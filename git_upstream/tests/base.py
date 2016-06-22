@@ -229,22 +229,30 @@ class BaseTestCase(testtools.TestCase):
         # merge commits
         parent_nodes = [p.lstrip("=") for p in parents]
         commits = [str(self._graph[p]) for p in parent_nodes[1:]]
+
         if any([p.startswith("=") for p in parents]):
             # special merge commit using inverse of 'ours' by
             # emptying the current index and then reading in any
             # trees of the nodes prefixed with '='
-            self.git.merge(*commits, s="ours", no_commit=True)
             use = [str(self._graph[p.lstrip("=")])
                    for p in parents if p.startswith("=")]
+            self.git.merge(*commits, s="ours", no_commit=True)
             self.git.read_tree(empty=True)
             self.git.read_tree(*use, u=True, reset=True)
-            self.git.commit(m="Merging %s into %s" %
-                            (",".join(parent_nodes[1:]),
-                                parent_nodes[0]))
-            self.git.clean(f=True, d=True, x=True)
-        else:
+        elif len(commits) < 2:
             # standard merge
-            self.git.merge(*commits, no_edit=True)
+            self.git.merge(*commits, no_commit=True)
+        else:
+            # multi-branch merge, git is not great at handling
+            # merging multiple orphaned branches
+            self.git.merge(*commits, s="ours", no_commit=True)
+            self.git.read_tree(empty=True)
+            self.git.read_tree("HEAD", *commits)
+            self.git.checkout("--", ".")
+        self.git.commit(m="[%s] Merging %s into %s" %
+                        (node, ",".join(parent_nodes[1:]),
+                            parent_nodes[0]))
+        self.git.clean(f=True, d=True, x=True)
 
     def _build_git_tree(self, graph_def, branches=[]):
         """Helper function to build a git repository from a graph definition

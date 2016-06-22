@@ -201,11 +201,17 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 """
                 Merging additional branch(es) '%s' into import branch '%s'
                     git checkout %s
-                    git merge %s
+                    git merge --allow-unrelated-histories %s
                 """, ", ".join(self.extra_branches), base, base,
                 " ".join(self.extra_branches))
             self.git.checkout(base)
-            self.git.merge(*self.extra_branches)
+            # --allow-unrelated-histories appears in git 2.9
+            # can use read-tree directly to allow merge of unrelated branches
+            self.git.merge(*self.extra_branches, s="ours", no_commit=True)
+            self.git.read_tree(empty=True)
+            self.git.read_tree("HEAD", *self.extra_branches)
+            self.git.checkout("--", ".")
+            self.git.commit(no_edit=True)
 
     def _linearise(self, branch, sequence, previous_import):
 

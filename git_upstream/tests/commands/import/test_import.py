@@ -51,10 +51,15 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
         self.assertThat(args.cmd.run(args), Equals(True),
                         "import command failed to complete successfully")
 
-        expected = getattr(self, 'expect_rebased', [])
-        if expected:
-            changes = list(Commit.iter_items(
-                self.repo, '%s..%s^2' % (upstream_branch, target_branch)))
+        expected = getattr(self, 'expect_found', None)
+        if expected is not None:
+            if len(list(Commit.new(self.repo, target_branch).parents)) > 1:
+                changes = list(Commit.iter_items(
+                    self.repo, '%s..%s^2' % (upstream_branch, target_branch),
+                    topo_order=True))
+            else:
+                # allow checking that nothing was rebased
+                changes = []
             self.assertThat(
                 len(changes), Equals(len(expected)),
                 "should only have seen %s changes, got: %s" %
@@ -67,6 +72,8 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
             # reverse changes to match as it would be newest to oldest.
             changes.reverse()
             for commit, node in zip(changes, expected):
+                if node == "MERGE":
+                    continue
                 subject = commit.message.splitlines()[0]
                 node_subject = self._graph[node].message.splitlines()[0]
                 self.assertThat(subject, Equals(node_subject),
