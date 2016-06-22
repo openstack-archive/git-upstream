@@ -17,6 +17,7 @@
 
 from abc import ABCMeta
 from abc import abstractmethod
+from abc import abstractproperty
 from collections import Sequence
 
 from git_upstream.lib.searchers import DiscardDuplicateGerritChangeId
@@ -61,8 +62,13 @@ class LocateChangesStrategy(GitMixin, Sequence):
     def __init__(self, git=None, *args, **kwargs):
         """Initialize an empty filters list"""
         self.data = None
+        self.searcher = None
         self.filters = []
         super(LocateChangesStrategy, self).__init__(*args, **kwargs)
+
+    @abstractproperty
+    def previous_upstream(self):
+        raise NotImplemented
 
     def __getitem__(self, key):
         if not self.data:
@@ -106,23 +112,31 @@ class LocateChangesWalk(LocateChangesStrategy):
         if not search_refs:
             search_refs = []
         search_refs.insert(0, upstream)
+        self.upstream = upstream
+
+        super(LocateChangesWalk, self).__init__(*args, **kwargs)
 
         self.searcher = UpstreamMergeBaseSearcher(branch=branch,
                                                   patterns=search_refs)
-        self.upstream = upstream
-        super(LocateChangesWalk, self).__init__(*args, **kwargs)
+
+    @property
+    def previous_upstream(self):
+        if not self.searcher.commit:
+            self.searcher.find()
+
+        return self.searcher.commit
 
     def filtered_iter(self):
         # may wish to make class used to remove duplicate objects configurable
         # through git-upstream specific 'git config' settings
         self.filters.append(
             DiscardDuplicateGerritChangeId(self.upstream,
-                                           limit=self.searcher.commit))
+                                           limit=self.previous_upstream))
         self.filters.append(NoMergeCommitFilter())
         self.filters.append(ReverseCommitFilter())
         self.filters.append(DroppedCommitFilter())
         self.filters.append(
             SupersededCommitFilter(self.upstream,
-                                   limit=self.searcher.commit))
+                                   limit=self.previous_upstream))
 
         return super(LocateChangesWalk, self).filtered_iter()

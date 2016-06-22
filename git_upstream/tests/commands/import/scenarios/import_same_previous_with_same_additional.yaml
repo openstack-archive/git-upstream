@@ -16,13 +16,13 @@
 #
 ---
 - desc: |
-    Test importing same upstream with different additional branches
+    Test importing same upstream with same additional branches
 
-    Checks that importing the same upstream branch with different
-    additional branch will recognize the upstream is the same but
-    the additional imports are different and perform the import.
+    Checks that importing the same upstream branch with the same
+    additional branch will recognize the inputs are identical and skip
+    performing the unnecessary import.
 
-    E------G                    additional/1
+    E---                        additional/1
         \
     F----                       additional/2
          \
@@ -37,12 +37,11 @@
     - [D, [C]]
     - [E, []]
     - [F, []]
-    - [G, [E]]
 
   branches:
     head: [master, D]
     upstream: [upstream/master, B]
-    additional_1: [additional/1, G]
+    additional_1: [additional/1, E]
     additional_2: [additional/2, F]
 
   parser_args:
@@ -53,4 +52,4 @@
     - additional/1
     - additional/2
 
-  expect_found: [E, G, F,MERGE, D]
+  expect_found: []

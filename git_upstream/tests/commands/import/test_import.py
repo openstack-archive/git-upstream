@@ -105,3 +105,22 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                                          self._graph['D1'].hexsha]),
                         "import --finish merge does contain the correct "
                         "parents")
+
+    def _verify_import_same_as_previous_upstream(self):
+        """Additional verification for the finished results"""
+        self.assertThat(
+            self.logger.output,
+            Contains("already at latest upstream commit"))
+        self.assertThat(
+            self.logger.output,
+            Contains("Nothing to be imported"))
+
+    def _verify_same_previous_with_same_additional(self):
+        """Additional verification for the finished results"""
+
+        self.assertThat(
+            self.logger.output,
+            Contains("already at latest upstream commit"))
+        self.assertThat(
+            self.logger.output,
+            Contains("No updated additional branch given, nothing to be done"))

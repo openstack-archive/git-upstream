@@ -18,6 +18,7 @@
 from git import GitCommandError
 
 from git_upstream.errors import GitUpstreamError
+from git_upstream.lib.pygitcompat import Commit
 from git_upstream.lib.rebaseeditor import RebaseEditor
 from git_upstream.lib.utils import GitMixin
 from git_upstream.log import LogDedentMixin
@@ -410,3 +411,52 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             self._set_branch(self.branch, current_sha, force=True)
             raise
         return True
+
+    def already_synced(self, strategy):
+        """Check if already synced
+
+        Check if we are already up to date or if there are changes to
+        be applied.
+        """
+
+        # if last commit in the strategy was a merge, then the additional
+        # branches that were merged in previously can be extracted based on
+        # the commits merged.
+        if len(strategy) > 0:
+            prev_import_merge = strategy[-1]
+        else:
+            # no changes carried?
+            prev_import_merge = None
+
+        additional_commits = None
+        if prev_import_merge and len(prev_import_merge.parents) > 1:
+            additional_commits = {
+                commit for commit in prev_import_merge.parents
+                if commit.hexsha != strategy.previous_upstream.hexsha}
+
+            if (additional_commits and
+                    len(self.extra_branches) != len(additional_commits)):
+                self.log.warning("""
+                    **************** WARNING ****************
+                    Previous import merged additional branches but none have
+                    been specified on the command line for this import.\n""")
+
+        # detect if nothing to do
+        if (strategy.previous_upstream.hexsha ==
+                self.git.rev_parse(self.upstream)):
+            self.log.notice("%s already at latest upstream commit: '%s'",
+                            self.branch, strategy.previous_upstream)
+            if additional_commits is None:
+                self.log.notice("Nothing to be imported")
+                return True
+            else:
+                new_additional_commits = {Commit.new(self.repo, branch)
+                                          for branch in self.extra_branches}
+                if new_additional_commits == additional_commits:
+                    self.log.notice(
+                        """
+                        No updated additional branch given, nothing to be done
+                        """)
+                    return True
+
+        return False

@@ -16,16 +16,11 @@
 #
 ---
 - desc: |
-    Test importing same upstream with different additional branches
+    Test that importing same upstream skips unless forced
 
-    Checks that importing the same upstream branch with different
-    additional branch will recognize the upstream is the same but
-    the additional imports are different and perform the import.
+    If already on the latest upstream given, check that instead of
+    duplicating the import, that instead git-upstream does nothing.
 
-    E------G                    additional/1
-        \
-    F----                       additional/2
-         \
           C---D                 local/master
          /
     A---B                       upstream/master
@@ -33,24 +28,16 @@
   tree:
     - [A, []]
     - [B, [A]]
-    - [C, [B, E, F]]
+    - [C, [B]]
     - [D, [C]]
-    - [E, []]
-    - [F, []]
-    - [G, [E]]
 
   branches:
     head: [master, D]
     upstream: [upstream/master, B]
-    additional_1: [additional/1, G]
-    additional_2: [additional/2, F]
 
   parser_args:
     - -q
     - import
     - --into=master
-    - upstream/master
-    - additional/1
-    - additional/2
 
-  expect_found: [E, G, F,MERGE, D]
+  expect_found: []
