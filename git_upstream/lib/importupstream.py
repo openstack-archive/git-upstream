@@ -205,7 +205,15 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 """, ", ".join(self.extra_branches), base, base,
                 " ".join(self.extra_branches))
             self.git.checkout(base)
-            self.git.merge(*self.extra_branches)
+            # use read-tree to handle multiple unrelated branches correctly
+            # as normal merge (with octopus strategy) will refuse if you
+            # are merging in more than one branch without a common
+            # ancestor to the current tree.
+            self.git.merge(*self.extra_branches, s="ours", no_commit=True)
+            self.git.read_tree(empty=True)
+            self.git.read_tree("HEAD", *self.extra_branches)
+            self.git.checkout("--", ".")
+            self.git.commit(no_edit=True)
 
     def _linearise(self, branch, sequence, previous_import):
 
