@@ -150,26 +150,51 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             upstream=self.args.upstream_branch,
             search_refs=self.args.search_refs)
 
-        if len(strategy) == 0:
+        if not strategy.previous_upstream:
             raise ImportUpstreamError("Cannot find previous import")
 
         # if last commit in the strategy was a merge, then the additional
         # branches that were merged in previously can be extracted based on
         # the commits merged.
-        prev_import_merge = strategy[-1]
-        if len(prev_import_merge.parents) > 1:
+        if len(strategy) > 0:
+            prev_import_merge = strategy[-1]
+        else:
+            # no changes carried?
+            prev_import_merge = None
+
+        additional_commits = None
+        if prev_import_merge and len(prev_import_merge.parents) > 1:
             idxs = [idx for idx, commit in enumerate(prev_import_merge.parents)
-                    if commit.hexsha != strategy.searcher.commit.hexsha]
+                    if commit.hexsha != strategy.previous_upstream.hexsha]
 
             if idxs:
-                additional_commits = [prev_import_merge.parents[i]
-                                      for i in idxs]
+                additional_commits = {prev_import_merge.parents[i]
+                                      for i in idxs}
                 if additional_commits and len(self.args.branches) == 0:
                     self.log.warning("""
                         **************** WARNING ****************
                         Previous import merged additional branches but none
                         have been specified on the command line for this
                         import.\n""")
+
+        # added code to deal with detecting if nothing to do
+        if (strategy.previous_upstream.hexsha ==
+                strategy.git.rev_parse(self.args.upstream_branch)):
+            self.log.notice("%s already at latest upstream commit: '%s'",
+                            self.args.branch, strategy.previous_upstream)
+            if additional_commits is None:
+                self.log.notice("Nothing to be imported")
+                return True
+            else:
+                from git_upstream.lib.pygitcompat import Commit
+                new_additional_commits = {Commit.new(strategy.repo, branch)
+                                          for branch in self.args.branches}
+                if new_additional_commits == additional_commits:
+                    self.log.notice(
+                        """
+                        No updated additional branch given, nothing to be done
+                        """)
+                    return True
 
         if self.args.dry_run:
             commit_list = [c.hexsha[:6] + " - " + c.summary[:60] +
