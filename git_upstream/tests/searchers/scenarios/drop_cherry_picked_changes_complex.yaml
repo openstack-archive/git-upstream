@@ -1,0 +1,63 @@
+#
+# Copyright (c) 2016 Hewlett Packard Enterprise Development LP
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+---
+- desc: |
+    Test cherry-picked changes found with complex layout
+
+    Construct a complex repo layout which contains additional include branches
+    and a previous import from upstream. Test that cherry-picked changes are
+    correctly spotted having been upstreamed and removed from the set to be
+    rebased.
+
+    Repository layout being tested
+
+    B--
+     \ \
+      \ \         L----------------
+       \ \       /                 \
+        C---D---E-------I---J---K1--M---N   master
+       /   \           /
+      /     --H---D1--E1
+     /       /
+    A---F---G---D2--E2--K                  upstream/master
+
+  tree:
+    - [A, []]
+    - [B, []]
+    - [C, [A, B]]
+    - [D, [C]]
+    - [D1, [H]]
+    - [D2, [G]]
+    - [E, [D]]
+    - [E1, [D1]]
+    - [E2, [D2]]
+    - [F, [A]]
+    - [G, [F]]
+    - [H, [G, B]]
+    - [I, [E, =E1]]
+    - [J, [I]]
+    - [K, [E2]]
+    - [K1, [J]]
+    - [L, [E]]
+    - [M, [K1, L]]
+    - [N, [M]]
+
+  branches:
+    head: [master, N]
+    upstream: [upstream/master, K]
+
+  expected_changes: [H, I, J, L, M, N]
