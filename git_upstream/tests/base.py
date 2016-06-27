@@ -1,5 +1,5 @@
 # Copyright 2010-2011 OpenStack Foundation
-# Copyright (c) 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2013-2016 Hewlett-Packard Enterprise Development Company, L.P.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -129,10 +129,14 @@ class DiveDir(fixtures.Fixture):
 class GitRepo(fixtures.Fixture):
     """Create an empty git repo in which to operate."""
 
+    def __init__(self, path=None):
+        self.path = path
+
     def _setUp(self):
         self._file_list = set()
-        tempdir = self.useFixture(fixtures.TempDir())
-        self.path = os.path.join(tempdir.path, 'git')
+        if not self.path:
+            tempdir = self.useFixture(fixtures.TempDir())
+            self.path = os.path.join(tempdir.path, 'git')
 
         os.mkdir(self.path)
         g = git.Git(self.path)
@@ -186,55 +190,34 @@ class GitRepo(fixtures.Fixture):
             self._create_file_commit(ids[x], message_prefix=message_prefix)
 
 
-class BaseTestCase(testtools.TestCase):
-    """Base Test Case for all tests."""
+class BuildTree(object):
 
-    logging.basicConfig()
-
-    def setUp(self):
-        super(BaseTestCase, self).setUp()
-
-        self.logger = self.useFixture(fixtures.FakeLogger(level=logging.DEBUG))
-        self.testrepo = self.useFixture(GitRepo())
-        repo_path = self.testrepo.path
-        self.useFixture(DiveDir(repo_path))
-        self.repo = self.testrepo.repo
-        self.git = self.repo.git
-
-        self._graph = {}
-        self.addOnException(self.attach_graph_info)
-
-        # _testMethodDoc is a hidden attribute containing the docstring for
-        # the given test, useful for some tests where description is not
-        # yet defined.
-        if getattr(self, '_testMethodDoc', None):
-            self.addDetail('description', text_content(self._testMethodDoc))
-
-        if hasattr(self, 'tree'):
-            self._build_git_tree(self.tree, self.branches.values())
-
-        if hasattr(self, 'pre-script'):
-            self.run_pre_script()
+    def __init__(self, gitrepo, tree, branches):
+        self.graph = {}
+        self.gitrepo = gitrepo
+        self.repo = gitrepo.repo
+        self.git = self.gitrepo.repo.git
+        self._build_git_tree(tree, branches)
 
     def _commit(self, node):
         p_node = _get_node_to_pick(node)
         if p_node:
-            self.git.cherry_pick(self._graph[p_node])
+            self.git.cherry_pick(self.graph[p_node])
         else:
             # standard commit
-            self.testrepo.add_commits(1, ref="HEAD",
-                                      message_prefix="[%s]" % node)
+            self.gitrepo.add_commits(1, ref="HEAD",
+                                     message_prefix="[%s]" % node)
 
     def _merge_commit(self, node, parents):
         # merge commits
         parent_nodes = [p.lstrip("=") for p in parents]
-        commits = [str(self._graph[p]) for p in parent_nodes[1:]]
+        commits = [str(self.graph[p]) for p in parent_nodes[1:]]
 
         if any([p.startswith("=") for p in parents]):
             # special merge commit using inverse of 'ours' by
             # emptying the current index and then reading in any
             # trees of the nodes prefixed with '='
-            use = [str(self._graph[p.lstrip("=")])
+            use = [str(self.graph[p.lstrip("=")])
                    for p in parents if p.startswith("=")]
             self.git.merge(*commits, s="ours", no_commit=True)
             self.git.read_tree(empty=True)
@@ -306,49 +289,64 @@ class BaseTestCase(testtools.TestCase):
                 self.git.symbolic_ref("HEAD", "refs/heads/%s" % node)
                 self.git.rm(".", r=True, cached=True)
                 self.git.clean(f=True, d=True, x=True)
-                self.testrepo.add_commits(1, ref="HEAD",
-                                          message_prefix="[%s]" % node)
+                self.gitrepo.add_commits(1, ref="HEAD",
+                                         message_prefix="[%s]" % node)
                 # only explicitly listed branches should exist afterwards
                 self.git.checkout(self.repo.commit())
                 self.git.branch(node, D=True)
 
             else:
                 # checkout the dependent node
-                self.git.checkout(self._graph[parents[0].lstrip('=')])
+                self.git.checkout(self.graph[parents[0].lstrip('=')])
                 if len(parents) > 1:
                     # merge commits
                     self._merge_commit(node, parents)
                 else:
                     self._commit(node)
-            self._graph[node] = self.repo.commit()
+            self.graph[node] = self.repo.commit()
 
         for name, node in branches:
-            self.git.branch(name, str(self._graph[node]), f=True)
+            self.git.branch(name, str(self.graph[node]), f=True)
 
         # return to master
         self.git.checkout("master")
 
     def _commits_from_nodes(self, nodes=[]):
 
-        return [self._graph[n] for n in nodes]
+        return [self.graph[n] for n in nodes]
 
-    def attach_graph_info(self, exc_info):
-        # appears to be an odd bug where this method is called twice
-        # if registered with addOnException so make sure to guard
-        # that the path actually exists before running
-        if not (hasattr(self.testrepo, 'path') and
-                os.path.exists(self.testrepo.path)):
-            return
 
-        if not self._graph:
-            return
-        self.addDetail('graph-dict', text_content(pformat(self._graph)))
+class BaseTestCase(testtools.TestCase):
+    """Base Test Case for all tests."""
 
-        self.addDetail(
-            'git-log-with-graph',
-            text_content(self.repo.git.log(graph=True, oneline=True,
-                                           decorate=True, all=True,
-                                           parents=True)))
+    logging.basicConfig()
+
+    def setUp(self):
+        super(BaseTestCase, self).setUp()
+
+        self.logger = self.useFixture(fixtures.FakeLogger(level=logging.DEBUG))
+        self.testrepo = self.useFixture(GitRepo())
+        repo_path = self.testrepo.path
+        self.useFixture(DiveDir(repo_path))
+
+        self.repo = self.testrepo.repo
+        self.git = self.repo.git
+
+        self.addOnException(self.attach_graph_info)
+
+        # _testMethodDoc is a hidden attribute containing the docstring for
+        # the given test, useful for some tests where description is not
+        # yet defined.
+        if getattr(self, '_testMethodDoc', None):
+            self.addDetail('description', text_content(self._testMethodDoc))
+
+        self.gittree = None
+        if hasattr(self, 'tree'):
+            self.gittree = BuildTree(
+                self.testrepo, self.tree, self.branches.values())
+
+        if hasattr(self, 'pre-script'):
+            self.run_pre_script()
 
     def run_pre_script(self):
         """
@@ -371,3 +369,21 @@ class BaseTestCase(testtools.TestCase):
 
         self.addDetail('pre-script-output',
                        text_content(output.decode('utf-8')))
+
+    def attach_graph_info(self, exc_info):
+        # appears to be an odd bug where this method is called twice
+        # if registered with addOnException so make sure to guard
+        # that the path actually exists before running
+        if not (hasattr(self.testrepo, 'path') and
+                os.path.exists(self.testrepo.path)):
+            return
+
+        if not self.gittree or not self.gittree.graph:
+            return
+        self.addDetail('graph-dict', text_content(pformat(self.gittree.graph)))
+
+        self.addDetail(
+            'git-log-with-graph',
+            text_content(self.repo.git.log(graph=True, oneline=True,
+                                           decorate=True, all=True,
+                                           parents=True)))

@@ -15,14 +15,14 @@
 
 """Tests for the 'import' module"""
 
-from git_upstream.tests.base import BaseTestCase
+from git_upstream.tests import base
 
 import_command = __import__("git_upstream.commands.import", globals(),
                             locals(), ['ImportUpstream'])
 ImportUpstream = import_command.ImportUpstream
 
 
-class TestImport(BaseTestCase):
+class TestImport(base.BaseTestCase):
 
     def test_import_finish_merge_clean(self):
         """Test that after finishing the import merge that the users working
@@ -57,7 +57,7 @@ class TestImport(BaseTestCase):
             'import': ('import', 'C1')
         }
 
-        self._build_git_tree(tree, branches.values())
+        self.gittree = base.BuildTree(self.testrepo, tree, branches.values())
         iu = ImportUpstream("master", "upstream/master", "import")
         iu.finish()
         self.assertEqual("", self.git.status(porcelain=True),
@@ -94,7 +94,7 @@ class TestImport(BaseTestCase):
             'import': ('import', 'C1')
         }
 
-        self._build_git_tree(tree, branches.values())
+        self.gittree = base.BuildTree(self.testrepo, tree, branches.values())
         iu = ImportUpstream("master", "upstream/master", "import")
         # create a dummy file
         open('dummy-file', 'a').close()

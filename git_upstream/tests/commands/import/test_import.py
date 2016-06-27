@@ -75,7 +75,7 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                 if node == "MERGE":
                     continue
                 subject = commit.message.splitlines()[0]
-                node_subject = self._graph[node].message.splitlines()[0]
+                node_subject = self.gittree.graph[node].message.splitlines()[0]
                 self.assertThat(subject, Equals(node_subject),
                                 "subject '%s' of commit '%s' does not match "
                                 "subject '%s' of node '%s'" % (
@@ -101,8 +101,8 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                         "--finish option failed to merge correctly")
         commit = self.git.rev_list('master', parents=True, max_count=1).split()
         parents = commit[1:]
-        self.assertThat(parents, Equals([self._graph['D'].hexsha,
-                                         self._graph['D1'].hexsha]),
+        self.assertThat(parents, Equals([self.gittree.graph['D'].hexsha,
+                                         self.gittree.graph['D1'].hexsha]),
                         "import --finish merge does contain the correct "
                         "parents")
 
