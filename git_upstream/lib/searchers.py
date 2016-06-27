@@ -126,12 +126,17 @@ class Searcher(GitMixin):
         return mergecommit, ["^%s" % ip
                              for ip in mergecommit.parents if ip != parent]
 
-    def list(self):
+    def list(self, upstream=None):
         """
         Returns a list of Commit objects, between the '<commitish>' revision
         given in the constructor, and the commit object returned by the find()
-        method.
+        method. Using the upstream with cherry-pick to exclude commits that
+        are identical to those already upstream.
         """
+        if upstream is None:
+            raise ValueError(
+                "Must provide a branch for upstream to compare against")
+
         if not self.commit:
             self.find()
 
@@ -182,34 +187,40 @@ class Searcher(GitMixin):
         # the tip of the head to avoid inversion where older commits
         # started before the previous import merge and approved afterwards
         # are not sorted by 'rev-list' predictably.
+        commit_list = []
         if previous_import:
             search_list = [
-                (previous_import, self.branch),
-                (self.commit, previous_import),
+                (self.branch, upstream, "^%s" % previous_import),
+                (previous_import, upstream, "^%s~1" % previous_import)
             ]
         else:
-            search_list = [(self.commit, self.branch)]
+            search_list = [(self.branch, upstream, None)]
 
-        commit_list = []
-        extra_args.append('--')
-        for start, end in search_list:
-            revision_spec = "{0}..{1}".format(start, end)
+        extra_args.append("^%s" % self.commit)
 
+        for local, target, exclude in search_list:
+            extra = list(extra_args)
+            if exclude:
+                extra.append(exclude)
+            extra.append("--")
+            revision_spec = "%s...%s" % (local, target)
             self.log.info(
                 """
                 Walking the changes between found commit and target, excluding
                 those behind the previous import or merged as an additional
                 branch during the previous import
-                    git rev-list --topo-order %s %s
-                """, revision_spec, " ".join(extra_args))
+                    git rev-list --topo-order --cherry-pick --left-only %s %s
+                """, revision_spec, " ".join(extra))
 
             commit_list.append(
                 Commit._iter_from_process_or_stream(
                     self.repo,
                     self.git.rev_list(revision_spec,
-                                      *extra_args,
-                                      as_process=True,
-                                      topo_order=True)))
+                                      *extra,
+                                      cherry_pick=True,
+                                      left_only=True,
+                                      topo_order=True,
+                                      as_process=True)))
 
         # chain the filters as generators so that we don't need to allocate new
         # lists for each step in the filter chain.
@@ -444,7 +455,7 @@ class CommitMessageSearcher(LogDedentMixin, Searcher):
 
         return self.commit.hexsha
 
-    def list(self, include=True):
+    def list(self, upstream=None, include=True):
         """
         Override parent implementation to permit inclusion of the found commit
         to be returned in the list of changes. This will help in cases where
@@ -452,7 +463,7 @@ class CommitMessageSearcher(LogDedentMixin, Searcher):
         branches that would be returned by the generic upstream searcher.
         """
 
-        commits = super(CommitMessageSearcher, self).list()
+        commits = super(CommitMessageSearcher, self).list(upstream)
         if include:
             commits.append(self.commit)
 
