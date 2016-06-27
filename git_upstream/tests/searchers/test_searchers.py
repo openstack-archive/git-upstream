@@ -52,4 +52,4 @@ class TestUpstreamMergeBaseSearcher(TestWithScenarios, BaseTestCase):
                                              patterns=pattern, repo=self.repo)
         self.assertEqual(
             self.gittree._commits_from_nodes(reversed(self.expected_changes)),
-            searcher.list())
+            searcher.list(self.branches['upstream'][0]))
