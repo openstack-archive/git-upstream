@@ -29,6 +29,7 @@ pip-delete-this-directory.txt
 .tox/
 .coverage
 .cache
+.git-test-trees
 nosetests.xml
 coverage.xml
 

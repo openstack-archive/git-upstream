@@ -44,7 +44,7 @@ class TestStrategies(TestWithScenarios, BaseTestCase):
         # need the tree built at this point
         self.addDetail('expected-changes',
                        text_content(pformat(
-                           list((c, self._graph[c].hexsha)
+                           list((c, self.gittree.graph[c].hexsha)
                                 for c in self.expected_changes))))
 
     def test_search_changes(self):
@@ -53,5 +53,6 @@ class TestStrategies(TestWithScenarios, BaseTestCase):
             branch=self.branches['head'][0],
             search_refs=[self.branches['upstream'][0]])
 
-        self.assertEqual(self._commits_from_nodes(self.expected_changes),
-                         [c for c in strategy.filtered_iter()])
+        self.assertEqual(
+            self.gittree._commits_from_nodes(self.expected_changes),
+            [c for c in strategy.filtered_iter()])

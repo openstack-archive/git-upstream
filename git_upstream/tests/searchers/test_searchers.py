@@ -39,7 +39,7 @@ class TestUpstreamMergeBaseSearcher(TestWithScenarios, BaseTestCase):
         # need the tree built at this point
         self.addDetail('expected-changes',
                        text_content(pformat(
-                           list((c, self._graph[c].hexsha)
+                           list((c, self.gittree.graph[c].hexsha)
                                 for c in self.expected_changes))))
 
     def test_search_changes(self):
@@ -51,5 +51,5 @@ class TestUpstreamMergeBaseSearcher(TestWithScenarios, BaseTestCase):
         searcher = UpstreamMergeBaseSearcher(branch=self.branches['head'][0],
                                              patterns=pattern, repo=self.repo)
         self.assertEqual(
-            self._commits_from_nodes(reversed(self.expected_changes)),
+            self.gittree._commits_from_nodes(reversed(self.expected_changes)),
             searcher.list())
