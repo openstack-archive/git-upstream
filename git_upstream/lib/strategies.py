@@ -99,7 +99,7 @@ class LocateChangesStrategy(GitMixin, Sequence):
 
     def _popdata(self):
         """Should return the list of commits from the searcher object"""
-        return self.searcher.list()
+        return self.searcher.list(upstream=self.upstream)
 
 
 class LocateChangesWalk(LocateChangesStrategy):
