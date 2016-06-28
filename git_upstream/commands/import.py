@@ -113,7 +113,7 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
     def finalize(self):
         """Perform additional parsing of args"""
 
-        if self.args.finish:
+        if self.args.finish and not self.args.upstream_branch:
             self.args.upstream_branch = self.args.import_branch
 
     def _finish(self, import_upstream):
