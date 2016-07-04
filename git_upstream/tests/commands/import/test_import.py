@@ -124,3 +124,14 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
         self.assertThat(
             self.logger.output,
             Contains("No updated additional branch given, nothing to be done"))
+
+    def _verify_import_everything_already_upstreamed(self):
+        """Additional verification for the finished results"""
+
+        self.assertThat(
+            self.logger.output,
+            Contains("All carried changes gone upstream"))
+        self.assertThat(
+            self.logger.output,
+            Contains("Creating  branch 'import/test_command' from specified "
+                     "commit 'upstream/master'"))
