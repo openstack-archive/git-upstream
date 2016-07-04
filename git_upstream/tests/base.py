@@ -351,6 +351,10 @@ class BaseTestCase(testtools.TestCase):
         if hasattr(self, 'pre_script'):
             self.run_pre_script()
 
+        # enable logging of GitPython if not already set
+        if os.environ.get("GIT_PYTHON_TRACE") is None:
+            type(self.git).GIT_PYTHON_TRACE = "1"
+
     def run_pre_script(self):
         """
         Run custom pre-script for test
