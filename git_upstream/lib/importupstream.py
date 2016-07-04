@@ -267,8 +267,9 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
         commit_list = list(strategy.filtered_iter())
         if len(commit_list) == 0:
-            self.log.notice("There are no local changes to be applied!")
-            return False
+            self.log.notice("All carried changes gone upstream")
+            self._set_branch(self.import_branch, self.upstream, force=True)
+            return True
 
         self.log.debug(
             """
