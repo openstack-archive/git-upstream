@@ -52,6 +52,8 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                         "import command failed to complete successfully")
 
         expected = getattr(self, 'expect_found', None)
+        # even if empty want to confirm that find no changes applied,
+        # otherwise confirm we find the expected number of changes.
         if expected is not None:
             if len(list(Commit.new(self.repo, target_branch).parents)) > 1:
                 changes = list(Commit.iter_items(
@@ -81,6 +83,14 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                                 "subject '%s' of node '%s'" % (
                                     subject, commit.hexsha, node_subject,
                                     node))
+
+        # allow disabling of checking the merge commit contents
+        # as some tests won't result in an import
+        if getattr(self, 'check_merge', True):
+            commit_message = self.git.log(target_branch, n=1)
+            self.assertThat(commit_message,
+                            Contains("of '%s' into '%s'" % (upstream_branch,
+                                                            target_branch)))
 
         # allow additional test specific verification methods below
         extra_test_func = getattr(self, '_verify_%s' % self.name, None)
