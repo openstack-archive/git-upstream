@@ -53,3 +53,4 @@
     - additional/2
 
   expect_found: []
+  check_merge: False
