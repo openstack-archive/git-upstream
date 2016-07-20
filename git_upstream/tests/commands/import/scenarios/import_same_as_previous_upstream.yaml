@@ -41,3 +41,4 @@
     - --into=master
 
   expect_found: []
+  check_merge: False
