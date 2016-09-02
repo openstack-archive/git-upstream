@@ -147,7 +147,7 @@ Don’t forget to commit and push (after this step, you may want to use git
 review as usual)
 
 ```bash
-git commit -a -m "Set .gitignore content to use internal gating infra"
+git commit -a -m "Set .gitreview content to use internal gating infra"
 git push
 ```
 
