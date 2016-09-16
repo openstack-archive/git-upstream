@@ -35,10 +35,10 @@
     head: [master, D]
     upstream: [upstream/master, B]
 
-  parser_args:
+  parser-args:
     - -q
     - import
     - --into=master
 
-  expect_found: []
-  check_merge: False
+  expect-found: []
+  check-merge: False

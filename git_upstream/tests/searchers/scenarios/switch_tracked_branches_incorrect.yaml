@@ -52,6 +52,6 @@
     stable: [upstream/stable, I]
     upstream: [upstream/master, H]
 
-  expected_changes: [E, I, B1, J]
+  expected-changes: [E, I, B1, J]
 
   pattern: upstream/master
