@@ -18,11 +18,11 @@
 import inspect
 import os
 
-import mock
 from testscenarios import TestWithScenarios
 from testtools.content import text_content
 from testtools.matchers import Contains
 from testtools.matchers import Equals
+from testtools.matchers import Not
 
 from git_upstream.lib.pygitcompat import Commit
 from git_upstream import main
@@ -30,8 +30,6 @@ from git_upstream.tests.base import BaseTestCase
 from git_upstream.tests.base import get_scenarios
 
 
-@mock.patch.dict('os.environ',
-                 {'TEST_GIT_UPSTREAM_REBASE_EDITOR': '1'})
 class TestImportCommand(TestWithScenarios, BaseTestCase):
 
     scenarios = get_scenarios(os.path.join(os.path.dirname(__file__),
@@ -55,6 +53,11 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
         args = self.parser.parse_args(self.parser_args)
         self.assertThat(args.cmd.run(args), Equals(True),
                         "import command failed to complete successfully")
+
+        # assuming non-interactive we should *NOT* see the following message
+        # appear in the logged output.
+        self.assertThat(self.logger.output,
+                        Not(Contains("Successfully rebased and updated")))
 
         # perform sanity checks on results
         self._check_tree_state()

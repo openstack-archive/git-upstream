@@ -55,13 +55,14 @@ class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
 
         cmdline = self.parser.get_default('script_cmdline') + self.parser_args
         try:
-            output = subprocess.check_output(cmdline, stderr=subprocess.STDOUT)
+            self.output = subprocess.check_output(cmdline,
+                                                  stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as cpe:
             self.addDetail('subprocess-output',
                            text_content(cpe.output.decode('utf-8')))
             raise
         self.addDetail('subprocess-output',
-                       text_content(output.decode('utf-8')))
+                       text_content(self.output.decode('utf-8')))
 
         expected = getattr(self, 'expect_rebased', [])
         if expected:
@@ -107,3 +108,8 @@ class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
         extra_test_func = getattr(self, '_verify_%s' % self.name, None)
         if extra_test_func:
             extra_test_func()
+
+    def _verify_basic(self):
+        self.assertThat(
+            self.output.decode('utf-8'),
+            Contains("Successfully rebased and updated refs/heads/import/"))
