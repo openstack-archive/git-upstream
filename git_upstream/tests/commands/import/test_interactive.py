@@ -16,9 +16,9 @@
 """Tests for the --interactive option to the  'import' command"""
 
 import os
-import subprocess
 
 import mock
+import psutil
 from testscenarios import TestWithScenarios
 from testtools.content import text_content
 from testtools.matchers import Contains
@@ -30,8 +30,13 @@ from git_upstream import main
 from git_upstream.tests.base import BaseTestCase
 from git_upstream.tests.base import get_scenarios
 
+try:
+    # if installed backported subprocess
+    import subprocess32 as subprocess
+except ImportError:
+    import subprocess
 
-@mock.patch.dict('os.environ', {'GIT_SEQUENCE_EDITOR': 'cat'})
+@mock.patch.dict('os.environ', {'GIT_EDITOR': 'cat'})
 class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
 
     commands, parser = main.build_parsers()
@@ -54,15 +59,39 @@ class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
         target_branch = self.branches['head'][0]
 
         cmdline = self.parser.get_default('script_cmdline') + self.parser_args
+
+        # ensure interactive mode cannot hang tests
+        def kill(proc_pid):
+            process = psutil.Process(proc_pid)
+            for proc in process.children(recursive=True):
+                try:
+                    proc.kill()
+                except OSError:
+                    continue
+            try:
+                process.kill()
+            except OSError:
+                pass
+
+        proc = subprocess.Popen(cmdline,
+                                  stdin=open(os.devnull, "r"),
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT, close_fds=True,
+                                  cwd=self.testrepo.path)
         try:
-            self.output = subprocess.check_output(cmdline,
-                                                  stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as cpe:
+            self.output = proc.communicate(
+                timeout=getattr(self, 'timeout', 5))[0]
+        except subprocess.TimeoutExpired:
+            kill(proc.pid)
+            output = proc.communicate()[0]
             self.addDetail('subprocess-output',
-                           text_content(cpe.output.decode('utf-8')))
+                           text_content(output.decode('utf-8')))
             raise
+
         self.addDetail('subprocess-output',
                        text_content(self.output.decode('utf-8')))
+
+        self.assertThat(proc.returncode, Equals(0))
 
         expected = getattr(self, 'expect_rebased', [])
         if expected:
