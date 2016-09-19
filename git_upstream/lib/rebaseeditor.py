@@ -205,11 +205,23 @@ class RebaseEditor(GitMixin, LogDedentMixin):
                 return subprocess.call(cmd), None, None
             finally:
                 self.cleanup()
-        elif mode == "1":
-            # run in test mode to avoid replacing the existing process
-            # to keep the majority of tests simple and only require special
-            # launching code for those tests written to check the rebase
-            # resume behaviour
+        elif not self._interactive:
+            # If in non-interactive mode use subprocess instead of exec
+            #
+            # This ensures that if no conflicts occur, that the calling
+            # git-upstream process will be able to switch the current
+            # branch after the git-rebase subprocess exits. This is not
+            # possible when using exec to have git-rebase replace the
+            # existing process. Since git-rebase performs checks once
+            # it is completed running the instructions (todo file),
+            # changing the current branch checked out in the git
+            # repository via the final instruction (calling
+            # `git-upstream import --finish ...`) results in git-rebase
+            # exiting with an exception.
+            #
+            # For interactive mode it seems reasonable to require manual
+            # switching of branches after being finished, as the user is
+            # already having to interact.
             try:
                 return 0, subprocess.check_output(
                     cmd, stderr=subprocess.STDOUT, env=environ), None
