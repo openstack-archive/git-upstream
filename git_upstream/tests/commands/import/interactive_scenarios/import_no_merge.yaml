@@ -57,6 +57,7 @@
   parser-args:
     - -q
     - import
+    - -i
     - --no-merge
     - --import-branch=import/F
     - --into=master
