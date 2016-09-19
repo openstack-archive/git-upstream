@@ -46,7 +46,7 @@ def build_test_tree(basedir, filename):
                                data['branches'].values())
 
             if 'pre-script' in data:
-                output = subprocess.check_output(getattr(data, 'pre-script'),
+                output = subprocess.check_output(data['pre-script'],
                                                  stderr=subprocess.STDOUT,
                                                  shell=True)
                 print("pre-script output:\n%s" % output)
