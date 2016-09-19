@@ -205,11 +205,18 @@ class RebaseEditor(GitMixin, LogDedentMixin):
                 return subprocess.call(cmd), None, None
             finally:
                 self.cleanup()
-        elif mode == "1":
-            # run in test mode to avoid replacing the existing process
-            # to keep the majority of tests simple and only require special
-            # launching code for those tests written to check the rebase
-            # resume behaviour
+        elif not self._interactive:
+            # If in non-interactive mode use subprocess instead of exec
+            #
+            # This ensures that if no conflicts occur, that the current
+            # process will be able to perform actions after the rebase
+            # such as switching branches, that is not possible when
+            # git-rebase is exec'ed to replace the current process as it
+            # performs certain checks at the end that cannot be avoided.
+            #
+            # For interactive mode it seems reasonable to require manual
+            # switching of branches after being finished, as the user is
+            # already having to interact.
             try:
                 return 0, subprocess.check_output(
                     cmd, stderr=subprocess.STDOUT, env=environ), None
