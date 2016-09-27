@@ -86,6 +86,24 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
 
         self._check_tree_state()
 
+    def test_command_with_tags(self):
+        # add tag for each branch/ref and test with added tag
+        parser_args = []
+        for arg in self.parser_args:
+            if (arg.startswith('-') or arg in ("import",)):
+                parser_args.append(arg)
+                continue
+
+            tag_name = "tag-gu-%s" % arg.replace('~', '-')
+            self.git.tag(tag_name, arg)
+            parser_args.append(tag_name)
+
+        args = self.parser.parse_args(parser_args)
+        self.assertThat(args.cmd.run(args), Equals(True),
+                        "import command failed to complete successfully")
+
+        self._check_tree_state()
+
     def _check_tree_state(self):
 
         expected = getattr(self, 'expect_found', None)
