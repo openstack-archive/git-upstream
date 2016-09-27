@@ -34,7 +34,6 @@ from git_upstream.tests.base import get_scenarios
                  {'TEST_GIT_UPSTREAM_REBASE_EDITOR': '1'})
 class TestImportCommand(TestWithScenarios, BaseTestCase):
 
-    commands, parser = main.build_parsers()
     scenarios = get_scenarios(os.path.join(os.path.dirname(__file__),
                               "scenarios"))
 
@@ -42,25 +41,49 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
         # add description in case parent setup fails.
         self.addDetail('description', text_content(self.desc))
 
+        self.commands, self.parser = main.build_parsers()
         # builds the tree to be tested
         super(TestImportCommand, self).setUp()
 
-    def test_command(self):
-        upstream_branch = self.branches['upstream'][0]
-        target_branch = self.branches['head'][0]
+        self.upstream_branch = self.branches['upstream'][0]
+        self.target_branch = self.branches['head'][0]
 
-        self.git.tag(inspect.currentframe().f_code.co_name, upstream_branch)
+    def test_command(self):
+        self.git.tag(inspect.currentframe().f_code.co_name,
+                     self.upstream_branch)
+
         args = self.parser.parse_args(self.parser_args)
         self.assertThat(args.cmd.run(args), Equals(True),
                         "import command failed to complete successfully")
+
+        # perform sanity checks on results
+        self._check_tree_state()
+
+        # allow disabling of checking the merge commit contents
+        # as some tests won't result in an import
+        if getattr(self, 'check_merge', True):
+            commit_message = self.git.log(self.target_branch, n=1)
+            self.assertThat(
+                commit_message,
+                Contains("of '%s' into '%s'" % (self.upstream_branch,
+                                                self.target_branch)))
+
+        # allow additional test specific verification methods below
+        extra_test_func = getattr(self, '_verify_%s' % self.name, None)
+        if extra_test_func:
+            extra_test_func()
+
+    def _check_tree_state(self):
 
         expected = getattr(self, 'expect_found', None)
         # even if empty want to confirm that find no changes applied,
         # otherwise confirm we find the expected number of changes.
         if expected is not None:
-            if len(list(Commit.new(self.repo, target_branch).parents)) > 1:
+            if len(list(Commit.new(self.repo,
+                                   self.target_branch).parents)) > 1:
                 changes = list(Commit.iter_items(
-                    self.repo, '%s..%s^2' % (upstream_branch, target_branch),
+                    self.repo,
+                    '%s..%s^2' % (self.upstream_branch, self.target_branch),
                     topo_order=True))
             else:
                 # allow checking that nothing was rebased
@@ -86,19 +109,6 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                                 "subject '%s' of node '%s'" % (
                                     subject, commit.hexsha, node_subject,
                                     node))
-
-        # allow disabling of checking the merge commit contents
-        # as some tests won't result in an import
-        if getattr(self, 'check_merge', True):
-            commit_message = self.git.log(target_branch, n=1)
-            self.assertThat(commit_message,
-                            Contains("of '%s' into '%s'" % (upstream_branch,
-                                                            target_branch)))
-
-        # allow additional test specific verification methods below
-        extra_test_func = getattr(self, '_verify_%s' % self.name, None)
-        if extra_test_func:
-            extra_test_func()
 
     def _verify_basic(self):
 
