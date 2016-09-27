@@ -304,7 +304,7 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
                 ["refs/remotes/*/{0}".format(ref) for ref in self.patterns])
 
         if search_tags:
-            self._references.append(
+            self._references.extend(
                 ["refs/tags/{0}".format(ref) for ref in self.patterns])
 
     @property
