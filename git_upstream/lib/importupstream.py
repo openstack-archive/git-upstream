@@ -63,14 +63,13 @@ class ImportUpstream(LogDedentMixin, GitMixin):
 
         invalid_ref = False
         for branch in branches:
-            if not any(head for head in self.repo.heads
-                       if head.name == branch):
-                msg = "Specified ref does not exist: '%s'"
+            if not self.is_valid_commit(branch):
+                msg = "Specified branch/tag/commit(ish) does not exist: '%s'"
                 self.log.error(msg, branch)
                 invalid_ref = True
 
         if invalid_ref:
-            raise ImportUpstreamError("Invalid ref")
+            raise ImportUpstreamError("Invalid branch/tag/sha1")
 
     @property
     def branch(self):
@@ -145,7 +144,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             commit = self.upstream
 
         try:
-            self.git.show_ref(commit, quiet=True, heads=True)
+            self.git.rev_parse("%s^{commit}" % commit, verify=True)
 
         except GitCommandError as e:
             msg = "Invalid commit '%s' specified to import from"
