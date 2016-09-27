@@ -73,6 +73,19 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
         if extra_test_func:
             extra_test_func()
 
+    def test_command_with_sha1s(self):
+        # convert branches/tags to sha1s
+        parser_args = [
+            arg if (arg.startswith('-') or arg in ("import",))
+            else self.git.rev_parse(arg)
+            for arg in self.parser_args
+        ]
+        args = self.parser.parse_args(parser_args)
+        self.assertThat(args.cmd.run(args), Equals(True),
+                        "import command failed to complete successfully")
+
+        self._check_tree_state()
+
     def _check_tree_state(self):
 
         expected = getattr(self, 'expect_found', None)
