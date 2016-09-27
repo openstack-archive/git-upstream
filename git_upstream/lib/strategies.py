@@ -116,8 +116,8 @@ class LocateChangesWalk(LocateChangesStrategy):
 
         super(LocateChangesWalk, self).__init__(*args, **kwargs)
 
-        self.searcher = UpstreamMergeBaseSearcher(branch=branch,
-                                                  patterns=search_refs)
+        self.searcher = UpstreamMergeBaseSearcher(
+            branch=branch, patterns=search_refs, search_tags=True)
 
     @property
     def previous_upstream(self):
