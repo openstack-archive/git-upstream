@@ -20,6 +20,7 @@ from abc import abstractmethod
 import itertools
 import re
 
+from git_upstream import errors
 from git_upstream import lib
 from git_upstream.lib.pygitcompat import Commit
 from git_upstream.lib.utils import GitMixin
@@ -276,7 +277,18 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
 
         if not patterns:
             patterns = ["upstream/*"]
-        self._patterns = patterns
+        self._patterns = set()
+        self._revs = set()
+        for rev in patterns:
+            if "*" in rev:
+                self._patterns.add(rev)
+            elif self.is_valid_commit(rev):
+                self._revs.add(rev)
+            else:
+                raise errors.GitUpstreamError(
+                    "'%s' not recognized as valid commit(ish) or pattern" %
+                    rev)
+
         self._references = ["refs/heads/{0}".format(ref)
                             for ref in self.patterns]
 
@@ -332,8 +344,12 @@ class UpstreamMergeBaseSearcher(LogDedentMixin, Searcher):
             "Searching for most recent merge base with upstream branches")
 
         # process pattern given to get a list of refs to check
-        rev_list_args = self.git.for_each_ref(
-            *self._references, format="%(refname:short)").splitlines()
+        if self._references:
+            rev_list_args = self.git.for_each_ref(
+                *self._references, format="%(refname:short)").splitlines()
+        else:
+            rev_list_args = []
+        rev_list_args.extend(self._revs)
         self.log.info(
             """
             Upstream refs:
