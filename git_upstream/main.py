@@ -148,6 +148,11 @@ def main(argv=None):
         logger.fatal("Git-Upstream requires git version 1.7.5 or later")
         sys.exit(1)
 
+    for arg in argv:
+        if arg in args.subcommands:
+            break
+        args.script_cmdline.append(arg)
+
     try:
         args.cmd.run(args)
     except GitUpstreamError as e:
