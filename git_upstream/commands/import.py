@@ -118,25 +118,19 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
         else:
             self.args.real_upstream_branch = self.args.upstream_branch
 
-    def _finish(self, import_upstream):
-        self.log.notice("Merging import to requested branch '%s'",
-                        self.args.branch)
-        if import_upstream.finish():
-            self.log.notice(
-                """
-                Successfully finished import:
-                    target branch: '%s'
-                    upstream branch: '%s'
-                    import branch: '%s'""",
-                self.args.branch, self.args.real_upstream_branch,
-                import_upstream.import_branch)
-            if self.args.branches:
-                for branch in self.args.branches:
-                    self.log.notice("    extra branch: '%s'", branch,
-                                    dedent=False)
-            return True
-        else:
-            return False
+    def _finish_report(self, import_upstream):
+        self.log.notice(
+            """
+            Successfully finished import:
+                target branch: '%s'
+                upstream branch: '%s'
+                import branch: '%s'""",
+            self.args.branch, self.args.real_upstream_branch,
+            import_upstream.import_branch)
+        if self.args.branches:
+            for branch in self.args.branches:
+                self.log.notice("    extra branch: '%s'", branch,
+                                dedent=False)
 
     def execute(self):
 
@@ -174,7 +168,11 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
 
         # finish and return if thats all
         if self.args.finish:
-            return self._finish(import_upstream)
+            if import_upstream.finish():
+                self._finish_report(import_upstream)
+                return True
+            else:
+                return False
 
         # otherwise perform fresh import
         self.log.notice("Starting import of upstream")
@@ -196,6 +194,8 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
         if not import_upstream.apply(strategy, self.args.interactive, cmdline):
             self.log.notice("Import cancelled")
             return False
+        else:
+            self._finish_report(import_upstream)
 
         if not self.args.merge:
             self.log.notice(
@@ -203,8 +203,6 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
                 Import complete, not merging to target branch '%s' as
                 requested.
                 """, self.args.branch)
-            return True
-
-        return self._finish(import_upstream)
+        return True
 
 # vim:sw=4:sts=4:ts=4:et:
