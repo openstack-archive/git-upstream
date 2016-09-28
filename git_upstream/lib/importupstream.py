@@ -271,51 +271,55 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         if len(commit_list) == 0:
             self.log.notice("All carried changes gone upstream")
             self._set_branch(self.import_branch, self.upstream, force=True)
-            return True
+            # rebase should not finish/merge result
+            if resume_cmdline == None:
+                return True
+            base = self.upstream
 
-        self.log.debug(
-            """
-            Should apply the following list of commits
-                %s
-            """, "\n    ".join([c.hexsha for c in commit_list]))
-
-        base = self.import_branch + "-base"
-
-        self._set_branch(self.import_branch, self.branch, force=True)
-        self.log.info(
-            """
-            Creating import branch '%s' from specified commit '%s' in prep to
-            linearize the local changes before transposing to the new upstream:
-                git branch --force %s %s
-            """, self.import_branch, self.branch, self.import_branch,
-            self.branch)
-
-        self.log.notice("Attempting to linearise previous changes")
-        # attempt to silently linearize the current carried changes as a branch
-        # based on the previous located import commit. This provides a sane
-        # abort result for if the user needs to abort the rebase of this branch
-        # onto the new point upstream that was requested to import from.
-        try:
-            self._linearise(self.import_branch, strategy,
-                            strategy.searcher.commit)
-        except Exception:
-            # Could ask user if they want to try and use the non clean route
-            # provided they don't mind that 'git rebase --abort' will result
-            # in a virtually useless local import branch
-            self.log.warning(
+        else:
+            self.log.debug(
                 """
+                Should apply the following list of commits
+                    %s
+                """, "\n    ".join([c.hexsha for c in commit_list]))
 
-                Exception occurred during linearisation of local changes on to
-                previous import to simplify behaviour should user need to abort
-                the rebase that applies these changes to the latest import
-                point. Attempting to tidy up state.
+            base = self.import_branch + "-base"
 
-                Do not Ctrl+C unless you wish to need to clean up your git
-                repository by hand.
-
-                """)
-            # reset head back to the tip of the changes to be rebased
             self._set_branch(self.import_branch, self.branch, force=True)
+            self.log.info(
+                """
+                Creating import branch '%s' from specified commit '%s' in prep to
+                linearize the local changes before transposing to the new upstream:
+                    git branch --force %s %s
+                """, self.import_branch, self.branch, self.import_branch,
+                self.branch)
+
+            self.log.notice("Attempting to linearise previous changes")
+            # attempt to silently linearize the current carried changes as a branch
+            # based on the previous located import commit. This provides a sane
+            # abort result for if the user needs to abort the rebase of this branch
+            # onto the new point upstream that was requested to import from.
+            try:
+                self._linearise(self.import_branch, strategy,
+                                strategy.searcher.commit)
+            except Exception:
+                # Could ask user if they want to try and use the non clean route
+                # provided they don't mind that 'git rebase --abort' will result
+                # in a virtually useless local import branch
+                self.log.warning(
+                    """
+
+                    Exception occurred during linearisation of local changes on to
+                    previous import to simplify behaviour should user need to abort
+                    the rebase that applies these changes to the latest import
+                    point. Attempting to tidy up state.
+
+                    Do not Ctrl+C unless you wish to need to clean up your git
+                    repository by hand.
+
+                    """)
+                # reset head back to the tip of the changes to be rebased
+                self._set_branch(self.import_branch, self.branch, force=True)
 
         # build the command line
         rebase = RebaseEditor(resume_cmdline, interactive, repo=self.repo)
@@ -329,31 +333,34 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                         %s %s
                 """, base, first.parents[0].hexsha, self.import_branch)
             status, out, err = rebase.run(commit_list,
-                                          first.parents[0].hexsha,
-                                          self.import_branch,
+                                            first.parents[0].hexsha,
+                                            self.import_branch,
+                                            onto=base)
+        else:
+            # nothing to be carried, but let rebase merge the result
+            status, out, err = rebase.run(commit_list, self.import_branch,
                                           onto=base)
-            if status:
-                if err and err.startswith("Nothing to do"):
-                    # cancelled by user
-                    self.log.notice("Cancelled by user")
-                    return False
 
-                self.log.error("Rebase failed, will need user intervention to "
-                               "resolve.")
-                if out:
-                    self.log.notice(out)
-                if err:
-                    self.log.notice(err)
-
-                # once we support resuming/finishing add a message here to tell
-                # the user to rerun this tool with the appropriate options to
-                # complete
+        if status:
+            if err and err.startswith("Nothing to do"):
+                # cancelled by user
+                self.log.notice("Cancelled by user")
                 return False
 
-            self.log.notice("Successfully applied all locally carried changes")
-        else:
-            self.log.warning("Warning, nothing to do: locally carried " +
-                             "changes already rebased onto " + self.upstream)
+            self.log.error("Rebase failed, will need user intervention to "
+                            "resolve.")
+            if out:
+                self.log.notice(out)
+            if err:
+                self.log.notice(err)
+
+            # once we support resuming/finishing add a message here to tell
+            # the user to rerun this tool with the appropriate options to
+            # complete
+            return False
+
+        self.git.checkout(self.branch)
+        self.log.notice("Successfully applied all locally carried changes")
         return True
 
     def resume(self, args):
