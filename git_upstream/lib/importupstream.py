@@ -271,7 +271,11 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         if len(commit_list) == 0:
             self.log.notice("All carried changes gone upstream")
             self._set_branch(self.import_branch, self.upstream, force=True)
-            return True
+            # no resume_cmdline means to skip merge
+            if resume_cmdline is None:
+                return True
+            # otherwise perform the finish
+            return self.finish()
 
         self.log.debug(
             """
@@ -351,6 +355,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 return False
 
             self.log.notice("Successfully applied all locally carried changes")
+            self.git.checkout(self.branch)
         else:
             self.log.warning("Warning, nothing to do: locally carried " +
                              "changes already rebased onto " + self.upstream)
@@ -366,6 +371,8 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         Finish the import by merging the import branch to the target while
         performing suitable verification checks.
         """
+        self.log.notice("Merging import to requested branch '%s'",
+                        self.branch)
         self.log.info("No verification checks enabled")
         in_rebase = False
         if self.is_detached():
@@ -413,6 +420,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 raise ImportUpstreamError(
                     "Resulting tree does not match import")
             if in_rebase:
+                self.log.info("Code thinks we're in the middle of a rebase")
                 self.git.checkout(target_sha)
         except (GitCommandError, ImportUpstreamError) as e:
             self.log.error(
