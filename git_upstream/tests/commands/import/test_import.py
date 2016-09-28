@@ -40,6 +40,11 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
         self.addDetail('description', text_content(self.desc))
 
         self.commands, self.parser = main.build_parsers()
+
+        script_cmdline = self.parser.get_default('script_cmdline')
+        script_cmdline[-1] = os.path.join(os.getcwd(), main.__file__)
+        self.parser.set_defaults(script_cmdline=script_cmdline)
+
         # builds the tree to be tested
         super(TestImportCommand, self).setUp()
 
