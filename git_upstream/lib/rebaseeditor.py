@@ -82,6 +82,7 @@ class RebaseEditor(GitMixin, LogDedentMixin):
 
         root = None
         with codecs.open(todo_file, "w", "utf-8") as todo:
+            commit = "HEAD"
             for commit in commits:
                 if not root:
                     root = commit.parents[0]
@@ -195,6 +196,10 @@ class RebaseEditor(GitMixin, LogDedentMixin):
         cmd = ['git', 'rebase', '--interactive']
         cmd.extend(self.git.transform_kwargs(**kwargs))
         cmd.extend(args)
+
+        # ensure that the finish will always be called
+        self._insert_exec_to_todo()
+
         mode = os.environ.get('TEST_GIT_UPSTREAM_REBASE_EDITOR', "")
         if mode.lower() == "debug":
             # In general it's not recommended to run rebase in direct
@@ -221,8 +226,6 @@ class RebaseEditor(GitMixin, LogDedentMixin):
             finally:
                 self.cleanup()
         else:
-            self._insert_exec_to_todo()
-
             cmd.append(environ)
             os.execlpe('git', *cmd)
 
