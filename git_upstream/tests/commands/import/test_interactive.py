@@ -34,7 +34,6 @@ from git_upstream.tests.base import get_scenarios
 @mock.patch.dict('os.environ', {'GIT_SEQUENCE_EDITOR': 'cat'})
 class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
 
-    commands, parser = main.build_parsers()
     scenarios = get_scenarios(os.path.join(os.path.dirname(__file__),
                               "interactive_scenarios"))
 
@@ -42,6 +41,7 @@ class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
         # add description in case parent setup fails.
         self.addDetail('description', text_content(self.desc))
 
+        self.commands, self.parser = main.build_parsers()
         script_cmdline = self.parser.get_default('script_cmdline')
         script_cmdline[-1] = os.path.join(os.getcwd(), main.__file__)
         self.parser.set_defaults(script_cmdline=script_cmdline)
