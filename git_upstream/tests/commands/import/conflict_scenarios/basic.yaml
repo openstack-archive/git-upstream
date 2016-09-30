@@ -39,18 +39,34 @@
   parser-args: [import, upstream/master]
 
   pre-script: |
-    #!/bin/sh -e
+    import os
 
-    file_f=$(git diff --name-only upstream/master~1..upstream/master)
-    git checkout master
-    echo "hello world" > ${file_f}
-    git add ${file_f}
-    git commit --amend --no-edit
+    from git_upstream.lib.pygitcompat import Repo
+
+
+    repo = Repo(os.path.curdir)
+    repo.git.checkout("master")
+
+    conflict_file = repo.git.diff("upstream/master~1..upstream/master",
+                                  name_only=True)
+    with open(conflict_file, "w") as f:
+        f.write("hello world")
+
+    repo.git.add(conflict_file)
+    repo.git.commit(amend=True, no_edit=True)
 
   post-script: |
-    #!/bin/sh -e
+    import os
 
-    file_f=$(git diff --name-only upstream/master~1..upstream/master)
-    git checkout --ours -- ${file_f}
-    git add ${file_f}
-    GIT_EDITOR=cat git rebase --continue
+    from git_upstream.lib.pygitcompat import Repo
+
+
+    repo = Repo(os.path.curdir)
+
+    conflict_file = repo.git.diff("upstream/master~1..upstream/master",
+                                  name_only=True)
+    repo.git.checkout("--ours", "--", conflict_file)
+    repo.git.add(conflict_file)
+    os.environ["GIT_EDITOR"] = "echo"
+    repo.git.rebase("--continue")
+
