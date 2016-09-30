@@ -406,7 +406,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 Replacing tree contents with those from the import branch:
                     git read-tree -u --reset %s
                 """, self.import_branch)
-            self.git.read_tree(self.import_branch, u=True, reset=True)
+            self.git.read_tree(target_sha, u=True, reset=True)
             self.log.info(
                 """
                 Committing merge commit:
@@ -416,7 +416,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             # finally test that everything worked correctly by comparing if
             # the tree object id's match
             if self.git.rev_parse("HEAD^{tree}") != \
-                    self.git.rev_parse("%s^{tree}" % self.import_branch):
+                    self.git.rev_parse("%s^{tree}" % target_sha):
                 raise ImportUpstreamError(
                     "Resulting tree does not match import")
             if in_rebase:
