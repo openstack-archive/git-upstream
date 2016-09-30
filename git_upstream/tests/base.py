@@ -366,9 +366,9 @@ class BaseTestCase(testtools.TestCase):
         # ensure we execute within context of the git repository
         with DiveDir(self.testrepo.path):
             try:
-                output = subprocess.check_output(self.pre_script,
-                                                 stderr=subprocess.STDOUT,
-                                                 shell=True)
+                output = subprocess.check_output(
+                    ["python", "-c", self.pre_script],
+                    stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
                 self.addDetail('pre-script-output',
                                text_content(e.output.decode('utf-8')))
@@ -391,9 +391,9 @@ class BaseTestCase(testtools.TestCase):
         # ensure we execute within context of the git repository
         with DiveDir(self.testrepo.path):
             try:
-                output = subprocess.check_output(self.post_script,
-                                                 stderr=subprocess.STDOUT,
-                                                 shell=True)
+                output = subprocess.check_output(
+                    ["python", "-c", self.post_script],
+                    stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
                 self.addDetail('post-script-output',
                                text_content(e.output.decode('utf-8')))
