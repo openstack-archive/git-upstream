@@ -1,0 +1,8 @@
+Code-Review+2: Joe Fegan <joe.fegan@hp.com>
+Workflow+1: Joe Fegan <joe.fegan@hp.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Fri, 30 Sep 2016 16:55:53 +0000
+Reviewed-on: https://review.openstack.org/372673
+Project: openstack/git-upstream
+Branch: refs/heads/master
