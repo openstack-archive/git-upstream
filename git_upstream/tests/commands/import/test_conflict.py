@@ -33,7 +33,7 @@ from git_upstream.tests.base import get_scenarios
 class TestImportCommand(TestWithScenarios, BaseTestCase):
 
     scenarios = get_scenarios(os.path.join(os.path.dirname(__file__),
-                              "scenarios"))
+                              "intervention_scenarios"))
 
     def setUp(self):
         # add description in case parent setup fails.
@@ -56,11 +56,14 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                      self.upstream_branch)
 
         args = self.parser.parse_args(self.parser_args)
-        self.assertThat(args.cmd.run(args), Equals(True),
-                        "import command failed to complete successfully")
+        # we should always fail here
+        self.assertThat(args.cmd.run(args), Equals(False))
 
-        # assuming non-interactive we should *NOT* see the following message
-        # appear in the logged output.
+        # simulate of manual resolving conflicts and completion of import
+        self.run_post_script()
+
+        # assuming non-interactive we should not see the following message
+        # from appear in the logged output.
         self.assertThat(self.logger.output,
                         Not(Contains("Successfully rebased and updated")))
 
@@ -75,8 +78,7 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                 commit_message,
                 Contains("of '%s' into '%s'" % (self.upstream_branch,
                                                 self.target_branch)))
-
-            # make sure the final state of merge is correct
+            # make sure the final state is actually correct
             self.assertThat(
                 self.repo.git.rev_parse("%s^{tree}" % self.target_branch),
                 Equals(self.repo.git.rev_parse(
@@ -124,53 +126,3 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
                                 "subject '%s' of node '%s'" % (
                                     subject, commit.hexsha, node_subject,
                                     node))
-
-    def _verify_basic(self):
-
-        self.assertThat(self.git.log(n=1), Contains("Merge branch 'import/"))
-
-    def _verify_basic_additional_missed(self):
-        """Additional verification that test produces a warning"""
-
-        self.assertThat(self.logger.output,
-                        Contains("Previous import merged additional"))
-
-    def _verify_import_finish(self):
-        """Additional verification for the finished results"""
-
-        commit = self.git.rev_list('master', parents=True, max_count=1).split()
-        parents = commit[1:]
-        self.assertThat(parents, Equals([self.gittree.graph['D'].hexsha,
-                                         self.gittree.graph['D1'].hexsha]),
-                        "import --finish merge does contain the correct "
-                        "parents")
-
-    def _verify_import_same_as_previous_upstream(self):
-        """Additional verification for the finished results"""
-        self.assertThat(
-            self.logger.output,
-            Contains("already at latest upstream commit"))
-        self.assertThat(
-            self.logger.output,
-            Contains("Nothing to be imported"))
-
-    def _verify_same_previous_with_same_additional(self):
-        """Additional verification for the finished results"""
-
-        self.assertThat(
-            self.logger.output,
-            Contains("already at latest upstream commit"))
-        self.assertThat(
-            self.logger.output,
-            Contains("No updated additional branch given, nothing to be done"))
-
-    def _verify_import_everything_already_upstreamed(self):
-        """Additional verification for the finished results"""
-
-        self.assertThat(
-            self.logger.output,
-            Contains("All carried changes gone upstream"))
-        self.assertThat(
-            self.logger.output,
-            Contains("Creating  branch 'import/test_command' from specified "
-                     "commit 'upstream/master'"))
