@@ -103,6 +103,12 @@ class TestImportInteractiveCommand(TestWithScenarios, BaseTestCase):
             self.assertThat(commit_message,
                             Contains("of '%s' into '%s'" % (upstream_branch,
                                                             target_branch)))
+            # make sure the final state of merge is correct
+            self.assertThat(
+                self.repo.git.rev_parse("%s^{tree}" % target_branch),
+                Equals(self.repo.git.rev_parse(
+                    "%s^2^{tree}" % target_branch)),
+                "--finish option failed to merge correctly")
 
         # allow additional test specific verification methods below
         extra_test_func = getattr(self, '_verify_%s' % self.name, None)

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012-2015 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012-2016 Hewlett-Packard Development Company, L.P.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -345,9 +345,9 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 self.log.error("Rebase failed, will need user intervention to "
                                "resolve.")
                 if out:
-                    self.log.notice(out)
+                    self.log.notice(out.decode('utf-8'))
                 if err:
-                    self.log.notice(err)
+                    self.log.notice(err.decode('utf-8'))
 
                 # once we support resuming/finishing add a message here to tell
                 # the user to rerun this tool with the appropriate options to
@@ -397,16 +397,16 @@ class ImportUpstream(LogDedentMixin, GitMixin):
                 """)
             self.log.info(
                 """
-                Merging import branch to HEAD and ignoring changes:
+                Merging import branch (%s) to HEAD and ignoring changes:
                     git merge -s ours --no-commit %s
-                """, self.import_branch)
+                """, self.import_branch, target_sha)
             self.git.merge('-s', 'ours', target_sha, no_commit=True)
             self.log.info(
                 """
-                Replacing tree contents with those from the import branch:
+                Replacing tree contents with those from the import branch (%s):
                     git read-tree -u --reset %s
-                """, self.import_branch)
-            self.git.read_tree(self.import_branch, u=True, reset=True)
+                """, self.import_branch, target_sha)
+            self.git.read_tree(target_sha, u=True, reset=True)
             self.log.info(
                 """
                 Committing merge commit:
@@ -416,7 +416,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             # finally test that everything worked correctly by comparing if
             # the tree object id's match
             if self.git.rev_parse("HEAD^{tree}") != \
-                    self.git.rev_parse("%s^{tree}" % self.import_branch):
+                    self.git.rev_parse("%s^{tree}" % target_sha):
                 raise ImportUpstreamError(
                     "Resulting tree does not match import")
             if in_rebase:
@@ -425,11 +425,10 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         except (GitCommandError, ImportUpstreamError) as e:
             self.log.error(
                 """
-                Failed to finish import by merging branch:
-                    '%s'
-                into and replacing the contents of:
-                    '%s'
-                """, self.import_branch, self.branch)
+                Failed to finish import by merging branch: '%s'
+                With commit: '%s'
+                into and replacing the contents of: '%s'
+                """, self.import_branch, target_sha, self.branch)
             self.log.error(str(e))
             self._set_branch(self.branch, current_sha, force=True)
             return False
