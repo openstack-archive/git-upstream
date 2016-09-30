@@ -377,6 +377,31 @@ class BaseTestCase(testtools.TestCase):
         self.addDetail('pre-script-output',
                        text_content(output.decode('utf-8')))
 
+    def run_post_script(self):
+        """
+        Run custom post-script for test
+
+        Method which executes the post-script defined for the test to perform
+        steps needed after initial execution of git-upstream has completed.
+
+        Generally it is only required where testing use cases involving
+        conflicts requiring simulating manual intervention to verify that
+        subsequent finish steps complete and result in the expected state.
+        """
+        # ensure we execute within context of the git repository
+        with DiveDir(self.testrepo.path):
+            try:
+                output = subprocess.check_output(self.post_script,
+                                                 stderr=subprocess.STDOUT,
+                                                 shell=True)
+            except subprocess.CalledProcessError as e:
+                self.addDetail('post-script-output',
+                               text_content(e.output))
+                raise
+
+        self.addDetail('post-script-output',
+                       text_content(output.decode('utf-8')))
+
     def attach_graph_info(self, exc_info):
         # appears to be an odd bug where this method is called twice
         # if registered with addOnException so make sure to guard
