@@ -159,6 +159,10 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
     def _verify_basic(self):
 
         self.assertThat(self.git.log(n=1), Contains("Merge branch 'import/"))
+        # check we report to the user about the import branch created
+        self.assertThat(
+            self.logger.output,
+            Contains("Created import branch 'import/"))
 
     def _verify_basic_additional_missed(self):
         """Additional verification that test produces a warning"""

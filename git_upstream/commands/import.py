@@ -177,7 +177,8 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
         # otherwise perform fresh import
         self.log.notice("Starting import of upstream")
         import_upstream.create_import(force=self.args.force)
-        self.log.notice("Successfully created import branch")
+        self.log.notice("Created import branch '%s'" %
+                        import_upstream.import_branch)
 
         # build suitable command line for interactive mode
         if self.args.merge:
