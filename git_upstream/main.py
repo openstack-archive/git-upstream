@@ -136,7 +136,7 @@ def main(argv=None):
 
     if argparse_loaded:
         argcomplete.autocomplete(parser)
-    args = parser.parse_args(argv)
+    args, unknownargs = parser.parse_known_args(argv)
 
     logger = setup_console_logging(args)
 
@@ -154,7 +154,7 @@ def main(argv=None):
         args.script_cmdline.append(arg)
 
     try:
-        args.cmd.run(args)
+        args.cmd.run(args, unknownargs)
     except GitUpstreamError as e:
         logger.fatal("%s", e[0])
         logger.debug("Git-Upstream: %s", e[0], exc_info=e)
