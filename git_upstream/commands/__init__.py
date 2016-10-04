@@ -52,6 +52,7 @@ class GitUpstreamCommand(object):
     def __init__(self, parser):
         self.parser = parser
         self.args = None
+        self.unknownargs = None
 
     def validate(self):
         """Verify the arguments passed for this command"""
@@ -64,8 +65,12 @@ class GitUpstreamCommand(object):
         """Execute this command"""
         raise NotImplementedError
 
-    def run(self, args):
+    def run(self, args, unknownargs=None):
         self.args = args
+        # NOTE(pbourke): avoids mutable arguments gotcha
+        if unknownargs is None:
+            unknownargs = []
+        self.unknownargs = unknownargs
         self.finalize()
         self.validate()
         return self.execute()
