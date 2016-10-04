@@ -102,3 +102,48 @@ class TestImport(base.BaseTestCase):
         self.assertEqual("?? dummy-file", self.git.status(porcelain=True),
                          "ImportUpstream.finish() failed to leave user "
                          "files not managed untouched.")
+
+    def test_import_create_import_branch_from_tag(self):
+        """Test that using a tag to import from uses the correct tag
+
+        Repository layout being checked
+
+          B---C             local/master
+         /
+        A---D---E           upstream/master (tags: tag-um-1, tag-um-2)
+
+        """
+
+        tree = [
+            ('A', []),
+            ('B', ['A']),
+            ('C', ['B']),
+            ('D', ['A']),
+            ('E', ['D']),
+        ]
+
+        branches = {
+            'head': ('master', 'C'),
+            'upstream': ('upstream/master', 'E'),
+        }
+
+        self.gittree = base.BuildTree(self.testrepo, tree, branches.values())
+        self.git.tag("tag-um-1", "upstream/master")
+        self.git.tag("tag-um-2", "upstream/master")
+        iu = ImportUpstream("master", "tag-um-1", "import/{describe}")
+        # create import
+        iu.create_import()
+        self.assertEqual(iu.import_branch, "import/tag-um-1",
+                         "ImportUpstream.create_import() failed to use the "
+                         "tag 'tag-um-1' for the import branch name")
+        # to confirm the tag being used is coming from the user, must
+        # test with the other tag to ensure it will use what is given
+        # to create the import branch, as 'git describe' can sometimes
+        # simply return one of the two tags applied, while what is
+        # desired is that only the tag given is used.
+        iu = ImportUpstream("master", "tag-um-2", "import/{describe}")
+        # create new import
+        iu.create_import()
+        self.assertEqual(iu.import_branch, "import/tag-um-2",
+                         "ImportUpstream.create_import() failed to use the "
+                         "tag 'tag-um-2' for the import branch name")
