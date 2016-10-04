@@ -154,17 +154,27 @@ class ImportUpstream(LogDedentMixin, GitMixin):
         if not import_branch:
             import_branch = self.import_branch
 
-        # use describe in order to be certain about unique identifying 'commit'
+        # determine if given a tag to import from and use as given, otherwise
+        # convert the given branch/commit into a described commit based on
+        # a recent tag.
+        #
         # Create a describe string with the following format:
         #    <describe upstream>[-<extra branch abbref hash>]*
         #
-        # Simply appends the 7 character ref abbreviation for each extra branch
-        # prefixed with '-', for each extra branch in the order they are given.
-        describe_commit = self.git.describe(commit, tags=True,
-                                            with_exceptions=False)
-        if not describe_commit:
-            self.log.warning("No tag describes the upstream branch")
-            describe_commit = self.git.describe(commit, always=True, tags=True)
+        # Extra branch abbref hash is the 7 character ref abbreviation for each
+        # extra branch joined with '-', in the order they are passed in to
+        # uniquely describe the full import.
+
+        if self.git.show_ref(commit, tags=True, with_exceptions=False):
+            # if given upstream ref is a tag, no need to describe
+            describe_commit = commit
+        else:
+            describe_commit = self.git.describe(commit, tags=True,
+                                                with_exceptions=False)
+            if not describe_commit:
+                self.log.warning("No tag describes the upstream branch")
+                describe_commit = self.git.describe(commit, always=True,
+                                                    tags=True)
 
         self.log.info("""
                     Using '%s' to describe:
