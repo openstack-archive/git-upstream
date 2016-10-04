@@ -57,6 +57,15 @@ class TestMainParser(testtools.TestCase):
             self.assertThat(mock_import.call_args[0][0].script_cmdline[2:],
                             matchers.Equals(argv[:3]))
 
+    def test_unknown_args_allowed(self):
+
+        argv = ["import", "--foo", "--bar"]
+        with mock.patch(
+                'git_upstream.commands.GitUpstreamCommand.run') as mock_import:
+            main.main(argv)
+            self.assertThat(mock_import.call_args[0][1],
+                            matchers.Equals(argv[1:]))
+
 
 class TestLoggingOptions(base.BaseTestCase):
     """Test cases for logging options behaviour"""
