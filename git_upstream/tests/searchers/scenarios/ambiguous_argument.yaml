@@ -24,6 +24,25 @@
     that are being passed to git, in this case a SHA1 that should be excluded
     from the list of commits to process.
 
+    This is important where executing a git command using a reference (or
+    shortened SHA1) that matches a filename in the current tree.
+
+    For example, if executing:
+
+      git rev-list 2cba7890ef
+
+    If a file exists with the name "2cba7890ef", the git command will throw
+    an error about ambiguous arguments, because it cannot distinguish
+    whether "2cba7890ef" refers to the file or the commit object. Thus need
+    to ensure that always use the following format to identify the commit:
+
+      git rev-list 2cba7890ef --
+
+    The '--' delimits that any following argument is a path, so git commands
+    are able to parse that a preceding argument that is not an option must
+    be a reference or git object identifier.
+
+
     Repository layout being tested
 
         B---C---F---G           master
