@@ -140,6 +140,13 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             import_branch=self.args.import_branch,
             extra_branches=self.args.branches)
 
+        # perform additional checks requiring git operations
+        if self.args.finish and not import_upstream.is_valid_commit(
+                self.args.import_branch):
+            self.parser.error(
+                "Invalid ref for argument '--import-branch', '%s' not found!"
+                % self.args.import_branch)
+
         self.log.notice("Searching for previous import")
         strategy = ImportStrategiesFactory.create_strategy(
             self.args.strategy, branch=self.args.branch,
