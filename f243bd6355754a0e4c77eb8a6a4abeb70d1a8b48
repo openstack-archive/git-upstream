@@ -1,0 +1,9 @@
+Code-Review+2: Paul Bourke (pbourke) <paul.bourke@oracle.com>
+Code-Review+2: Joe Fegan <joe.fegan@hp.com>
+Workflow+1: Joe Fegan <joe.fegan@hp.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 05 Oct 2016 09:46:09 +0000
+Reviewed-on: https://review.openstack.org/381930
+Project: openstack/git-upstream
+Branch: refs/heads/master
