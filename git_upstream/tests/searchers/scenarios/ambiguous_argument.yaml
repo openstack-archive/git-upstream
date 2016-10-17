@@ -53,7 +53,7 @@
   pre-script: |
     import os
 
-    from git_upstream.lib.pygitcompat import Repo
+    from git.repo import Repo
 
 
     repo = Repo(os.path.curdir)
