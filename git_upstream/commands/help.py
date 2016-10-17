@@ -29,12 +29,12 @@ class HelpCommand(LogDedentMixin, GitUpstreamCommand):
         self.parser.add_argument('command', metavar='<command>', nargs='?',
                                  help="command to display help about")
 
-    def execute(self, args, parent_parser=None):
-        if getattr(args, 'command', None):
-            if args.command in args.subcommands:
-                args.subcommands[args.command].print_help()
+    def execute(self):
+        if getattr(self.args, 'command', None):
+            if self.args.command in self.args.subcommands:
+                self.args.subcommands[self.args.command].print_help()
             else:
                 self.parser.error("'%s' is not a valid subcommand" %
-                                  args.command)
+                                  self.args.command)
         else:
-            parent_parser.print_help()
+            self.args.parent_parser.print_help()

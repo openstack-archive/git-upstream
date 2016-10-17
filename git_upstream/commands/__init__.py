@@ -60,7 +60,7 @@ class GitUpstreamCommand(object):
         """Additional updating of the args to set values"""
 
     @abc.abstractmethod
-    def execute(self, args):
+    def execute(self):
         """Execute this command"""
         raise NotImplementedError
 
