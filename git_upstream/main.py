@@ -24,6 +24,7 @@ import argparse
 import logging
 import os
 import sys
+import weakref
 
 import git
 
@@ -71,7 +72,8 @@ def build_parsers():
     else:
         script_cmdline = [program]
 
-    parser.set_defaults(script_cmdline=script_cmdline)
+    parser.set_defaults(script_cmdline=script_cmdline,
+                        parent_parser=weakref.proxy(parser))
 
     return subcommand_parsers, parser
 
@@ -140,8 +142,9 @@ def main(argv=None):
 
     logger = setup_console_logging(args)
 
+    # allow help subcommand to be called before checking git version
     if args.cmd.name == "help":
-        args.cmd.run(args, parser)
+        args.cmd.run(args)
         return 0
 
     if git.Git().version_info < (1, 7, 5):
