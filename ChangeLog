@@ -1,6 +1,56 @@
 Changelog
 =========
 
+0.12.0 (2016-10-19)
+-------------------
+
+- Changelog for 0.12.0 Release.
+- Fix help subcommand.
+- Remove compatibility hacks causing issues with newer GitPython.
+- Check valid import branch argument value.
+- Report import branch name used by default.
+- Use tag for import branch naming when given.
+- Use python for pre/post scripts.
+- Support tags for input args.
+- Allow SHA1 as reference for inputs.
+- Fix finish merge to ensure correct contents.
+- Always have rebase perform finish.
+- Ensure correct mode of git-rebase executed.
+- Support old GitPython transform_kwargs signature.
+- Refactor test to allow additional.
+- Ensure parent options retained for exec'ed finish.
+- Fix access for pre-script dict member.
+- Update .gitignore with .eggs path for setuptools.
+- Enable default GIT_PYTHON_TRACE for tests.
+- Consolidate to a single separator character.
+- Fix broken interactive mode to be usable.
+- Record upstream branch in import merge commit.
+- Handle all local changes landed upstream.
+- Detect cherry-picked changes without Change-Id.
+- Example in USAGE.md should reference .gitreview.
+- Use a recent pbr.
+- Add tool to recreate git repo from test scenarios.
+- Detect when nothing to import.
+- Merge multiple unrelated additional branches.
+- Support for python 3.
+- Show rebase help during interactive import.
+- Simplify USAGE.md example by using a local remote.
+- Fix / simplify the example patch in USAGE.md.
+- Minor change to the USAGE.md.
+- Handle missing merge during initial import.
+- Include parent commits in git graph.
+- Update package author/maintainer details.
+- Match name and result of is_detached() method.
+- Install coverage and fix command line to call.
+- Refactor import command tests to use scenarios.
+- Consolidate note reference and header constants.
+- Consolidate BadName exception compatibility.
+- Keep modifications to GitPython objects in single module.
+- Support test specific scripts to modify test areas.
+- Ensure end of arguments marked clearly.
+- Fix a tiny typo in USAGE.
+
+
 0.11.0 (2016-02-08)
 -------------------
 
