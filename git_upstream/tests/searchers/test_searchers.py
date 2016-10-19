@@ -18,6 +18,7 @@ from pprint import pformat
 
 from testscenarios import TestWithScenarios
 from testtools.content import text_content
+from testtools import matchers
 
 from git_upstream.lib.searchers import UpstreamMergeBaseSearcher
 from git_upstream.tests.base import BaseTestCase
@@ -50,6 +51,11 @@ class TestUpstreamMergeBaseSearcher(TestWithScenarios, BaseTestCase):
 
         searcher = UpstreamMergeBaseSearcher(branch=self.branches['head'][0],
                                              patterns=pattern, repo=self.repo)
+
         self.assertEqual(
             self.gittree._commits_from_nodes(reversed(self.expected_changes)),
             searcher.list(self.branches['upstream'][0]))
+
+        self.assertThat(self.logger.output,
+                        matchers.Contains("Searching for most recent merge "
+                                          "base with upstream branches"))
