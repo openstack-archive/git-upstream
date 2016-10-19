@@ -20,6 +20,7 @@ from pprint import pformat
 
 from testscenarios import TestWithScenarios
 from testtools.content import text_content
+from testtools import matchers
 
 from git_upstream.tests.base import BaseTestCase
 from git_upstream.tests.base import get_scenarios
@@ -56,3 +57,7 @@ class TestStrategies(TestWithScenarios, BaseTestCase):
         self.assertEqual(
             self.gittree._commits_from_nodes(self.expected_changes),
             [c for c in strategy.filtered_iter()])
+
+        self.assertThat(self.logger.output,
+                        matchers.Contains("Searching for most recent merge "
+                                          "base with upstream branches"))

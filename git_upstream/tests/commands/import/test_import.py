@@ -64,6 +64,9 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
         self.assertThat(self.logger.output,
                         Not(Contains("Successfully rebased and updated")))
 
+        self.assertThat(self.logger.output,
+                        Contains("Starting execution of import command"))
+
         # perform sanity checks on results
         self._check_tree_state()
 
