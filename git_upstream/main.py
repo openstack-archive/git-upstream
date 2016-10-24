@@ -42,6 +42,7 @@ except ImportError:
 
 def build_parsers():
     parser = argparse.ArgumentParser(
+        prog='git-upstream',
         description=__doc__.strip(),
         epilog='See "%(prog)s help COMMAND" for help on a specific command.',
         add_help=False)
@@ -67,7 +68,7 @@ def build_parsers():
 
     # calculate the correct path to allow the program be re-executed
     program = sys.argv[0]
-    if os.path.split(program)[-1] != 'git-upstream':
+    if os.path.split(program)[-1] != parser.prog:
         script_cmdline = ['python', program]
     else:
         script_cmdline = [program]
