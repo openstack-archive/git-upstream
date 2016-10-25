@@ -20,16 +20,22 @@
 import argparse
 import datetime
 from distutils.core import Command
+from distutils.command.build import build
 import os
+
+
+AUTO_BUILD = True
 
 
 class BuildManpage(Command):
 
-    user_options = []
+    user_options = [
+        ('output=', 'O', 'output file'),
+    ]
     command_name = 'build_manpage'
 
     def initialize_options(self):
-        self._output = self.distribution.get_name() + '.1'
+        self.output = None
         self._see_also = ["git:1"]
         self._today = datetime.date.today()
         self._commands = self._parser = None
@@ -38,6 +44,9 @@ class BuildManpage(Command):
         from git_upstream import main
         self._commands, self._parser = main.build_parsers()
         self._parser.formatter = ManPageFormatter()
+
+        if self.output is None:
+            self.output = self.distribution.get_name() + '.1'
 
     def _markup(self, txt):
         return txt.replace('-', '\\-')
@@ -113,7 +122,9 @@ class BuildManpage(Command):
         manpage.append(self._write_options())
         manpage.append(self._write_footer())
         manpage.append(self._write_see_also())
-        stream = open(self._output, 'w')
+        if not os.path.exists(os.path.dirname(self.output)):
+            os.makedirs(os.path.dirname(self.output))
+        stream = open(self.output, 'w')
         stream.write(''.join(manpage))
         stream.close()
 
@@ -134,3 +145,7 @@ class ManPageFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
     def format_usage(self, usage):
         return ManPageFormatter._markup(usage)
+
+
+if AUTO_BUILD:
+    build.sub_commands.append(('build_manpage', None))
