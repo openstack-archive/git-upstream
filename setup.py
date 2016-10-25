@@ -14,8 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import setuptools
+import sys
 
+
+# build_manpage command added under doc/utils
+sys.path.insert(0,  os.path.abspath('./doc/utils'))
 
 setuptools.setup(
     setup_requires=['pbr'],
