@@ -43,7 +43,7 @@ class BuildManpage(Command):
     def finalize_options(self):
         from git_upstream import main
         self._commands, self._parser = main.build_parsers()
-        self._parser.formatter = ManPageFormatter()
+        self._parser.formatter_class = ManPageFormatter
 
         if self.output is None:
             self.output = self.distribution.get_name() + '.1'
@@ -132,12 +132,12 @@ class BuildManpage(Command):
 class ManPageFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
     def __init__(self,
+                 prog,
                  indent_increment=2,
                  max_help_position=24,
-                 width=None,
-                 short_first=1):
-        argparse.HelpFormatter.__init__(self, indent_increment,
-                                        max_help_position, width, short_first)
+                 width=None):
+        argparse.HelpFormatter.__init__(self, prog, indent_increment,
+                                        max_help_position, width)
 
     @staticmethod
     def _markup(txt):
