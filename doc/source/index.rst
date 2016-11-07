@@ -6,11 +6,16 @@
 Welcome to git-upstream's documentation!
 ========================================
 
-Contents:
 
+Contents:
+=========
 .. toctree::
    :maxdepth: 2
 
+   installation
+   subcommands
+   workflows
+   examples
 
 
 Indices and tables
