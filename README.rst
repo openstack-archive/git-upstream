@@ -1,5 +1,8 @@
+README
+======
+
 What is git-upstream?
-=====================
+---------------------
 
 git-upstream is an open source Python application that can be used to
 keep in sync with upstream open source projects, mainly OpenStack.
@@ -80,7 +83,7 @@ automatically dropped, also useful to drop the additional ported changes
 automatically if possible, rather than have it cause conflicts.
 
 What git-upstream is not
-========================
+------------------------
 
 The name of this tool includes the "git-" prefix because of the Git
 naming convention that a Git subcommand must have. So, as git-review
@@ -92,8 +95,8 @@ strictly related to git-review. In other words, git-review can (and most
 of the time will) be used without even knowing about git-upstream
 existence.
 
-git-upstream installation
-=========================
+Installation
+============
 
 At the time of writing, there are two ways to install git-upstream:
 cloning its git repository or using pip.
