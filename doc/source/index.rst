@@ -6,6 +6,9 @@
 Welcome to git-upstream's documentation!
 ========================================
 
+.. include:: ../../README.rst
+   :start-after: ======
+   :end-before: git-upstream installation
 
 Contents:
 =========
