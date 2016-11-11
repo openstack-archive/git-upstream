@@ -14,7 +14,7 @@ Workflows
 Importing from upstream: using git-upstream
 -------------------------------------------
 
-See :doc:`installation instructions </installation>` for details on
+See `installation instructions <installation.rst>`_ for details on
 installing.
 
 Initial import of an upstream project
