@@ -28,7 +28,7 @@ commands.
    any part of commit message (e.g., other headers).
 
 
-Current git-upstream version supports the following features
+Git-upstream currently supports the following features
 
 -  **Single upstream branch import**
 
@@ -51,11 +51,11 @@ fully re-reviewed or merged into master and pushed.
 -  **Detailed logging**
 
 git-upstream can output to both console and log file simultaneously.
-Multiple levels and these are managed separately for log file and
-console output. This means jobs run by Jenkins can save a detailed log
-file separately as an artefact while printing status information to the
-console if those running the jobs don’t wish to have the console spammed
-with the details.
+Multiple log levels are supported, and these are managed separately for
+log file and console output. This means jobs run by Jenkins can save a
+detailed log file separately as an artefact while printing status
+information to the console if those running the jobs don’t wish to have
+the console spammed with the details.
 
 -  **Dropping of changes that appear upstream**
 
@@ -66,9 +66,9 @@ that have appeared on the upstream branch since the last import point.
 
 Once the list of changes to be re-applied has been determined (and those
 to be dropped have been pruned), the tool can open an editor (controlled
-by your git editor settings) for users to review those changes to be
+by a user's git editor settings) for users to review those changes to be
 made and allow them to perform further operations such as re-ordering,
-dropping of obsolete changes, squashing.
+dropping of obsolete changes, and squashing.
 
 -  **Dropping local changes**
 
@@ -81,19 +81,6 @@ being upstreamed based on review feedback and the resulting differences
 were ported to the internal as well. While the original change will be
 automatically dropped, also useful to drop the additional ported changes
 automatically if possible, rather than have it cause conflicts.
-
-What git-upstream is not
-------------------------
-
-The name of this tool includes the "git-" prefix because of the Git
-naming convention that a Git subcommand must have. So, as git-review
-(usually invoked with "git review [...]"), this tool can be invoked
-using "git upstream [...]".
-
-That said, and even if git-upstream currently uses Change-Ids, it is not
-strictly related to git-review. In other words, git-review can (and most
-of the time will) be used without even knowing about git-upstream
-existence.
 
 Installation
 ============
