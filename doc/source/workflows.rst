@@ -1,15 +1,10 @@
 Workflows
 =========
 
-.. note:: this guide assumes that you are using a branch named *master*
+.. note:: This guide assumes that you are using a branch named *master*
    to maintain your new features or bug fixes that sit on top of the
    upstream code of some project (probably somewhat related to
    OpenStack).
-
-   It is also assumed you are tracking releases, which is only one of
-   the possible approaches to upstream tracking. Another approach would
-   be tracking the master tip of a project. Of course even other
-   strategies are possible.
 
 Importing from upstream: using git-upstream
 -------------------------------------------
@@ -185,8 +180,8 @@ Environment File Plugin (finally!).
         Reviewed-by: Clark Boylan <clark.boylan@gmail.com>
         Tested-by: Jenkins
 
-Import those changes simply cherry-picking the two commits. Don’t forget
-to push (review!) your changes.
+Import those changes by simply cherry-picking the two commits. Don’t
+forget to push (review!) your changes.
 
 .. code:: bash
 
@@ -197,7 +192,7 @@ to push (review!) your changes.
 Importing new versions from upstream
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Days passes and finally a new releases comes out.
+Time passes and finally a new releases comes out.
 
 .. code:: bash
 
@@ -207,23 +202,17 @@ Days passes and finally a new releases comes out.
       xargs git push --tags origin
 
 A lot of work has been done upstream and we need to rebase our master
-onto the upstream master branch. In this process we must skip all the
-commits we already cherry-picked some days ago, of course.
-
-.. note:: the rebasing for this example is trivial but it is just to
-   break the ice. Later in this guide we will address rebasing
-   conflicts that can occur in the real world.
-
-Create a new local branch with the new release tag as a starting point
-
-.. code:: bash
-
-    git branch import/0.6.0 0.6.0
+onto the upstream master branch. In this process we want to skip all
+the commits cherry-picked some days ago, where they have merged
+upstream.
 
 Running git-upstream
 ~~~~~~~~~~~~~~~~~~~~
 
-Finally, it is time to run git-upstream! Before doing so make sure the
+Identify the commit/tag/branch to import from, in this example we'll use
+``0.6.0`` as a tag for a recent release we want to import.
+
+Now, it is time to run git-upstream! Before doing so make sure the
 current branch is master
 
 .. code:: bash
@@ -232,7 +221,7 @@ current branch is master
 
 .. code:: bash
 
-    git-upstream import import/0.6.0
+    git-upstream import 0.6.0
     Searching for previous import
     Starting import of upstream
     Successfully created import branch
@@ -249,9 +238,9 @@ current branch is master
 What has just happened?
 
 git-upstream has created a new branch named ``import/0.6.0-base`` which
-tip is set to the commit pointed by the release tag ``0.6.0``, and has
-rebased all changes present in our local master which were not already
-present in the upstream new release (``import/0.6.0-base``) onto
+tip is branched from the release tag ``0.6.0``, and has rebased all
+changes present in our local master which were not already present in
+the upstream new release (``import/0.6.0-base``) onto
 ``import/0.6.0-base``.
 
 You can see that running the following command
@@ -263,10 +252,11 @@ You can see that running the following command
 For this trivial example, the only commit not present in the upstream
 release was about the customisation of the .gitreview file.
 
-The default strategy git-upstream uses to find duplicate entries is the
-comparison of Change-id entries in commit messages. Of course, it’s not
-possible to compare directly the SHA1 for a commit because the
-cherry-picking changes the information used for SHA1 calculation
+The default strategy git-upstream uses to find duplicate entries is
+exactly the same as ``git-rebase``. Additionally it also looks at
+Change-Id entries in commit messages where found, as these help identify
+patches that were changed before being accepted upstream when using
+Gerrit for reviews.
 
 .. note:: A git commit SHA1 is generated from the following information:
 
@@ -276,12 +266,17 @@ cherry-picking changes the information used for SHA1 calculation
    - tree SHA1 (hierarchy of directories and files within the commit)
    - list of the SHA1's of the parent commits
 
+   This prevents usage of the commit SHA1 as a method of finding
+   duplicates. Git utilizes a patch-id instead to find identical changes
+   as this is only based of the changes the commit makes to the tree.
+
 --------
 
 The local branch ``import/0.6.0`` now contains our local changes rebased
 onto the new upstream release. git-upstream has also merged this branch
-with the local master branch (with "ours" strategy) to allow the normal
-workflow (committing/merging to master for review).
+with the local master branch (with a custom merge strategy equivalent to
+the inverse of 'ours') to allow the normal workflow (committing/merging
+to master for review).
 
 .. note:: The "final" merging step is not mandatory. Of course you can
    keep a separate branch for each new import. On one hand this
@@ -362,28 +357,17 @@ Depending on the type of conflict, you will could:
    upstream code. You can later resume rebasing process issuing
    ``git rebase --continue``
 
-Currently git-upstream can't resume the rebasing process. So, if needed,
-the final "merging" steps have to be performed manually:
+By default git-upstream should automatically be re-called as the final step
+of the rebasing process. Unless however you have used the option
+``--no-merge`` as an argument to the import command.
+
+In such cases, where you wish to subsequently finish, the ``import``
+subcommand provides a ``--finish`` option to assist:
 
 .. code:: bash
 
-    git merge -s ours --no-commit <import-xxxx>
-
-Replacing tree contents with those from the import branch
-
-.. code:: bash
-
-    git read-tree -u --reset <import-xxxx>
-
-Committing merge commit
-
-.. code:: bash
-
-    git commit --no-edit
-
-.. note:: git-upstream performs exactly those steps in order to replace
-   the content of ``master`` branch with the import branch preserving the
-   history.
+    git checkout master
+    git upstream import --finish --import-branch import/0.5.0 0.5.0
 
 Integration with Gerrit
 -----------------------
