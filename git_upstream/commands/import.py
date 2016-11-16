@@ -134,6 +134,8 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
 
     def execute(self):
 
+        self.log.info("Starting execution of import command")
+
         import_upstream = ImportUpstream(
             branch=self.args.branch,
             upstream=self.args.real_upstream_branch,
