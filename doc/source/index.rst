@@ -7,14 +7,20 @@ Welcome to git-upstream's documentation!
 ========================================
 
 .. include:: ../../README.rst
-   :start-after: ======
-   :end-before: git-upstream installation
+   :start-after: =====================
+   :end-before: To install:
+
+.. include:: ../../README.rst
+   :start-after:     pip install .
+   :end-before: What does git-upstream do?
 
 Contents:
 =========
+
 .. toctree::
    :maxdepth: 2
 
+   intro
    installation
    subcommands
    workflows
