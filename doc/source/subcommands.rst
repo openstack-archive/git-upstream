@@ -1,5 +1,5 @@
-Git-Upstream Subcommands
-========================
+Subcommands
+===========
 
 import
 ------
