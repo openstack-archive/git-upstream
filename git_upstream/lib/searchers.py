@@ -220,8 +220,8 @@ class Searcher(GitMixin):
                 those behind the previous import or merged as an additional
                 branch during the previous import
                     git rev-list --topo-order %s %s %s
-                """, self.git.transform_kwargs(**git_args), revision_spec,
-                " ".join(extra))
+                """, ' '.join(self.git.transform_kwargs(**git_args)),
+                revision_spec, " ".join(extra))
 
             commit_list.append(
                 Commit._iter_from_process_or_stream(
