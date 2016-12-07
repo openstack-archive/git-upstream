@@ -66,7 +66,8 @@ class Searcher(GitMixin):
         """
         pass
 
-    def _check_merge_is_previous(self, mergecommit, parent, last_merge):
+    def _check_merge_is_previous(self, mergecommit, parent, last_merge,
+                                 ancestry_commits):
         """Check if merge commit and parent describes previous import
 
         Method checks if the given merge and parent commits describe a
@@ -94,14 +95,14 @@ class Searcher(GitMixin):
                 Found merge of additional branch:
                     %s
                 """, mergecommit)
-            return None, ["^%s" % mp for mp in mergecommit.parents]
+            return None, ["^%s" % mp for mp in mergecommit.parents], None
 
         # if the parent tree doesn't match the merge commit tree, we can
         # skip inspecting it as it and it's parent commit must be
         # included as it contributes changes to the tree.
         if (self.git.rev_parse("%s^{tree}" % parent) !=
                 self.git.rev_parse("%s^{tree}" % mergecommit)):
-            return None, []
+            return None, [], None
 
         # otherwise we have a descendant commit with the same tree that
         # requires further inspection to determine if it is really the
@@ -114,19 +115,29 @@ class Searcher(GitMixin):
             # the previous mainline that was replaced and should ignore
             if mergecommit == last_merge:
                 # also means we've found the previous import
-                return mergecommit, ["^%s" % parent]
+                return mergecommit, ["^%s" % parent], None
 
             # otherwise this an unusual state where we are looking at the
             # merge of the previous import with a change that landed on the
             # previous target mainline but was not included in the changes
             # that where on the previous import. This can occur due to a
             # change being approved/landed after the import was performed
-            return None, []
+            return None, [], None
+
+        other_parents = [p.hexsha for p in mergecommit.parents if p != parent]
+
+        # if the merge base of the parent against any of the other parents
+        # happens to be in a list of commits directly between the tip and
+        # previous upstream import, then it is simply a merge of an obsolete
+        # commit. These are very difficult to strip out normally
+        if any(self.git.merge_base(
+                parent, p, with_exceptions=False) in ancestry_commits
+               for p in other_parents):
+            return None, [], other_parents
 
         # otherwise looking at the previous import merge commit and the parent
         # from the previous import branch, so exclude all other parents.
-        return mergecommit, ["^%s" % ip
-                             for ip in mergecommit.parents if ip != parent]
+        return mergecommit, ["^%s" % ip for ip in other_parents], None
 
     def list(self, upstream=None):
         """
@@ -154,14 +165,28 @@ class Searcher(GitMixin):
         merge_list = list(Commit.iter_items(self.repo, revision_spec,
                                             topo_order=True,
                                             ancestry_path=True, merges=True))
+
+        # to handle special case where a merge of a commit introduces
+        # nothing to the tree, need to spot when such commits are based
+        # off of the import set, so as not to accidentally exclude
+        strip_commits = set()
+        ancestry_commits = [
+            commit.hexsha
+            for commit in Commit.iter_items(
+                self.repo, revision_spec, topo_order=True,
+                ancestry_path=True, merges=False)
+        ]
+
         extra_args = []
         previous_import = None
         for mergecommit, parent in ((mc, p)
                                     for mc in merge_list
                                     for p in mc.parents):
             # inspect each
-            previous_import_candidate, ignores = self._check_merge_is_previous(
-                mergecommit, parent, merge_list[-1])
+            (previous_import_candidate,
+             ignores,
+             prune_list) = self._check_merge_is_previous(
+                mergecommit, parent, merge_list[-1], ancestry_commits)
 
             if ignores:
                 self.log.debug(
@@ -170,6 +195,14 @@ class Searcher(GitMixin):
                         %s
                     """, "\n    ".join(ignores))
                 extra_args.extend(ignores)
+
+            if prune_list:
+                self.log.debug(
+                    """
+                    Adding following commits to be pruned afterwards:
+                        %s
+                    """, "\n    ".join(prune_list))
+                strip_commits.update(prune_list)
 
             if previous_import_candidate:
                 previous_import = previous_import_candidate
@@ -246,6 +279,9 @@ class Searcher(GitMixin):
         # chain the filters as generators so that we don't need to allocate new
         # lists for each step in the filter chain.
         commit_list = itertools.chain(*commit_list)
+        # strip commits that cannot be excluded through revision specifications
+        # or without removing additional history
+        commit_list = [c for c in commit_list if c.hexsha not in strip_commits]
         for f in self.filters:
             commit_list = f.filter(commit_list)
 
