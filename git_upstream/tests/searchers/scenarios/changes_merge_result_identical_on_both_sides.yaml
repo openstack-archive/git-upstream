@@ -50,4 +50,4 @@
     head: [master, J]
     upstream: [upstream/master, L]
 
-  expected-changes: [D1, G1, H, I, J]
+  expected-changes: [D1, G1, I, J]
