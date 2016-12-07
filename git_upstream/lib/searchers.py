@@ -155,12 +155,12 @@ class Searcher(GitMixin):
                                             topo_order=True,
                                             ancestry_path=True, merges=True))
         extra_args = []
-        previous_import = False
+        previous_import = None
         for mergecommit, parent in ((mc, p)
                                     for mc in merge_list
                                     for p in mc.parents):
             # inspect each
-            previous_import, ignores = self._check_merge_is_previous(
+            previous_import_candidate, ignores = self._check_merge_is_previous(
                 mergecommit, parent, merge_list[-1])
 
             if ignores:
@@ -171,13 +171,20 @@ class Searcher(GitMixin):
                     """, "\n    ".join(ignores))
                 extra_args.extend(ignores)
 
-            if previous_import:
+            if previous_import_candidate:
+                previous_import = previous_import_candidate
                 self.log.info(
                     """
                     Found the previous import merge:
                         %s
-                    """, mergecommit)
-                break
+                    """, previous_import)
+
+        if previous_import:
+            self.log.info(
+                """
+                Found possible previous import merge:
+                    %s
+                """, previous_import)
 
         # walk the tree and find all commits that lie in the path between the
         # commit found by find() and head of the branch in two steps, to
