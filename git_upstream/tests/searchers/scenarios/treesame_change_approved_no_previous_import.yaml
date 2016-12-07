@@ -12,7 +12,7 @@
 
     Repository layout being tested
 
-            O----
+            O---P
            /     \
       B---C---D---G---H                 master
      /
@@ -24,10 +24,11 @@
     - [B, [A]]
     - [C, [B]]
     - [O, [C]]
+    - [P, [O]]
     - [D, [C]]
     - [E, [A]]
     - [F, [E]]
-    - [G, [=D, O]]
+    - [G, [=D, P]]
     - [H, [G]]
     - [L, [F]]
     - [M, [L]]
