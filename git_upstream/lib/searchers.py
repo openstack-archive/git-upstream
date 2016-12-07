@@ -205,14 +205,17 @@ class Searcher(GitMixin):
             else:
                 search_list = [(self.branch, upstream, None)]
             rev_spec = "{0}...{1}"
-            git_args = {'cherry_pick': True, 'left_only': True}
+            git_args = {'cherry_pick': True,
+                        'left_only': True,
+                        'full_history': True,
+                        }
             extra_args.append("^%s" % self.commit)
 
         for start, end, exclude in search_list:
             extra = list(extra_args)
             if exclude:
                 extra.append(exclude)
-            extra.append("--")
+            extra.extend(["--", "."])
             revision_spec = rev_spec.format(start, end)
             self.log.info(
                 """
