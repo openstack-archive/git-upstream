@@ -81,9 +81,10 @@ class Searcher(GitMixin):
         self.log.debug(
             """
             previous upstream: %s
+            merge commit: %s
             merge-base: %s
             parent: %s
-            """, self.commit, mergebase, parent.hexsha)
+            """, self.commit, mergecommit, mergebase, parent.hexsha)
 
         # if not a valid response from merge-base, we have an additional
         # branch with unrelated history, and should ignore all parents
