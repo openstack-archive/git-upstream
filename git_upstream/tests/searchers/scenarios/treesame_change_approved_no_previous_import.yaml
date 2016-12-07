@@ -1,0 +1,39 @@
+- desc: |
+    Construct a repo layout where using a complex layout where a previous
+    import from upstream having been completed, test that if a change was
+    created on before the previous import was created, and merged to the
+    target branch 'but did not introduce any changes to the branch' that
+    it is not incorrectly detected as the previous merge import.
+
+    i.e. will the searcher ignore 'I' even though it is treesame to 'H',
+    and instead correctly detect 'A' as the previous import given the
+    diagram below. Additionally will it exclude 'O' as not contributing
+    anything to the final state.
+
+    Repository layout being tested
+
+            O----
+           /     \
+      B---C---D---G---H                 master
+     /
+    A---E---F---L---M                   upstream/master
+
+
+  tree:
+    - [A, []]
+    - [B, [A]]
+    - [C, [B]]
+    - [O, [C]]
+    - [D, [C]]
+    - [E, [A]]
+    - [F, [E]]
+    - [G, [=D, O]]
+    - [H, [G]]
+    - [L, [F]]
+    - [M, [L]]
+
+  branches:
+    head: [master, H]
+    upstream: [upstream/master, M]
+
+  expected-changes: [B, C, D, G, H]
