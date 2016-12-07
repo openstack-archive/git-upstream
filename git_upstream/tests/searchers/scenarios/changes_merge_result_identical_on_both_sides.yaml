@@ -24,34 +24,30 @@
 
     Repository layout being tested
 
-          B---C---D---G---H---I---J     master
-         /               /
-        /               G1              import/next
+        B---C---D---G---H---I---J     master
        /               /
-      /       B1--C1--D1
+      /       D1--G1---
      /       /
-    A---E---F---K---L                   upstream/master
+    A--B1--C1---K---L                   upstream/master
 
   tree:
     - [A, []]
     - [B, [A]]
     - [C, [B]]
     - [D, [C]]
-    - [E, [A]]
-    - [F, [E]]
-    - [G, [D]]
-    - [B1, [F]]
+    - [B1, [A]]
     - [C1, [B1]]
+    - [G, [D]]
     - [D1, [C1]]
     - [G1, [D1]]
-    - [H, [=G, G1]]
+    - [H, [G, =G1]]
     - [I, [H]]
     - [J, [I]]
-    - [K, [F]]
+    - [K, [C1]]
     - [L, [K]]
 
   branches:
     head: [master, J]
     upstream: [upstream/master, L]
 
-  expected-changes: [B1, C1, D1, G1, H, I, J]
+  expected-changes: [D1, G1, H, I, J]
