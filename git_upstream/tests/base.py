@@ -70,6 +70,8 @@ def reverse_toposort(data):
                 yield (node, data[node])
                 visited[node] = _FINISHED
                 continue
+            elif visited.get(node) is _FINISHED:
+                continue
 
             visited[node] = _VISITED
             nodes_to_visit.append(node)
@@ -205,7 +207,7 @@ class BuildTree(object):
     def _commit(self, node):
         p_node = _get_node_to_pick(node)
         if p_node:
-            self.git.cherry_pick(self.graph[p_node])
+            self.git.cherry_pick(self.graph[p_node], x=True)
         else:
             # standard commit
             self.gitrepo.add_commits(1, ref="HEAD",
