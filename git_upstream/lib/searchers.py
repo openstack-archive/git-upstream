@@ -150,9 +150,10 @@ class Searcher(GitMixin):
                 git rev-list --ancestry-path --merges %s
             """, revision_spec)
 
-        merge_list = list(Commit.iter_items(self.repo, revision_spec,
-                                            topo_order=True,
-                                            ancestry_path=True, merges=True))
+        merge_list = reversed(list(Commit.iter_items(self.repo, revision_spec,
+                                                     topo_order=True,
+                                                     ancestry_path=True,
+                                                     merges=True)))
         extra_args = []
         previous_import = False
         for mergecommit, parent in ((mc, p)
