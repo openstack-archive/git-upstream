@@ -130,10 +130,15 @@ class Searcher(GitMixin):
         # happens to be in a list of commits directly between the tip and
         # previous upstream import, then it is simply a merge of an obsolete
         # commit. These are very difficult to strip out normally
-        if any(self.git.merge_base(
-                parent, p, with_exceptions=False) in ancestry_commits
-               for p in other_parents):
-            return None, [], other_parents
+        exclude_commits = []
+        for p in other_parents:
+            if self.git.merge_base(
+                    p, parent, with_exceptions=False) in ancestry_commits:
+                exclude_commits.extend(
+                    self.git.rev_list("%s..%s" % (parent, p)).splitlines())
+
+        if exclude_commits:
+            return None, [], exclude_commits
 
         # otherwise looking at the previous import merge commit and the parent
         # from the previous import branch, so exclude all other parents.
