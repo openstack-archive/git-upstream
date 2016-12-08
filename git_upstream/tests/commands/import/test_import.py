@@ -67,6 +67,10 @@ class TestImportCommand(TestWithScenarios, BaseTestCase):
         self.assertThat(self.logger.output,
                         Contains("Starting execution of import command"))
 
+        self.assertThat(
+            self.logger.output,
+            Not(Contains("Exception occurred during linearisation")))
+
         # perform sanity checks on results
         self._check_tree_state()
 

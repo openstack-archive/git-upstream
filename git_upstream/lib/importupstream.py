@@ -237,7 +237,7 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             ancestors.add(root)
 
             # look for merge commits that are not part of ancestry path
-            for idx in xrange(counter - 1, -1, -1):
+            for idx in range(counter - 1, -1, -1):
                 commit = sequence[idx]
                 # if there is only one parent, no need to check the others
                 if len(commit.parents) < 2:
