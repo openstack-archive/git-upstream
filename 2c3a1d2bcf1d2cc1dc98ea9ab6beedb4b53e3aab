@@ -1,0 +1,10 @@
+Code-Review+1: jeck <xiexiaozhe@inspur.com>
+Code-Review+2: Darragh Bailey <daragh.bailey@gmail.com>
+Code-Review+2: Joe Fegan <joe.fegan@hpe.com>
+Workflow+1: Joe Fegan <joe.fegan@hpe.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 31 Jan 2017 18:13:28 +0000
+Reviewed-on: https://review.openstack.org/408003
+Project: openstack/git-upstream
+Branch: refs/heads/master
