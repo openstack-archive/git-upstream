@@ -16,6 +16,18 @@ specified strategy. Once complete it will merge and replace the contents
 of the target branch with those from the import branch, unless
 ``--no-merge`` is specified.
 
+By default, the import branch is named according to the following
+format, unless overridden using ``--import-branch``:
+
+::
+
+    import/<tag-or-git-describe-commit>[-<additional-branch-git-describe-commit>]
+
+For example, ``import/4.0.0.0rc1-8-geaec95b`` refers to an upstream
+branch who's latest tag is ``4.0.0.0rc1``. 8 commits have been made
+upstream ahead of this tag, and ``geaec95b`` is SHA1 of the tip before
+import.
+
 Usage
 ~~~~~
 
