@@ -1,0 +1,9 @@
+Code-Review+2: Manuel Desbonnet <mdes@hpe.com>
+Code-Review+2: Paul Bourke (pbourke) <paul.bourke@oracle.com>
+Workflow+1: Darragh Bailey <daragh.bailey@gmail.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Mon, 27 Mar 2017 16:00:39 +0000
+Reviewed-on: https://review.openstack.org/408215
+Project: openstack/git-upstream
+Branch: refs/heads/master
