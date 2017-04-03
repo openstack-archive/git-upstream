@@ -1,0 +1,9 @@
+Code-Review+2: Manuel Desbonnet <mdes@hpe.com>
+Code-Review+2: Joe Fegan <joe.fegan@hpe.com>
+Workflow+1: Joe Fegan <joe.fegan@hpe.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Mon, 03 Apr 2017 17:05:17 +0000
+Reviewed-on: https://review.openstack.org/408245
+Project: openstack/git-upstream
+Branch: refs/heads/master
