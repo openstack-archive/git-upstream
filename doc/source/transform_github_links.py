@@ -73,16 +73,17 @@ def transform_github_links(app, doctree, fromdocname):
         # Replace the suffix with the correct target format file ending,
         # but only if the link ends with both the correct source suffix
         # and refers to a local file.
-        if link.endswith(source_suffix):
-            # absolute paths are considered relative to repo
-            if link.startswith("/"):
-                basepath = ""
-            # relative paths are against the current doctree source path
-            else:
-                basepath = doc_dir
-            if os.path.exists(os.path.join(basepath, link)):
-                node['refuri'] = (link[:-len(source_suffix)] + target_format +
-                                  anchor)
+        for src_suffix in source_suffix:
+            if link.endswith(src_suffix):
+                # absolute paths are considered relative to repo
+                if link.startswith("/"):
+                    basepath = ""
+                # relative paths are against the current doctree source path
+                else:
+                    basepath = doc_dir
+                if os.path.exists(os.path.join(basepath, link)):
+                    node['refuri'] = (link[:-len(source_suffix)] + target_format +
+                                    anchor)
 
 
 def setup(app):
