@@ -1,7 +1,7 @@
 hacking>=0.11.0,<0.12  # Apache-2.0
 loremipsum
 mock!=1.1.1,<=1.3.0
-Sphinx>=1.1.2,<1.2
+Sphinx>=1.5.1  # BSD
 discover
 coverage>=3.6  # Apache-2.0
 fixtures>=0.3.14
