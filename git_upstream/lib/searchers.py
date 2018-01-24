@@ -117,6 +117,7 @@ class Searcher(GitMixin):
             # the previous mainline that was replaced and should ignore
             if mergecommit == last_merge:
                 # also means we've found the previous import
+                self.log.debug("Merge is last merge to be inspected")
                 return mergecommit, ["^%s" % parent], None
 
             # otherwise this an unusual state where we are looking at the
@@ -124,9 +125,11 @@ class Searcher(GitMixin):
             # previous target mainline but was not included in the changes
             # that where on the previous import. This can occur due to a
             # change being approved/landed after the import was performed
+            self.log.debug("Merge base is not the same as root merge base")
             return None, [], None
 
         other_parents = [p.hexsha for p in mergecommit.parents if p != parent]
+        self.log.debug("Merge base is same: other_parents: %s", other_parents)
 
         # if the merge base of the parent against any of the other parents
         # happens to be in a list of commits directly between the tip and
@@ -183,6 +186,7 @@ class Searcher(GitMixin):
                 self.repo, revision_spec, topo_order=True,
                 ancestry_path=True, merges=False)
         ]
+        self.log.debug("Ancestry commits: %s", ancestry_commits)
 
         extra_args = []
         previous_import = None
@@ -215,7 +219,7 @@ class Searcher(GitMixin):
                 previous_import = previous_import_candidate
                 self.log.info(
                     """
-                    Found the previous import merge:
+                    Found possible previous import merge:
                         %s
                     """, previous_import)
 
