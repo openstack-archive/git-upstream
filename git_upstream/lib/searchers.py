@@ -128,7 +128,9 @@ class Searcher(GitMixin):
             self.log.debug("Merge base is not the same as root merge base")
             return None, [], None
 
-        other_parents = [p.hexsha for p in mergecommit.parents if p != parent]
+        other_parents = set(
+            p.hexsha for p in mergecommit.parents if p != parent
+        )
         self.log.debug("Merge base is same: other_parents: %s", other_parents)
 
         # if the merge base of the parent against any of the other parents
@@ -144,6 +146,11 @@ class Searcher(GitMixin):
 
         if exclude_commits:
             return None, [], exclude_commits
+
+        # handle case where merges are always created in GitHub even when
+        # not needed.
+        if other_parents.issubset(ancestry_commits):
+            return None, [], []
 
         # otherwise looking at the previous import merge commit and the parent
         # from the previous import branch, so exclude all other parents.
