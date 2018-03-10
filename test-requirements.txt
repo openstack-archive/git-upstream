@@ -12,3 +12,4 @@ testscenarios>=0.4
 testtools>=0.9.32
 PyYAML>=3.1.0
 psutil>=1.1.1,<2.0.0  # BSD
+fixtures-git  # Apache-2.0
