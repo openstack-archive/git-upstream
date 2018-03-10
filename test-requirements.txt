@@ -1,5 +1,4 @@
 hacking>=0.11.0,<0.12  # Apache-2.0
-loremipsum
 mock
 sphinx>=1.5.1  # BSD
 coverage>=3.6  # Apache-2.0
@@ -11,3 +10,4 @@ testscenarios>=0.4
 testtools>=0.9.32
 PyYAML>=3.1.0
 psutil>=3.2.2  # BSD
+fixtures-git  # Apache-2.0
