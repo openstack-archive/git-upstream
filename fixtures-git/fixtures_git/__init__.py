@@ -299,29 +299,36 @@ class GitFixture(fixtures.Fixture):
         if self._graph:
             self.gittree = GitTree(self, self._graph, self._branches)
 
-    def _create_file(self):
-        contents = "\n\n".join(loremipsum.get_paragraphs(3))
+    def _create_file(self, filename=None, contents=None):
+        if not contents:
+            contents = "\n\n".join(loremipsum.get_paragraphs(3))
 
         # always want to ensure the files added to the repo are unique no
         # matter which branch they are added to, as otherwise there may
         # be conflicts caused by replaying local changes and performing
         # merges
-        while True:
-            tmpfile = tempfile.NamedTemporaryFile(
-                dir=self.repo.working_dir, delete=False)
-            if tmpfile.name not in self._file_list:
-                self._file_list.add(tmpfile.name)
-                break
-            # case where same filename in use on a different branch
-            tmpfile.close()
-            os.remove(tmpfile.name)
+        if filename is None:
+            while True:
+                tmpfile = tempfile.NamedTemporaryFile(
+                    dir=self.repo.working_dir, delete=False)
+                # close immediately to ensure code at the end of this can
+                # be reopened for writing
+                tmpfile.close()
+                if tmpfile.name not in self._file_list:
+                    self._file_list.add(tmpfile.name)
+                    filename = tmpfile.name
+                    break
+                # remove file as name in use elsewhere in the git repo
+                os.remove(tmpfile.name)
 
-        tmpfile.write(contents.encode('utf-8'))
-        tmpfile.close()
-        return tmpfile.name
+        with open(filename, 'w') as f:
+            f.write(contents.encode('utf-8'))
 
-    def _create_file_commit(self, change_id=None, message_prefix=None):
-        filename = self._create_file()
+        return filename
+
+    def _create_file_commit(self, message=None, contents=None,
+                            change_id=None, message_prefix=None):
+        filename = self._create_file(contents)
         self.repo.git.add(filename)
         message = "Adding %s" % os.path.basename(filename)
         if message_prefix:
