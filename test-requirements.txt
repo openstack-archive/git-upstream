@@ -1,5 +1,5 @@
 hacking>=0.11.0,<0.12  # Apache-2.0
-faker>=0.8.16
+fixtures-git  # Apache-2.0
 mock>=2.0.0
 sphinx>=1.5.1  # BSD
 coverage>=3.6  # Apache-2.0

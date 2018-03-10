@@ -55,7 +55,7 @@ class TestStrategies(TestWithScenarios, BaseTestCase):
             search_refs=[self.branches['upstream'][0]])
 
         self.assertEqual(
-            self.gittree._commits_from_nodes(self.expected_changes),
+            self.gittree.commits_from_nodes(self.expected_changes),
             [c for c in strategy.filtered_iter()])
 
         self.assertThat(self.logger.output,
