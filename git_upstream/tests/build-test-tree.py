@@ -42,8 +42,8 @@ def build_test_tree(basedir, filename):
         with base.DiveDir(testrepo.path):
 
             if 'tree' in data:
-                base.BuildTree(testrepo, data['tree'],
-                               data['branches'].values())
+                base.fixtures_git.gitfixture.GitTree(
+                    testrepo, data['tree'], data['branches'].values())
 
             if 'pre-script' in data:
                 output = subprocess.check_output(data['pre-script'],

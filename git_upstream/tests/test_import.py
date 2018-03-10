@@ -57,7 +57,8 @@ class TestImport(base.BaseTestCase):
             'import': ('import', 'C1')
         }
 
-        self.gittree = base.BuildTree(self.testrepo, tree, branches.values())
+        self.gittree = base.fixtures_git.gitfixture.GitTree(
+            self.testrepo, tree, branches.values())
         iu = ImportUpstream("master", "upstream/master", "import")
         iu.finish()
         self.assertEqual("", self.git.status(porcelain=True),
@@ -94,7 +95,8 @@ class TestImport(base.BaseTestCase):
             'import': ('import', 'C1')
         }
 
-        self.gittree = base.BuildTree(self.testrepo, tree, branches.values())
+        self.gittree = base.fixtures_git.gitfixture.GitTree(
+            self.testrepo, tree, branches.values())
         iu = ImportUpstream("master", "upstream/master", "import")
         # create a dummy file
         open('dummy-file', 'a').close()
@@ -127,7 +129,8 @@ class TestImport(base.BaseTestCase):
             'upstream': ('upstream/master', 'E'),
         }
 
-        self.gittree = base.BuildTree(self.testrepo, tree, branches.values())
+        self.gittree = base.fixtures_git.gitfixture.GitTree(
+            self.testrepo, tree, branches.values())
         self.git.tag("tag-um-1", "upstream/master")
         self.git.tag("tag-um-2", "upstream/master")
         iu = ImportUpstream("master", "tag-um-1", "import/{describe}")
