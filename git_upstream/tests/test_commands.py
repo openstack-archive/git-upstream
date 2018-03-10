@@ -94,7 +94,8 @@ class TestLoggingOptions(base.BaseTestCase):
             'upstream': ('upstream/master', 'E'),
         }
 
-        self.gittree = base.BuildTree(self.testrepo, tree, branches.values())
+        self.gittree = base.fixtures_git.gitfixture.GitTree(
+            self.testrepo, tree, branches.values())
 
         cmdline = self.parser.get_default('script_cmdline')
 
