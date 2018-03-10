@@ -224,16 +224,37 @@ class BuildTree(object):
             # trees of the nodes prefixed with '='
             use = [str(self.graph[p.lstrip("=")])
                    for p in parents if p.startswith("=")]
-            self.git.merge(*commits, s="ours", no_commit=True)
+            try:
+                self.git.merge(*commits, s="ours", no_commit=True)
+            except git.exc.GitCommandError as exc:
+                if 'refusing to merge unrelated histories' in exc.stderr:
+                    self.git.merge(*commits, s="ours", no_commit=True,
+                                   allow_unrelated_histories=True)
+                else:
+                    raise
             self.git.read_tree(empty=True)
             self.git.read_tree(*use, u=True, reset=True)
         elif len(commits) < 2:
             # standard merge
-            self.git.merge(*commits, no_commit=True)
+            try:
+                self.git.merge(*commits, no_commit=True)
+            except git.exc.GitCommandError as exc:
+                if 'refusing to merge unrelated histories' in exc.stderr:
+                    self.git.merge(*commits, no_commit=True,
+                                   allow_unrelated_histories=True)
+                else:
+                    raise
         else:
             # multi-branch merge, git is not great at handling
             # merging multiple orphaned branches
-            self.git.merge(*commits, s="ours", no_commit=True)
+            try:
+                self.git.merge(*commits, s="ours", no_commit=True)
+            except git.exc.GitCommandError as exc:
+                if 'refusing to merge unrelated histories' in exc.stderr:
+                    self.git.merge(*commits, s="ours", no_commit=True,
+                                   allow_unrelated_histories=True)
+                else:
+                    raise
             self.git.read_tree(empty=True)
             self.git.read_tree("HEAD", *commits)
             self.git.checkout("--", ".")
