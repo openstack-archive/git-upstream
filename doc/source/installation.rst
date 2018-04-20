@@ -59,7 +59,7 @@ Verify your installation.
     Name: git-upstream
     Version: 0.12.1
     Summary: git tool to help manage upstream repositories
-    Home-page: https://pypi.python.org/pypi/git-upstream
+    Home-page: https://pypi.org/project/git-upstream
     Author: Darragh Bailey
     Author-email: dbailey@hpe.com
     License: Apache License (2.0)
@@ -71,7 +71,7 @@ Verify your installation.
 
     [...]
 
-.. _pypi: https://pypi.python.org/pypi/git-upstream
+.. _pypi: https://pypi.org/project/git-upstream
 
 Installing for Development
 --------------------------

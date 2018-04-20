@@ -27,7 +27,7 @@ To install:
 
     pip install git-upstream
 
-See also https://pypi.python.org/pypi/git-upstream
+See also https://pypi.org/project/git-upstream
 
 
 You can also install directly from source:
@@ -121,8 +121,8 @@ You can also join via this `IRC URL
 webchat <https://webchat.freenode.net/>`_.
 
 
-.. _pep8: https://pypi.python.org/pypi/pep8
-.. _pyflakes: https://pypi.python.org/pypi/pyflakes
+.. _pep8: https://pypi.org/project/pep8
+.. _pyflakes: https://pypi.org/project/pyflakes
 .. _tox: https://testrun.org/tox
 
 What does git-upstream do?
