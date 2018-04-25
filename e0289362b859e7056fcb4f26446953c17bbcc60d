@@ -1,0 +1,8 @@
+Code-Review+2: Darragh Bailey <daragh.bailey@gmail.com>
+Workflow+1: Darragh Bailey <daragh.bailey@gmail.com>
+Verified+2: Zuul
+Submitted-by: Zuul
+Submitted-at: Wed, 25 Apr 2018 09:31:01 +0000
+Reviewed-on: https://review.openstack.org/563296
+Project: openstack/git-upstream
+Branch: refs/heads/master
