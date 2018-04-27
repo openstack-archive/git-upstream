@@ -219,7 +219,15 @@ class ImportUpstream(LogDedentMixin, GitMixin):
             # as normal merge (with octopus strategy) will refuse if you
             # are merging in more than one branch without a common
             # ancestor to the current tree.
-            self.git.merge(*self.extra_branches, s="ours", no_commit=True)
+            try:
+                self.git.merge(*self.extra_branches, s="ours", no_commit=True)
+            except GitCommandError as exc:
+                if 'refusing to merge unrelated histories' in exc.stderr:
+                    self.git.merge(*self.extra_branches, s="ours",
+                                   no_commit=True,
+                                   allow_unrelated_histories=True)
+                else:
+                    raise
             self.git.read_tree(empty=True)
             self.git.read_tree("HEAD", *self.extra_branches)
             self.git.checkout("--", ".")
