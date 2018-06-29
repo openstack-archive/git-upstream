@@ -23,7 +23,7 @@ import tempfile
 
 import fixtures
 import git
-import loremipsum
+import faker
 import testtools
 from testtools.content import text_content
 import yaml
@@ -136,6 +136,7 @@ class GitRepo(fixtures.Fixture):
 
     def __init__(self, path=None):
         self.path = path
+        self._faker = faker.Faker()
 
     def _setUp(self):
         self._file_list = set()
@@ -154,7 +155,7 @@ class GitRepo(fixtures.Fixture):
 
     def _create_file(self, contents=None):
         if not contents:
-            contents = "\n\n".join(loremipsum.get_paragraphs(3))
+            contents = "\n\n".join(self._faker.paragraphs(3))
 
         # always want to ensure the files added to the repo are unique no
         # matter which branch they are added to, as otherwise there may
