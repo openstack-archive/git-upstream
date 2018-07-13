@@ -22,6 +22,7 @@ Contents:
 
    intro
    installation
+   quick-start
    subcommands
    workflows
    examples
