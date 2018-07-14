@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+from git_upstream.commands import _helpers as helpers
 from git_upstream.commands import GitUpstreamCommand
 from git_upstream.lib.supersede import Supersede
 from git_upstream.log import LogDedentMixin
@@ -55,7 +56,8 @@ class SupersedeCommand(LogDedentMixin, GitUpstreamCommand):
             '-u', '--upstream-branch', metavar='<upstream-branch>',
             dest='upstream_branch', required=False, default='upstream/master',
             help='Search change ids values in <upstream-branch> branch '
-                 '(default: %(default)s)')
+                 '(default: %(default)s)'
+        ).completer = helpers.upstream_completer
 
     def execute(self):
 

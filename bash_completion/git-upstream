@@ -1,1 +1,50 @@
 eval "$(register-python-argcomplete git-upstream)"
+# following automatically picked up if git bash completion active
+_git_upstream() {
+    # save originals
+    ORIG_COMP_LINE="${COMP_LINE}"
+    ORIG_COMP_POINT="${COMP_POINT}"
+    ORIG_COMP_WORDS=( "${COMP_WORDS[@]}" )
+
+    # need to modify comp words to strip out git global options
+    # before calling completion on git-upstream
+    NEW_COMP_WORDS=()
+    index=0
+    found=0
+    for i in ${!COMP_WORDS[@]}
+    do
+	[[ "${COMP_WORDS[$i]}" = "upstream" ]] && found=1
+	if [[ ${found} -eq 1 ]]
+	then
+	    NEW_COMP_WORDS[${index}]="${COMP_WORDS[${i}]}"
+	    (( index++ ))
+	fi
+    done
+    NEW_COMP_WORDS[0]="git-upstream"
+    COMP_WORDS=( "${NEW_COMP_WORDS[@]}" )
+    COMP_LINE="${COMP_WORDS[@]}"
+    COMP_POINT="${#COMP_LINE}"
+
+    # check if the git repo path has been passed to git
+    __git_find_repo_path
+    export GIT_UPSTREAM_REPO_PATH="${__git_repo_path}"
+
+    if [[ -n "$_ARC_DEBUG" ]]
+    then
+	echo "COMP_LINE=${COMP_LINE}" >&2
+	echo "COMP_WORDS=${COMP_WORDS[@]}" >&2
+    fi
+
+    # perform completion
+    _python_argcomplete "git-upstream"
+
+    # restore and cleanup
+    COMP_LINE="${ORIG_COMP_LINE}"
+    COMP_POINT="${ORIG_COMP_POINT}"
+    COMP_WORDS=( "${ORIG_COMP_WORDS[@]}" )
+    unset ORIG_COMP_LINE
+    unset ORIG_COMP_POINT
+    unset ORIG_COMP_WORDS
+    unset NEW_COMP_WORDS
+    compopt +o nospace
+}

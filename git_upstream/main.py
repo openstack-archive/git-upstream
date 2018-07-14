@@ -1,3 +1,4 @@
+# PYTHON_ARGCOMPLETE_OK
 #
 # Copyright (c) 2012, 2013, 2014 Hewlett-Packard Development Company, L.P.
 #
@@ -133,12 +134,13 @@ def main(argv=None):
 
     (cmds, parser) = build_parsers()
 
+    if argparse_loaded:
+        argcomplete.autocomplete(parser, always_complete_options=False)
+
     if not argv:
         parser.print_help()
         return 0
 
-    if argparse_loaded:
-        argcomplete.autocomplete(parser)
     args = parser.parse_args(argv)
 
     logger = setup_console_logging(args)

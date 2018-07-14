@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+from git_upstream.commands import _helpers as helpers
 from git_upstream.commands import GitUpstreamCommand
 from git_upstream.lib.importupstream import ImportUpstream
 from git_upstream.lib.importupstream import ImportUpstreamError
@@ -87,7 +88,8 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
         self.parser.add_argument(
             '--into', dest='branch', metavar='<branch>', default='HEAD',
             help='Branch to take changes from, and replace with imported '
-                 'branch.')
+                 'branch.'
+        ).completer = helpers.branch_completer
         self.parser.add_argument(
             '--import-branch', metavar='<import-branch>',
             default='import/{describe}', help='Name of import branch to use')
@@ -96,11 +98,13 @@ class ImportCommand(LogDedentMixin, GitUpstreamCommand):
             'upstream_branch', metavar='<upstream-branch>', nargs='?',
             default='upstream/master',
             help='Upstream branch to import. Must be specified if you wish to '
-                 'provide additional branches.')
+                 'provide additional branches.'
+        ).completer = helpers.upstream_completer
         self.parser.add_argument(
             'branches', metavar='<branches>', nargs='*',
             help='Branches to additionally merge into the import branch using '
-                 'default git merging behaviour')
+                 'default git merging behaviour'
+        ).completer = helpers.branch_completer
 
     def validate(self):
         """Perform more complex validation of args that cannot be mixed"""
